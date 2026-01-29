@@ -79,7 +79,7 @@ const ProductModal = ({ item, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 flex items-center justify-center z-[105]"
+            className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10"
           >
             <Loader2
               className="text-red-600 animate-spin"
@@ -98,16 +98,18 @@ const ProductModal = ({ item, onClose }) => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.4 }}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <img
-            src={optimizeCloudinaryUrl(images[activeIdx])}
-            className={`w-full h-full object-cover md:object-contain transition-opacity duration-700 ${
-              isImageLoading ? "opacity-0" : "opacity-100"
-            }`}
-            alt={item.title}
-            onLoad={() => setIsImageLoading(false)}
-          />
+          <div className="relative h-full aspect-[2/3] max-w-full overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <img
+              src={optimizeCloudinaryUrl(images[activeIdx])}
+              className={`w-full h-full object-cover transition-opacity duration-700 ${
+                isImageLoading ? "opacity-0" : "opacity-100"
+              }`}
+              alt={item.title}
+              onLoad={() => setIsImageLoading(false)}
+            />
+          </div>
 
           {/* DEGRADADOS */}
           <div className="absolute inset-0 pointer-events-none">
@@ -169,11 +171,12 @@ const ProductModal = ({ item, onClose }) => {
         >
           {/* COLUMNA IZQUIERDA */}
           <div className="flex-1">
-            <h2 className="text-3xl md:text-8xl font-black uppercase italic leading-[0.85] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
-              <span className="block">{item.title.split(" ")[0]}</span>
-              <span className="block text-white">
-                {item.title.split(" ").slice(1).join(" ")}
-              </span>
+            <h2 className="text-3xl md:text-8xl font-black uppercase italic leading-[0.8] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
+              {item.title.split(" ").map((word, index) => (
+                <span key={index} className="block">
+                  {word}
+                </span>
+              ))}
             </h2>
 
             <p className="text-gray-300 text-[10px] md:text-sm mb-4 md:mb-8 max-w-[280px] md:max-w-md italic font-light leading-relaxed">
