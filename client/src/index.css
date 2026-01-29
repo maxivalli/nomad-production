@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;900&display=swap');
+
+@layer base {
+  html {
+    /* Esto asegura que la fuente base sea Inter si nada más se define */
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+:root {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden; /* Importante para que el scroll horizontal no falle */
+}
+
