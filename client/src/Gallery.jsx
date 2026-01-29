@@ -7,6 +7,18 @@ const Gallery = ({ items, setSelectedItem }) => {
   // 1. ESTADO PARA EL NOMBRE DE LA COLECCIÓN
   const [collectionName, setCollectionName] = useState("");
 
+  // --- MEJORA: FUNCIÓN DE OPTIMIZACIÓN DE CLOUDINARY ---
+  const optimizeCloudinaryUrl = (url) => {
+    if (!url || !url.includes("cloudinary.com")) return url;
+    
+    // Insertamos f_auto (formato), q_auto (calidad) y un ancho razonable para la galería
+    const splitUrl = url.split("/upload/");
+    const optimizationParams = "f_auto,q_auto,w_1000"; 
+    
+    return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
+  };
+  // ----------------------------------------------------
+
   // 2. FETCH PARA OBTENER EL NOMBRE DESDE LA BASE DE DATOS
   useEffect(() => {
     const fetchCollectionName = async () => {
@@ -38,14 +50,12 @@ const Gallery = ({ items, setSelectedItem }) => {
 
   const { scrollYProgress } = useScroll({ target: targetRef });
 
-  // CÁLCULO DINÁMICO: Ajustado para las nuevas dimensiones
   const [totalScroll, setTotalScroll] = useState(0);
 
   useEffect(() => {
     const calculateScroll = () => {
       if (typeof window !== "undefined") {
         const isMobile = window.innerWidth < 768;
-        // Dimensiones actualizadas: 340px móvil / 450px desktop
         const cardWidth = isMobile ? 340 : 450; 
         const gap = isMobile ? 24 : 48; 
         const padding = isMobile ? 48 : 96; 
@@ -116,19 +126,21 @@ const Gallery = ({ items, setSelectedItem }) => {
             className="flex gap-6 md:gap-12 px-6 md:px-12"
           >
             {items.map((item) => {
-              const mainImage = Array.isArray(item.img)
-                ? item.img[0]
-                : item.img;
+              // --- MEJORA: SELECCIÓN Y OPTIMIZACIÓN DE IMAGEN ---
+              const rawImage = Array.isArray(item.img) ? item.img[0] : item.img;
+              const optimizedImage = optimizeCloudinaryUrl(rawImage);
+              // -------------------------------------------------
+
               return (
                 <div
                   key={item.id}
                   onClick={() => handleOpenProduct(item)}
-                  // Modificado: h y w aumentados para md (desktop)
                   className="group relative h-[442px] w-[340px] md:h-[550px] md:w-[450px] flex-none overflow-hidden bg-neutral-800 shrink-0 cursor-pointer shadow-2xl transition-transform duration-500"
                 >
                   <img
-                    src={mainImage}
+                    src={optimizedImage} // Usando imagen optimizada
                     alt={item.title}
+                    loading="lazy" // Mejora de performance nativa
                     className="h-full w-full object-cover transition-all duration-1000 group-hover:scale-110"
                   />
 

@@ -1,8 +1,23 @@
-import React, { useRef } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import React, { useRef, useEffect, useState } from "react";
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 const ProcessCard = ({ step }) => {
   const cardRef = useRef(null);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+
+  // --- MEJORA: OPTIMIZACIÓN DE VIDEO CLOUDINARY ---
+  const optimizeVideoUrl = (url) => {
+    if (!url || !url.includes("cloudinary.com")) return url;
+    
+    // Cambiamos /upload/ por /upload/f_auto,q_auto/ y forzamos .webm para máximo ahorro
+    const splitUrl = url.split("/upload/");
+    const optimizationParams = "f_auto,q_auto,vc_vp9"; // vc_vp9 es un codec muy eficiente
+    
+    // Quitamos la extensión original y ponemos .mp4 (f_auto decidirá si sirve webm)
+    const baseUrl = splitUrl[1].split(".")[0];
+    return `${splitUrl[0]}/upload/${optimizationParams}/${baseUrl}.mp4`;
+  };
 
   const { scrollYProgress } = useScroll({
     target: cardRef,
@@ -15,7 +30,6 @@ const ProcessCard = ({ step }) => {
     restDelta: 0.001,
   });
 
-  // Efecto de desaturación casi total (100% a 90% para un toque mínimo de color)
   const grayscale = useTransform(smoothProgress, [0, 1], ["grayscale(100%)", "grayscale(90%)"]);
   const opacity = useTransform(smoothProgress, [0, 1], [0.3, 1]);
 
@@ -24,13 +38,27 @@ const ProcessCard = ({ step }) => {
       {/* Contenedor de Video Cinematográfico */}
       <div className="relative aspect-[3/2] overflow-hidden bg-black border border-white/5 mb-6 group">
         
-        {/* 1. OVERLAY DE GRANO/TEXTURA */}
+        {/* SPINNER DE CARGA PARA VIDEO */}
+        <AnimatePresence>
+          {isVideoLoading && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex items-center justify-center z-[25] bg-black"
+            >
+              <Loader2 className="text-red-600 animate-spin" size={32} strokeWidth={1} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* OVERLAY DE GRANO/TEXTURA */}
         <div className="absolute inset-0 pointer-events-none z-20 opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
         
-        {/* 2. VIÑETEADO CINEMATOGRÁFICO */}
+        {/* VIÑETEADO CINEMATOGRÁFICO */}
         <div className="absolute inset-0 z-10 pointer-events-none bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.8)_100%)]" />
 
-        {/* 3. ESQUINAS DE ENFOQUE (HUD) */}
+        {/* ESQUINAS DE ENFOQUE (HUD) */}
         <div className="absolute inset-4 z-20 pointer-events-none border-t border-l border-white/20 w-4 h-4" />
         <div className="absolute inset-4 left-auto z-20 pointer-events-none border-t border-r border-white/20 w-4 h-4" />
         <div className="absolute inset-4 top-auto z-20 pointer-events-none border-b border-l border-white/20 w-4 h-4" />
@@ -41,13 +69,14 @@ const ProcessCard = ({ step }) => {
           loop
           muted
           playsInline
+          onCanPlayThrough={() => setIsVideoLoading(false)} // Se activa cuando hay suficiente video cargado
           style={{
             filter: grayscale,
-            opacity: opacity,
+            opacity: isVideoLoading ? 0 : opacity,
           }}
-          className="w-full h-full object-cover scale-105" // scale-105 para evitar bordes blancos
+          className="w-full h-full object-cover scale-105 transition-opacity duration-1000"
         >
-          <source src={step.video} type="video/mp4" />
+          <source src={optimizeVideoUrl(step.video)} type="video/mp4" />
         </motion.video>
 
         {/* INDICADOR REC */}

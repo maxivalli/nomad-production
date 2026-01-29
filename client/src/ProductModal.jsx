@@ -1,15 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, ArrowRight } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, Loader2, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const ProductModal = ({ item, onClose }) => {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [isImageLoading, setIsImageLoading] = useState(true);
   const navigate = useNavigate();
 
   if (!item) return null;
 
   const images = Array.isArray(item.img) ? item.img : [item.img];
+
+  // Resetear el spinner cuando cambia la imagen
+  useEffect(() => {
+    setIsImageLoading(true);
+  }, [activeIdx]);
+
+  // --- OPTIMIZACIÓN DE CLOUDINARY ---
+  const optimizeCloudinaryUrl = (url) => {
+    if (!url || !url.includes("cloudinary.com")) return url;
+    const splitUrl = url.split("/upload/");
+    const optimizationParams = "f_auto,q_auto,w_1600";
+    return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
+  };
 
   const colorMap = {
     negro: "#000000",
@@ -58,6 +72,24 @@ const ProductModal = ({ item, onClose }) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden"
     >
+      {/* SPINNER DE CARGA CENTRAL */}
+      <AnimatePresence>
+        {isImageLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center z-[105]"
+          >
+            <Loader2
+              className="text-red-600 animate-spin"
+              size={48}
+              strokeWidth={1}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* IMAGEN DE FONDO */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -69,17 +101,20 @@ const ProductModal = ({ item, onClose }) => {
           className="absolute inset-0 w-full h-full"
         >
           <img
-            src={images[activeIdx]}
-            className="w-full h-full object-cover md:object-contain"
+            src={optimizeCloudinaryUrl(images[activeIdx])}
+            className={`w-full h-full object-cover md:object-contain transition-opacity duration-700 ${
+              isImageLoading ? "opacity-0" : "opacity-100"
+            }`}
             alt={item.title}
+            onLoad={() => setIsImageLoading(false)}
           />
-          
-          {/* MODIFICACIÓN: Degradado solo en el 30% inferior en móvil, y lateral en desktop */}
+
+          {/* DEGRADADOS */}
           <div className="absolute inset-0 pointer-events-none">
-            {/* Capa para Móvil (Bottom 30%) */}
+            {/* Capa para Móvil */}
             <div className="absolute bottom-0 left-0 w-full h-[50%] bg-gradient-to-t from-black via-black/50 to-transparent md:hidden" />
-            
-            {/* Capa para Desktop (Lateral Izquierdo para lectura) */}
+
+            {/* Capa para Desktop */}
             <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
           </div>
         </motion.div>
@@ -108,7 +143,11 @@ const ProductModal = ({ item, onClose }) => {
         {images.map((_, i) => (
           <div
             key={i}
-            className={`h-1 transition-all duration-300 ${i === activeIdx ? "w-6 md:w-8 bg-red-600" : "w-1.5 md:w-2 bg-white/20"}`}
+            className={`h-1 transition-all duration-300 ${
+              i === activeIdx
+                ? "w-6 md:w-8 bg-red-600"
+                : "w-1.5 md:w-2 bg-white/20"
+            }`}
           />
         ))}
       </div>
@@ -149,21 +188,33 @@ const ProductModal = ({ item, onClose }) => {
                 <div className="flex gap-3 md:gap-6 items-center">
                   {item.sizes && item.sizes.length > 0 ? (
                     item.sizes.map((s) => (
-                      <span key={s} className="text-lg md:text-4xl font-black text-white">{s}</span>
+                      <span
+                        key={s}
+                        className="text-lg md:text-4xl font-black text-white"
+                      >
+                        {s}
+                      </span>
                     ))
                   ) : (
-                    <span className="text-[9px] uppercase tracking-widest text-gray-500 italic">N/A</span>
+                    <span className="text-[9px] uppercase tracking-widest text-gray-500 italic">
+                      N/A
+                    </span>
                   )}
                 </div>
               </div>
 
               {item.color && (
                 <div className="space-y-1 md:space-y-3">
-                  <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">Color</p>
+                  <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
+                    Color
+                  </p>
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 md:w-5 md:h-5 rounded-full border border-white/30"
-                      style={{ backgroundColor: colorMap[item.color.toLowerCase()] || "#333" }}
+                      style={{
+                        backgroundColor:
+                          colorMap[item.color.toLowerCase()] || "#333",
+                      }}
                     />
                     <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter">
                       {item.color}
@@ -179,14 +230,21 @@ const ProductModal = ({ item, onClose }) => {
             {item.purchase_link && (
               <button
                 onClick={handlePurchase}
-                className="group relative flex items-center justify-center gap-2 bg-white px-6 py-4 md:px-10 md:py-5 overflow-hidden transition-all active:scale-95 border border-white"
+                className="group relative flex items-center justify-center gap-3 bg-white px-6 py-4 md:px-10 md:py-5 overflow-hidden transition-all active:scale-95 border border-white"
               >
+                {/* Fondo animado al hacer hover */}
                 <div className="absolute inset-0 bg-black translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
-                <div className="relative z-10 flex items-center">
+
+                <div className="relative z-10 flex items-center gap-2 md:gap-3">
                   <span className="text-black group-hover:text-white font-black italic uppercase tracking-tighter text-sm md:text-3xl">
                     COMPRAR
                   </span>
-                  <span className="text-red-600 font-black italic text-sm md:text-3xl ml-0.5">+</span>
+                  {/* Icono del bolsito */}
+                  <ShoppingBag
+                    size={20}
+                    className="text-red-600 md:w-8 md:h-8"
+                    strokeWidth={2.5}
+                  />
                 </div>
               </button>
             )}
