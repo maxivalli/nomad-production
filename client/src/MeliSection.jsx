@@ -89,7 +89,7 @@ const MeliSection = () => {
 
             <motion.h2
               variants={itemVariants}
-              className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6"
+              className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6"
             >
               VISIT US ON <br />
               <span className="text-[#303370]">MERCADO LIBRE</span>
