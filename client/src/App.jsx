@@ -12,6 +12,7 @@ import Packing from "./Packing"
 import StudioMarque from "./StudioMarque";
 import TheStudio from "./TheStudio";
 import Stockists from "./Stockists";
+import MeliSection from "./MeliSection";
 import Contacto from "./Contacto";
 import Footer from "./Footer";
 import ProductModal from "./ProductModal";
@@ -87,6 +88,7 @@ function App() {
           <StudioMarque />
           <TheStudio />
           <Stockists />
+          <MeliSection />
           <Contacto />
         </main>
 
