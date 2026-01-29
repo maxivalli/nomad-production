@@ -91,13 +91,32 @@ async function migrate() {
     `);
     console.log('✓ Tabla de productos actualizada\n');
 
-    // 5. Actualizar tabla de settings
-    console.log('📋 Actualizando tabla de configuración...');
+    // 5. Actualizar tabla de configuración (REFORZADO)
+    console.log('📋 Sincronizando tabla de configuración...');
+    
+    // Primero: Crear la tabla si no existe
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Segundo: Por si la tabla existía pero no tenía la columna updated_at
     await pool.query(`
       ALTER TABLE settings 
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
-    console.log('✓ Tabla de configuración actualizada\n');
+
+    // Tercero: Insertar la colección inicial si la tabla está vacía
+    await pool.query(`
+      INSERT INTO settings (key, value) 
+      VALUES ('current_collection', 'AUTUMN COLLECTION 2026')
+      ON CONFLICT (key) DO NOTHING;
+    `);
+    
+    console.log('✓ Tabla de configuración sincronizada\n');
 
     // 6. Resumen
     console.log('✅ MIGRACIÓN COMPLETADA EXITOSAMENTE\n');
