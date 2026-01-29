@@ -15,6 +15,8 @@ const app = express();
 // CONFIGURACIÓN DE SEGURIDAD
 // ==========================================
 
+app.set('trust proxy', 1);
+
 // Helmet para headers de seguridad
 app.use(
   helmet({
