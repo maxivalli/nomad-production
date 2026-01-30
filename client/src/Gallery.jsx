@@ -1,39 +1,31 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
-
-  // 1. ESTADO PARA EL NOMBRE DE LA COLECCIÓN
   const [collectionName, setCollectionName] = useState("");
+  
+  // Usamos un set para rastrear cargas sin disparar re-renders masivos
+  const [loaded, setLoaded] = useState({});
 
-  // --- MEJORA: FUNCIÓN DE OPTIMIZACIÓN DE CLOUDINARY ---
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
-    
-    // Insertamos f_auto (formato), q_auto (calidad) y un ancho razonable para la galería
     const splitUrl = url.split("/upload/");
     const optimizationParams = "f_auto,q_auto,w_1000"; 
-    
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
-  // ----------------------------------------------------
 
-  // 2. FETCH PARA OBTENER EL NOMBRE DESDE LA BASE DE DATOS
   useEffect(() => {
     const fetchCollectionName = async () => {
       try {
         const res = await fetch("/api/settings/collection");
         const data = await res.json();
-        if (data && data.value) {
-          setCollectionName(data.value);
-        }
+        if (data && data.value) setCollectionName(data.value);
       } catch (err) {
-        console.error("Error al cargar el nombre de la colección:", err);
         setCollectionName("NEW COLLECTION");
       }
     };
-
     fetchCollectionName();
   }, []);
 
@@ -49,7 +41,6 @@ const Gallery = ({ items, setSelectedItem }) => {
   };
 
   const { scrollYProgress } = useScroll({ target: targetRef });
-
   const [totalScroll, setTotalScroll] = useState(0);
 
   useEffect(() => {
@@ -59,77 +50,41 @@ const Gallery = ({ items, setSelectedItem }) => {
         const cardWidth = isMobile ? 340 : 450; 
         const gap = isMobile ? 24 : 48; 
         const padding = isMobile ? 48 : 96; 
-
-        const contentWidth =
-          items.length * cardWidth + (items.length - 1) * gap;
-        const windowWidth = window.innerWidth;
-
-        setTotalScroll(-(contentWidth - windowWidth + padding));
+        const contentWidth = items.length * cardWidth + (items.length - 1) * gap;
+        setTotalScroll(-(contentWidth - window.innerWidth + padding));
       }
     };
-
     calculateScroll();
     window.addEventListener("resize", calculateScroll);
     return () => window.removeEventListener("resize", calculateScroll);
   }, [items.length]);
 
-  const xPx = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0px", `${totalScroll}px`],
-  );
+  const xPx = useTransform(scrollYProgress, [0, 1], ["0px", `${totalScroll}px`]);
   const titleX = useTransform(scrollYProgress, [0, 1], ["0px", "-300px"]);
-  const opacity = useTransform(
-    scrollYProgress,
-    [0, 0.05, 0.9, 1],
-    [1, 1, 0.5, 0],
-  );
+  const opacity = useTransform(scrollYProgress, [0, 0.05, 0.9, 1], [1, 1, 0.5, 0]);
 
   return (
-    <section
-      id="colecciones"
-      ref={targetRef}
-      className="relative h-[600vh] bg-neutral-900/20"
-    >
+    <section id="colecciones" ref={targetRef} className="relative h-[600vh] bg-neutral-900/20">
       <div className="sticky top-5 h-screen flex flex-col justify-center overflow-hidden">
-        {/* ENCABEZADO */}
-        <motion.div
-          style={{ x: titleX, opacity }}
-          className="relative z-10 px-6 md:px-12 mb-4 md:mb-6 pointer-events-none"
-        >
-          <motion.span
-            initial={{ opacity: 0, x: -10 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0 pl-1"
-          >
-            THE CALATOG
+        <motion.div style={{ x: titleX, opacity }} className="relative z-10 px-6 md:px-12 mb-4 md:mb-6 pointer-events-none">
+          <motion.span className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0 pl-1">
+            THE CATALOG
           </motion.span>
-
           <h2 className="text-white text-5xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
             {collectionName ? (
               <>
                 <span className="block">{collectionName.split(" ")[0]}</span>
-                <span className="block text-white">
-                  {collectionName.split(" ").slice(1).join(" ")}
-                </span>
+                <span className="block text-white">{collectionName.split(" ").slice(1).join(" ")}</span>
               </>
-            ) : (
-              "LOADING..."
-            )}
+            ) : "LOADING..."}
           </h2>
         </motion.div>
 
-        {/* CONTENEDOR DE FOTOS */}
         <div className="relative">
-          <motion.div
-            style={{ x: xPx }}
-            className="flex gap-6 md:gap-12 px-6 md:px-12"
-          >
+          <motion.div style={{ x: xPx }} className="flex gap-6 md:gap-12 px-6 md:px-12">
             {items.map((item) => {
-              // --- MEJORA: SELECCIÓN Y OPTIMIZACIÓN DE IMAGEN ---
               const rawImage = Array.isArray(item.img) ? item.img[0] : item.img;
-              const optimizedImage = optimizeCloudinaryUrl(rawImage);
-              // -------------------------------------------------
+              const isImgLoaded = loaded[item.id];
 
               return (
                 <div
@@ -137,15 +92,22 @@ const Gallery = ({ items, setSelectedItem }) => {
                   onClick={() => handleOpenProduct(item)}
                   className="group relative h-[442px] w-[340px] md:h-[550px] md:w-[450px] flex-none overflow-hidden bg-neutral-800 shrink-0 cursor-pointer shadow-2xl transition-transform duration-500"
                 >
+                  {/* SPINNER CON CSS PURO - Cero interferencia con Framer Motion */}
+                  {!isImgLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-neutral-900 z-0">
+                      <Loader2 className="text-red-600 animate-spin" size={48} strokeWidth={1} />
+                    </div>
+                  )}
+
                   <img
-                    src={optimizedImage} // Usando imagen optimizada
+                    src={optimizeCloudinaryUrl(rawImage)}
                     alt={item.title}
-                    loading="lazy" // Mejora de performance nativa
-                    className="h-full w-full object-cover transition-all duration-1000 group-hover:scale-110"
+                    loading="lazy"
+                    onLoad={() => setLoaded(prev => ({ ...prev, [item.id]: true }))}
+                    className={`h-full w-full object-cover transition-all duration-1000 group-hover:scale-110 ${isImgLoaded ? 'opacity-100' : 'opacity-0'}`}
                   />
 
                   <div className="absolute inset-0 group-hover:bg-black/10 transition-colors duration-500" />
-
                   <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full bg-gradient-to-t from-black via-transparent to-transparent">
                     <p className="text-xl md:text-2xl font-black uppercase italic tracking-tighter group-hover:text-red-600 transition-colors text-white">
                       {item.title}
@@ -160,12 +122,8 @@ const Gallery = ({ items, setSelectedItem }) => {
           </motion.div>
         </div>
 
-        {/* Barra de progreso */}
         <div className="absolute bottom-5 left-0 w-full h-[5px] bg-white/10 z-20">
-          <motion.div
-            style={{ scaleX: scrollYProgress }}
-            className="h-full bg-red-600 origin-left"
-          />
+          <motion.div style={{ scaleX: scrollYProgress }} className="h-full bg-red-600 origin-left" />
         </div>
       </div>
     </section>

@@ -15,7 +15,7 @@ const app = express();
 // CONFIGURACIÓN DE SEGURIDAD
 // ==========================================
 
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 // Helmet para headers de seguridad
 app.use(
@@ -86,7 +86,7 @@ const initDB = async () => {
         img TEXT[] NOT NULL, 
         sizes TEXT[],
         purchase_link TEXT,
-        color TEXT,
+        color TEXT[],
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -123,6 +123,16 @@ const initDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Agrega esta línea para convertir la columna si ya existe y es de tipo texto:
+    await pool.query(`
+      DO $$ 
+      BEGIN 
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='color' AND data_type='text') THEN
+      ALTER TABLE products ALTER COLUMN color TYPE TEXT[] USING array[color];
+    END IF;
+  END $$;
+`);
 
     // Crear usuario admin por defecto si no existe
     const adminExists = await pool.query(
@@ -171,7 +181,12 @@ const productSchema = Joi.object({
     .items(Joi.string().valid("S", "M", "L", "XL"))
     .default([]),
   purchase_link: Joi.string().uri().allow("").default(""),
-  color: Joi.string().max(50).allow("").default(""),
+  color: Joi.array()
+    .items(Joi.string().max(50))
+    .default([])
+    .messages({
+      "array.base": "El campo color debe ser una lista de colores",
+    }),
 });
 
 const loginSchema = Joi.object({
@@ -307,6 +322,7 @@ app.get("/api/products", async (req, res) => {
     const normalizedProducts = result.rows.map((product) => ({
       ...product,
       img: Array.isArray(product.img) ? product.img : [product.img],
+      color: Array.isArray(product.color) ? product.color : (product.color ? [product.color] : []),
     }));
 
     res.json(normalizedProducts);

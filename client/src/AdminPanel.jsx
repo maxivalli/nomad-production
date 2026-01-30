@@ -36,7 +36,7 @@ const AdminPanel = () => {
     img: [],
     sizes: [],
     purchase_link: "",
-    color: "",
+    color: [],
   });
 
   const availableSizes = ["S", "M", "L", "XL"];
@@ -50,32 +50,32 @@ const AdminPanel = () => {
   ];
 
   useEffect(() => {
-  const loadCloudinaryConfig = async () => {
-    try {
-      const config = await api.getCloudinaryConfig();
-      setCloudinaryConfig(config);
-    } catch (err) {
-      console.error("Error cargando config de Cloudinary:", err);
-      toast.error("No se pudo cargar la configuración de imágenes");
-    }
-  };
-  loadCloudinaryConfig();
-}, []);
+    const loadCloudinaryConfig = async () => {
+      try {
+        const config = await api.getCloudinaryConfig();
+        setCloudinaryConfig(config);
+      } catch (err) {
+        console.error("Error cargando config de Cloudinary:", err);
+        toast.error("No se pudo cargar la configuración de imágenes");
+      }
+    };
+    loadCloudinaryConfig();
+  }, []);
 
   // 1. OBTENER PRODUCTOS (FETCH)
   const fetchProducts = async () => {
-  try {
-    const data = await api.getProducts();
-    const normalizedData = data.map((item) => ({
-      ...item,
-      img: Array.isArray(item.img) ? item.img : [item.img],
-    }));
-    setProducts(normalizedData);
-  } catch (err) {
-    console.error("Error al obtener productos:", err);
-    toast.error("No se pudieron cargar los productos");
-  }
-};
+    try {
+      const data = await api.getProducts();
+      const normalizedData = data.map((item) => ({
+        ...item,
+        img: Array.isArray(item.img) ? item.img : [item.img],
+      }));
+      setProducts(normalizedData);
+    } catch (err) {
+      console.error("Error al obtener productos:", err);
+      toast.error("No se pudieron cargar los productos");
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -83,110 +83,110 @@ const AdminPanel = () => {
 
   // CARGAR FECHA
   useEffect(() => {
-  const fetchSettings = async () => {
-    try {
-      const data = await api.getLaunchDate();
-      if (data.date) setLaunchDate(data.date);
-    } catch (err) {
-      console.error("Error cargando fecha");
-      toast.error("No se pudo cargar la fecha de lanzamiento");
-    }
-  };
-  fetchSettings();
-}, []);
+    const fetchSettings = async () => {
+      try {
+        const data = await api.getLaunchDate();
+        if (data.date) setLaunchDate(data.date);
+      } catch (err) {
+        console.error("Error cargando fecha");
+        toast.error("No se pudo cargar la fecha de lanzamiento");
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Cargar el nombre al iniciar
   useEffect(() => {
-  const fetchCollection = async () => {
-    try {
-      const data = await api.getCollection();
-      setCollectionName(data.value);
-    } catch (err) {
-      console.error("Error cargando colección");
-    }
-  };
-  fetchCollection();
-}, []);
+    const fetchCollection = async () => {
+      try {
+        const data = await api.getCollection();
+        setCollectionName(data.value);
+      } catch (err) {
+        console.error("Error cargando colección");
+      }
+    };
+    fetchCollection();
+  }, []);
 
   const handleSaveDate = async () => {
-  setIsSavingDate(true);
-  try {
-    await api.setLaunchDate(launchDate);
-    toast.success("Fecha de lanzamiento actualizada");
-  } catch (err) {
-    console.error(err);
-    toast.error("Error al actualizar la fecha");
-  } finally {
-    setIsSavingDate(false);
-  }
-};
+    setIsSavingDate(true);
+    try {
+      await api.setLaunchDate(launchDate);
+      toast.success("Fecha de lanzamiento actualizada");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al actualizar la fecha");
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
 
   const updateCollectionName = async () => {
-  try {
-    await api.updateCollection(collectionName);
-    toast.success("Nombre de colección actualizado");
-  } catch (err) {
-    console.error(err);
-    toast.error("Error al actualizar la colección");
-  }
-};
+    try {
+      await api.updateCollection(collectionName);
+      toast.success("Nombre de colección actualizado");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al actualizar la colección");
+    }
+  };
 
   // 2. CLOUDINARY WIDGET (Soporte hasta 3 fotos)
   const handleOpenWidget = () => {
-  if (!cloudinaryConfig) {
-    toast.error("Configuración de Cloudinary no disponible");
-    return;
-  }
+    if (!cloudinaryConfig) {
+      toast.error("Configuración de Cloudinary no disponible");
+      return;
+    }
 
-  const slotsAvailable = 3 - formData.img.length;
+    const slotsAvailable = 3 - formData.img.length;
 
-  if (slotsAvailable <= 0) {
-    toast.warning("Límite de 3 imágenes alcanzado");
-    return;
-  }
+    if (slotsAvailable <= 0) {
+      toast.warning("Límite de 3 imágenes alcanzado");
+      return;
+    }
 
-  const myWidget = window.cloudinary.createUploadWidget(
-    {
-      cloudName: cloudinaryConfig.cloudName,
-      uploadPreset: cloudinaryConfig.uploadPreset,
-      sources: ["local", "url", "camera"],
-      multiple: true,
-      maxFiles: slotsAvailable,
-      styles: {
-        palette: {
-          window: "#000000",
-          windowBorder: "#dc2626",
-          tabIcon: "#FFFFFF",
-          textLight: "#FFFFFF",
-          textDark: "#000000",
-          inactiveTabIcon: "#555555",
-          menuIcons: "#FFFFFF",
-          link: "#dc2626",
-          action: "#dc2626",
-          inProgress: "#dc2626",
-          complete: "#16a34a",
-          error: "#ea3323",
-          sourceBg: "#000000",
+    const myWidget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: cloudinaryConfig.cloudName,
+        uploadPreset: cloudinaryConfig.uploadPreset,
+        sources: ["local", "url", "camera"],
+        multiple: true,
+        maxFiles: slotsAvailable,
+        styles: {
+          palette: {
+            window: "#000000",
+            windowBorder: "#dc2626",
+            tabIcon: "#FFFFFF",
+            textLight: "#FFFFFF",
+            textDark: "#000000",
+            inactiveTabIcon: "#555555",
+            menuIcons: "#FFFFFF",
+            link: "#dc2626",
+            action: "#dc2626",
+            inProgress: "#dc2626",
+            complete: "#16a34a",
+            error: "#ea3323",
+            sourceBg: "#000000",
+          },
         },
       },
-    },
-    (error, result) => {
-      if (!error && result && result.event === "queues-end") {
-        const uploadedFiles = result.info.files;
-        const newUrls = uploadedFiles.map(
-          (file) => file.uploadInfo.secure_url,
-        );
+      (error, result) => {
+        if (!error && result && result.event === "queues-end") {
+          const uploadedFiles = result.info.files;
+          const newUrls = uploadedFiles.map(
+            (file) => file.uploadInfo.secure_url,
+          );
 
-        setFormData((prev) => ({
-          ...prev,
-          img: [...prev.img, ...newUrls].slice(0, 3),
-        }));
-        toast.success("Imágenes subidas exitosamente");
-      }
-    },
-  );
-  myWidget.open();
-};
+          setFormData((prev) => ({
+            ...prev,
+            img: [...prev.img, ...newUrls].slice(0, 3),
+          }));
+          toast.success("Imágenes subidas exitosamente");
+        }
+      },
+    );
+    myWidget.open();
+  };
 
   // 3. SELECCIÓN DE TALLES
   const handleSizeToggle = (size) => {
@@ -198,62 +198,79 @@ const AdminPanel = () => {
     }));
   };
 
+  const handleColorToggle = (colorName) => {
+    setFormData((prev) => ({
+      ...prev,
+      color: prev.color.includes(colorName)
+        ? prev.color.filter((c) => c !== colorName)
+        : [...prev.color, colorName],
+    }));
+  };
+
   // 4. GUARDAR O ACTUALIZAR
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (formData.img.length === 0) {
-    toast.warning("Debes subir al menos una imagen");
-    return;
-  }
+    e.preventDefault();
 
-  setIsLoading(true);
-
-  try {
-    if (isEditing) {
-      await api.updateProduct(isEditing, formData);
-      toast.success("Producto actualizado exitosamente");
-    } else {
-      await api.createProduct(formData);
-      toast.success("Producto creado exitosamente");
+    if (formData.img.length === 0) {
+      toast.warning("Debes subir al menos una imagen");
+      return;
     }
 
-    setFormData({
-      title: "",
-      description: "",
-      img: [],
-      sizes: [],
-      purchase_link: "",
-      color: "",
-    });
-    setIsEditing(null);
-    fetchProducts();
-  } catch (error) {
-    console.error("Error en la operación:", error);
-    toast.error(error.message || "Error al guardar el producto");
-  } finally {
-    setIsLoading(false);
-  }
-};
+    setIsLoading(true);
+
+    try {
+      if (isEditing) {
+        await api.updateProduct(isEditing, formData);
+        toast.success("Producto actualizado exitosamente");
+      } else {
+        await api.createProduct(formData);
+        toast.success("Producto creado exitosamente");
+      }
+
+      setFormData({
+        title: "",
+        description: "",
+        img: [],
+        sizes: [],
+        purchase_link: "",
+        color: [],
+      });
+      setIsEditing(null);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error en la operación:", error);
+      toast.error(error.message || "Error al guardar el producto");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 5. BORRAR PRODUCTO
   const handleDelete = async (id) => {
-  if (!window.confirm("¿Confirmas la eliminación definitiva de esta pieza?")) {
-    return;
-  }
+    if (
+      !window.confirm("¿Confirmas la eliminación definitiva de esta pieza?")
+    ) {
+      return;
+    }
 
-  try {
-    await api.deleteProduct(id);
-    toast.success("Producto eliminado exitosamente");
-    setProducts(prev => prev.filter(p => p.id !== id));
-  } catch (error) {
-    console.error("Error al eliminar:", error);
-    toast.error(error.message || "Error al eliminar el producto");
-  }
-};
+    try {
+      await api.deleteProduct(id);
+      toast.success("Producto eliminado exitosamente");
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      toast.error(error.message || "Error al eliminar el producto");
+    }
+  };
 
   // 6. CARGAR PARA EDITAR
   const startEdit = (item) => {
+    const colorData = Array.isArray(item.color)
+      ? item.color
+      : item.color
+        ? [item.color]
+        : [];
+
     setIsEditing(item.id);
     setFormData({
       title: item.title,
@@ -261,21 +278,21 @@ const AdminPanel = () => {
       img: Array.isArray(item.img) ? item.img : [item.img],
       sizes: item.sizes,
       purchase_link: item.purchase_link || "",
-      color: item.color || "", // Cargar color existente
+      color: colorData,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleLogout = async () => {
-  try {
-    await api.logout();
-    toast.success("Sesión cerrada");
-    navigate("/login");
-  } catch (err) {
-    console.error("Error al cerrar sesión:", err);
-    navigate("/login"); // Redirigir de todos modos
-  }
-};
+    try {
+      await api.logout();
+      toast.success("Sesión cerrada");
+      navigate("/login");
+    } catch (err) {
+      console.error("Error al cerrar sesión:", err);
+      navigate("/login"); // Redirigir de todos modos
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#050505] text-white antialiased selection:bg-red-600/30 overflow-x-hidden">
@@ -430,7 +447,7 @@ const AdminPanel = () => {
                     img: [],
                     sizes: [],
                     purchase_link: "",
-                    color: "",
+                    color: [],
                   });
                 }}
                 className="absolute top-4 right-4 text-red-500 hover:text-white flex items-center gap-1 text-[9px] font-[900] tracking-widest z-10 bg-black p-1.5 md:bg-transparent border border-red-600/20 md:border-none"
@@ -547,43 +564,47 @@ const AdminPanel = () => {
               </div>
             </div>
 
-            {/* COLOR SELECTION */}
+            {/* COLOR SELECTION MULTIPLE */}
             <div className="space-y-4">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
-                Color Protocol
+                Color Protocol{" "}
+                <span className="text-red-500">
+                  ({formData.color.length} Seleccionados)
+                </span>
               </label>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                {colorPalette.map((c) => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, color: c.name })}
-                    className={`relative h-12 flex items-center justify-center border-2 transition-all group ${
-                      formData.color === c.name
-                        ? "border-red-600 bg-red-600/10 shadow-[0_0_15px_rgba(220,38,38,0.2)]"
-                        : "border-white/10 bg-black hover:border-white/30"
-                    }`}
-                  >
-                    <div
-                      className="w-4 h-4 rounded-full border border-white/20 shadow-inner"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                    <span
-                      className={`ml-2 text-[8px] font-[900] uppercase tracking-widest ${
-                        formData.color === c.name
-                          ? "text-white"
-                          : "text-neutral-500"
+                {colorPalette.map((c) => {
+                  const isSelected = formData.color.includes(c.name);
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => handleColorToggle(c.name)}
+                      className={`relative h-12 flex items-center justify-center border-2 transition-all group ${
+                        isSelected
+                          ? "border-red-600 bg-red-600/10 shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+                          : "border-white/10 bg-black hover:border-white/30"
                       }`}
                     >
-                      {c.name}
-                    </span>
-                    {formData.color === c.name && (
-                      <div className="absolute -top-1 -right-1">
-                        <Zap size={8} className="text-white fill-red-600" />
-                      </div>
-                    )}
-                  </button>
-                ))}
+                      <div
+                        className="w-4 h-4 rounded-full border border-white/20 shadow-inner"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      <span
+                        className={`ml-2 text-[8px] font-[900] uppercase tracking-widest ${
+                          isSelected ? "text-white" : "text-neutral-500"
+                        }`}
+                      >
+                        {c.name}
+                      </span>
+                      {isSelected && (
+                        <div className="absolute -top-1 -right-1">
+                          <Zap size={8} className="text-white fill-red-600" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

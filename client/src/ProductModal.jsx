@@ -206,25 +206,34 @@ const ProductModal = ({ item, onClose }) => {
                 </div>
               </div>
 
-              {item.color && (
-                <div className="space-y-1 md:space-y-3">
-                  <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
-                    Color
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 md:w-5 md:h-5 rounded-full border border-white/30"
-                      style={{
-                        backgroundColor:
-                          colorMap[item.color.toLowerCase()] || "#333",
-                      }}
-                    />
-                    <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter">
-                      {item.color}
-                    </span>
+              {/* SECCIÓN DE COLORES ACTUALIZADA */}
+              {item.color &&
+                Array.isArray(item.color) &&
+                item.color.length > 0 && (
+                  <div className="space-y-1 md:space-y-3">
+                    <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
+                      Color Protocol
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3 md:gap-5">
+                      {item.color.map((c) => (
+                        <div key={c} className="flex items-center gap-2 group">
+                          {/* Círculo de color */}
+                          <div
+                            className="w-3 h-3 md:w-6 md:h-6 rounded-full border border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-110"
+                            style={{
+                              backgroundColor:
+                                colorMap[c.toLowerCase()] || "#333",
+                            }}
+                          />
+                          {/* Nombre del color */}
+                          <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter opacity-90 group-hover:opacity-100 transition-opacity">
+                            {c}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
 
