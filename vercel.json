@@ -16,7 +16,7 @@
   "rewrites": [
     {
       "source": "/share/:slug",
-      "destination": "/server/api/share?slug=:slug"
+      "destination": "/api/share?slug=:slug"
     },
     {
       "source": "/api/:path*",
@@ -46,15 +46,6 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=()"
-        }
-      ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
         }
       ]
     }

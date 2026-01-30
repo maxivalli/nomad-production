@@ -5,7 +5,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   const { slug } = req.query;
   const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
 
@@ -26,8 +26,7 @@ export default async function handler(req, res) {
 
     if (!producto) {
       console.log("2. Producto no encontrado para slug:", slug);
-      res.writeHead(302, { Location: FRONTEND_URL });
-      return res.end();
+      return res.redirect(302, FRONTEND_URL);
     }
 
     console.log("3. Producto encontrado:", producto.title);
@@ -95,7 +94,6 @@ export default async function handler(req, res) {
     `);
   } catch (err) {
     console.error("❌ Error en ruta share:", err);
-    res.writeHead(302, { Location: FRONTEND_URL });
-    res.end();
+    res.redirect(302, FRONTEND_URL);
   }
-}
+};
