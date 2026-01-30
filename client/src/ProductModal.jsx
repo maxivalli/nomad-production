@@ -25,11 +25,27 @@ const ProductModal = ({ item, onClose }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, []);
+  const scrollY = window.scrollY;
+  window.scrollTo(0, scrollY + 1);
+  setTimeout(() => {
+    window.scrollTo(0, scrollY);
+  }, 10);
+  
+  setTimeout(() => {
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.top = `-${scrollY}px`;
+  }, 50);
+  
+  return () => {
+    document.body.style.overflow = 'unset';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.top = '';
+    window.scrollTo(0, scrollY);
+  };
+}, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -100,7 +116,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-10 cursor-zoom-out touch-none"
+      className="fixed inset-0 h-[100svh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -128,10 +144,10 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="relative flex items-center justify-center w-full h-full p-0 md:p-4">
+          <div className="relative h-[100dvh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
-              className={`w-screen md:w-auto h-full max-h-[100dvh] md:max-h-[90vh] object-contain shadow-2xl ${
+              className={`w-full h-full object-cover transition-opacity duration-700 ${
                 isImageLoading ? "opacity-0" : "opacity-100"
               }`}
               alt={item.title}
