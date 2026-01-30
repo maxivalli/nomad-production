@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"; // 1. Importamos useNavigate
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
-  const navigate = useNavigate(); // 2. Inicializamos el hook
+  const navigate = useNavigate(); 
   const [collectionName, setCollectionName] = useState("");
   const [loaded, setLoaded] = useState({});
 
@@ -29,21 +29,14 @@ const Gallery = ({ items, setSelectedItem }) => {
     fetchCollectionName();
   }, []);
 
-  // 3. Eliminamos el eventListener de 'popstate' manual,
-  // ya que ahora React Router maneja el historial por nosotros.
-
   const handleOpenProduct = (item) => {
-    // 4. Generamos el slug y navegamos a la nueva ruta
-    // .replace(/[^a-z0-9\s-]/g, "") -> Esto borra todo lo que no sea letra, número o espacio
     const slug = item.title
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s-]/g, "") // Borra comillas, puntos, etc.
-      .replace(/\s+/g, "-"); // Cambia espacios por guiones
+      .replace(/[^a-z0-9\s-]/g, "") 
+      .replace(/\s+/g, "-"); 
     navigate(`/producto/${slug}`);
 
-    // El setSelectedItem(item) ya se ejecutará mediante el useEffect en App.jsx
-    // al detectar el cambio de URL, pero puedes dejarlo aquí para una respuesta inmediata.
     setSelectedItem(item);
   };
 
