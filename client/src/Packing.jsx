@@ -76,13 +76,12 @@ const Packaging = () => {
   // MANEJO DEL BOTÓN "ATRÁS" PARA EL MODAL
   useEffect(() => {
     if (selectedImg) {
-      // Cuando se abre el modal, añadimos una entrada artificial al historial
       window.history.pushState({ modalOpen: true }, "");
     }
 
     const handleBackButton = () => {
       if (selectedImg) {
-        setSelectedImg(null); // Cerramos el modal en lugar de irnos de la página
+        setSelectedImg(null); 
       }
     };
 
@@ -91,8 +90,6 @@ const Packaging = () => {
   }, [selectedImg]);
 
   const handleClose = () => {
-    // Si cerramos el modal manualmente (X o clic fuera),
-    // eliminamos la entrada falsa del historial para que no quede "atrás" muerto.
     if (selectedImg && window.history.state?.modalOpen) {
       window.history.back();
     }

@@ -20,7 +20,6 @@ const PackingModal = ({ selectedImg, onClose }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          // Agregamos touch-none si no quieres que el usuario haga scroll accidentalmente sobre el modal
           className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-10 cursor-zoom-out touch-none"
         >
           {/* Botón de Cierre - Más grande en móvil para accesibilidad */}

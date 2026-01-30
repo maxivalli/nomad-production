@@ -28,7 +28,6 @@ const ProductModal = ({ item, onClose }) => {
   document.body.style.overflow = 'hidden';
   return () => {
     document.body.style.overflow = 'unset';
-    window.scrollTo(0, 0)
   };
 }, []);
 
@@ -101,7 +100,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 h-[100svh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
+      className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-10 cursor-zoom-out touch-none"
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -129,7 +128,7 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="relative h-[100dvh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+          <div className="w-screen md:w-auto h-full max-h-[100dvh] md:max-h-[90vh] object-contain shadow-2xl">
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
               className={`w-full h-full object-cover transition-opacity duration-700 ${
