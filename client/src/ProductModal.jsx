@@ -21,16 +21,26 @@ const ProductModal = ({ item, onClose }) => {
   const images = Array.isArray(item.img) ? item.img : [item.img];
 
   useEffect(() => {
-    setIsImageLoading(true);
-  }, [activeIdx]);
+    // Previene el scroll del body
+    document.body.style.overflow = "hidden";
 
-  useEffect(() => {
-  // Bloquea el scroll del fondo
-  document.body.style.overflow = 'hidden';
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, []);
+    // Fija la altura del viewport al valor actual
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    setVH();
+
+    // Opcional: actualizar si cambia el tamaño
+    // window.addEventListener('resize', setVH);
+
+    return () => {
+      document.body.style.overflow = "unset";
+      document.documentElement.style.removeProperty("--vh");
+      // window.removeEventListener('resize', setVH);
+    };
+  }, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -89,7 +99,8 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  const handleGlobalClick = () => {
+  const handleGlobalClick = (e) => {
+    e.preventDefault();
     if (showFullText) {
       setShowFullText(false);
     }
@@ -101,7 +112,8 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="sticky inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
+      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
     >
       <AnimatePresence>
         {isImageLoading && (
