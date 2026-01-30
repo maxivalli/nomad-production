@@ -25,19 +25,17 @@ const ProductModal = ({ item, onClose }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
 
-    const setVvh = () => {
-      let vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
-
-    setVvh();
-    window.addEventListener("resize", setVvh);
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
 
     return () => {
-      document.body.style.overflow = "unset";
-      window.removeEventListener("resize", setVvh);
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -110,8 +108,8 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden touch-none" 
+      style={{ height: "100%", position: "fixed", top: 0, left: 0 }}
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -139,10 +137,7 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div
-            style={{ height: "calc(var(--vh, 1vh) * 85)" }} // <--- 85% del alto real
-            className="relative aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center"
-          >
+          <div className="relative h-[100dvh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
               className={`w-full h-full object-cover transition-opacity duration-700 ${
