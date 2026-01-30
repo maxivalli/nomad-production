@@ -9,30 +9,26 @@
       }
     },
     {
+      "src": "server/share.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "server/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/share/(.*)",
-      "dest": "/server/index.js"
+      "src": "/share/(?<slug>[^/]+)",
+      "dest": "/server/share.js?slug=$slug"
     },
     {
       "src": "/api/(.*)",
       "dest": "/server/index.js"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/client/assets/$1"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot))",
-      "dest": "/client/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/client/index.html"
+      "dest": "/client/$1"
     }
   ],
   "headers": [
