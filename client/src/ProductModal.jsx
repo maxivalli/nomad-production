@@ -24,6 +24,14 @@ const ProductModal = ({ item, onClose }) => {
     setIsImageLoading(true);
   }, [activeIdx]);
 
+  useEffect(() => {
+  // Bloquea el scroll del fondo
+  document.body.style.overflow = 'hidden';
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, []);
+
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
     const splitUrl = url.split("/upload/");
@@ -93,7 +101,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
+      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -121,7 +129,7 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="relative h-[90vh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+          <div className="relative h-[100dvh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
               className={`w-full h-full object-cover transition-opacity duration-700 ${
