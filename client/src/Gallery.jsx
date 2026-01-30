@@ -1,14 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // 1. Importamos useNavigate
 
-const Gallery = ({ items, setSelectedItem, isModalOpen }) => {
+const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
   const [collectionName, setCollectionName] = useState("");
   const [loaded, setLoaded] = useState({});
-  const [totalScroll, setTotalScroll] = useState(0);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -30,7 +29,20 @@ const Gallery = ({ items, setSelectedItem, isModalOpen }) => {
     fetchCollectionName();
   }, []);
 
-  // Manejo del scroll horizontal
+  const handleOpenProduct = (item) => {
+    const slug = item.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "") 
+      .replace(/\s+/g, "-"); 
+    navigate(`/producto/${slug}`);
+
+    setSelectedItem(item);
+  };
+
+  const { scrollYProgress } = useScroll({ target: targetRef });
+  const [totalScroll, setTotalScroll] = useState(0);
+
   useEffect(() => {
     const calculateScroll = () => {
       if (typeof window !== "undefined") {
@@ -38,7 +50,8 @@ const Gallery = ({ items, setSelectedItem, isModalOpen }) => {
         const cardWidth = isMobile ? 340 : 450;
         const gap = isMobile ? 24 : 48;
         const padding = isMobile ? 48 : 96;
-        const contentWidth = items.length * cardWidth + (items.length - 1) * gap;
+        const contentWidth =
+          items.length * cardWidth + (items.length - 1) * gap;
         setTotalScroll(-(contentWidth - window.innerWidth + padding));
       }
     };
@@ -47,38 +60,25 @@ const Gallery = ({ items, setSelectedItem, isModalOpen }) => {
     return () => window.removeEventListener("resize", calculateScroll);
   }, [items.length]);
 
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-    // Importante: Si el modal está abierto, el scroll ya no debe progresar
-    disabled: isModalOpen,
-  });
-
-  const xPx = useTransform(scrollYProgress, [0, 1], ["0px", `${totalScroll}px`]);
+  const xPx = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0px", `${totalScroll}px`],
+  );
   const titleX = useTransform(scrollYProgress, [0, 1], ["0px", "-300px"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.05, 0.9, 1], [1, 1, 0.5, 0]);
-
-  const handleOpenProduct = (item) => {
-    const slug = item.title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-    
-    // Seteamos el item inmediatamente para gatillar el cambio de altura en la section
-    setSelectedItem(item);
-    navigate(`/producto/${slug}`);
-  };
+  const opacity = useTransform(
+    scrollYProgress,
+    [0, 0.05, 0.9, 1],
+    [1, 1, 0.5, 0],
+  );
 
   return (
     <section
       id="colecciones"
       ref={targetRef}
-      className={`relative transition-all duration-0 ${
-        isModalOpen ? "h-screen overflow-hidden" : "h-[600vh]"
-      } bg-neutral-900/20`}
+      className="relative h-[auto] bg-neutral-900/20"
     >
-      <div className={`sticky top-10 h-screen flex flex-col justify-center overflow-hidden`}>
-        {/* Encabezado */}
+      <div className="sticky top-5 h-screen flex flex-col justify-center overflow-hidden">
         <motion.div
           style={{ x: titleX, opacity }}
           className="relative z-10 px-6 md:px-12 mb-4 md:mb-6 pointer-events-none"
@@ -100,7 +100,6 @@ const Gallery = ({ items, setSelectedItem, isModalOpen }) => {
           </h2>
         </motion.div>
 
-        {/* Galería Horizontal */}
         <div className="relative">
           <motion.div
             style={{ x: xPx }}
@@ -133,9 +132,7 @@ const Gallery = ({ items, setSelectedItem, isModalOpen }) => {
                     onLoad={() =>
                       setLoaded((prev) => ({ ...prev, [item.id]: true }))
                     }
-                    className={`h-full w-full object-cover transition-all duration-1000 group-hover:scale-110 ${
-                      isImgLoaded ? "opacity-100" : "opacity-0"
-                    }`}
+                    className={`h-full w-full object-cover transition-all duration-1000 group-hover:scale-110 ${isImgLoaded ? "opacity-100" : "opacity-0"}`}
                   />
 
                   <div className="absolute inset-0 group-hover:bg-black/10 transition-colors duration-500" />
@@ -153,8 +150,7 @@ const Gallery = ({ items, setSelectedItem, isModalOpen }) => {
           </motion.div>
         </div>
 
-        {/* Barra de Progreso */}
-        <div className="absolute bottom-10 left-0 w-full h-[5px] bg-white/10 z-20">
+        <div className="absolute bottom-5 left-0 w-full h-[5px] bg-white/10 z-20">
           <motion.div
             style={{ scaleX: scrollYProgress }}
             className="h-full bg-red-600 origin-left"
