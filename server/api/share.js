@@ -5,8 +5,8 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-module.exports = async (req, res) => {
-  const slug = req.query.slug;
+export default async function handler(req, res) {
+  const { slug } = req.query;
   const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
 
   console.log("--- DEBUG SHARE ---");
@@ -26,7 +26,8 @@ module.exports = async (req, res) => {
 
     if (!producto) {
       console.log("2. Producto no encontrado para slug:", slug);
-      return res.redirect(FRONTEND_URL);
+      res.writeHead(302, { Location: FRONTEND_URL });
+      return res.end();
     }
 
     console.log("3. Producto encontrado:", producto.title);
@@ -41,23 +42,21 @@ module.exports = async (req, res) => {
 
     const tituloLimpio = formatTitle(producto.title);
     const tituloFinal = `${tituloLimpio} | NOMAD`;
-    
-    console.log("4. Titulo generado:", tituloFinal);
 
     const desc = producto.description
       ? producto.description.substring(0, 150) + "..."
       : "Explora nuestra nueva colección.";
-    
+
     let imagen = Array.isArray(producto.img) ? producto.img[0] : producto.img;
-    
-    if (imagen && !imagen.startsWith('http')) {
-      imagen = `${FRONTEND_URL}${imagen.startsWith('/') ? '' : '/'}${imagen}`;
+
+    if (imagen && !imagen.startsWith("http")) {
+      imagen = `${FRONTEND_URL}${imagen.startsWith("/") ? "" : "/"}${imagen}`;
     }
 
     console.log("5. URL de imagen:", imagen);
 
-    res.setHeader('Content-Type', 'text/html');
-    res.send(`
+    res.setHeader("Content-Type", "text/html");
+    res.status(200).send(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
@@ -96,6 +95,7 @@ module.exports = async (req, res) => {
     `);
   } catch (err) {
     console.error("❌ Error en ruta share:", err);
-    res.redirect(FRONTEND_URL);
+    res.writeHead(302, { Location: FRONTEND_URL });
+    res.end();
   }
-};
+}

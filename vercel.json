@@ -9,26 +9,18 @@
       }
     },
     {
-      "src": "server/share.js",
-      "use": "@vercel/node"
-    },
-    {
       "src": "server/index.js",
       "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/share/(?<slug>[^/]+)",
-      "dest": "/server/share.js?slug=$slug"
+      "source": "/share/:slug",
+      "destination": "/server/api/share?slug=:slug"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/server/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/client/$1"
+      "source": "/api/:path*",
+      "destination": "/server/index.js"
     }
   ],
   "headers": [
