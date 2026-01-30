@@ -19,8 +19,8 @@
       "destination": "/server/index.js"
     },
     {
-      "source": "/share/(.*)",
-      "destination": "server/index.js"
+      "source": "/share/:slug",
+      "destination": "/api/share"
     },
     {
       "source": "/(.*)",
