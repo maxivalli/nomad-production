@@ -60,7 +60,7 @@ const ProductModal = ({ item, onClose }) => {
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
 
-    // IMPORTANTE: Esta URL NO lleva el '#' porque va al servidor de Node
+    // Usamos window.location.origin para asegurar que la URL sea absoluta
     const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
