@@ -310,10 +310,11 @@ app.get("/api/auth/verify", authenticateAdmin, (req, res) => {
 
 app.get("/share/:slug", async (req, res) => {
   const { slug } = req.params;
-  const FRONTEND_URL =
-    process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
+  const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
 
-  // Función de limpieza idéntica a la del frontend
+  console.log("--- DEBUG SHARE ---");
+  console.log("1. Slug recibido:", slug);
+
   const generarSlug = (text) => {
     return text
       .toLowerCase()
@@ -323,16 +324,15 @@ app.get("/share/:slug", async (req, res) => {
   };
 
   try {
-    // Buscamos todos los productos para encontrar el que coincide con el slug
-    const result = await pool.query(
-      "SELECT title, description, img FROM products",
-    );
-
+    const result = await pool.query("SELECT title, description, img FROM products");
     const producto = result.rows.find((p) => generarSlug(p.title) === slug);
 
     if (!producto) {
+      console.log("2. Producto no encontrado para slug:", slug);
       return res.redirect(FRONTEND_URL);
     }
+
+    console.log("3. Producto encontrado:", producto.title);
 
     const formatTitle = (text) => {
       return text
@@ -342,21 +342,25 @@ app.get("/share/:slug", async (req, res) => {
         .join(" ");
     };
 
-    const titulo = `${formatTitle(producto.title)} | NOMAD`;
+    const tituloLimpio = formatTitle(producto.title);
+    const tituloFinal = `${tituloLimpio} | NOMAD`;
+    
+    console.log("4. Titulo generado:", tituloFinal);
+
     const desc = producto.description
       ? producto.description.substring(0, 150) + "..."
       : "Explora nuestra nueva colección.";
-    // Usamos la primera imagen del array
     const imagen = Array.isArray(producto.img) ? producto.img[0] : producto.img;
 
-    // Enviamos el HTML con Meta Tags dinámicos
+    // IMPORTANTE: fíjate en las comillas dobles en content="${tituloFinal}"
+    // Si no hay comillas, WhatsApp corta en el espacio.
     res.send(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>${titulo}</title>
-        <meta property="og:title" content="${titulo}">
+        <title>${tituloFinal}</title>
+        <meta property="og:title" content="${tituloFinal}">
         <meta property="og:description" content="${desc}">
         <meta property="og:image" content="${imagen}">
         <meta property="og:type" content="website">
@@ -376,7 +380,7 @@ app.get("/share/:slug", async (req, res) => {
       </html>
     `);
   } catch (err) {
-    console.error("Error en ruta share:", err);
+    console.error("❌ Error en ruta share:", err);
     res.redirect(FRONTEND_URL);
   }
 });
