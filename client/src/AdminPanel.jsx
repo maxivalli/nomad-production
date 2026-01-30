@@ -18,37 +18,71 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
+// ============================================================================
+// CONSTANTES Y CONFIGURACIÓN
+// ============================================================================
+
+const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
+const MAX_IMAGES = 3;
+
+const COLOR_PALETTE = [
+  { name: "negro", hex: "#000000" },
+  { name: "blanco", hex: "#ffffff" },
+  { name: "gris", hex: "#808080" },
+  { name: "beige", hex: "#f5f5dc" },
+  { name: "rojo", hex: "#dc2626" },
+  { name: "azul", hex: "#2563eb" },
+];
+
+const COLOR_MAP = {
+  negro: "#000000",
+  blanco: "#ffffff",
+  gris: "#808080",
+  beige: "#f5f5dc",
+  rojo: "#dc2626",
+  azul: "#2563eb",
+};
+
+const INITIAL_FORM_STATE = {
+  title: "",
+  description: "",
+  img: [],
+  sizes: [],
+  purchase_link: "",
+  color: [],
+};
+
+// ============================================================================
+// COMPONENTE PRINCIPAL
+// ============================================================================
+
 const AdminPanel = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [isEditing, setIsEditing] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [launchDate, setLaunchDate] = useState("");
-  const [isSavingDate, setIsSavingDate] = useState(false);
-  const [collectionName, setCollectionName] = useState("");
-  const [cloudinaryConfig, setCloudinaryConfig] = useState(null);
   const toast = useToast();
 
-  // ESTADO INICIAL REFORZADO: img siempre es un Array
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    img: [],
-    sizes: [],
-    purchase_link: "",
-    color: [],
-  });
+  // --------------------------------------------------------------------------
+  // ESTADO - Datos de productos y configuración
+  // --------------------------------------------------------------------------
+  const [products, setProducts] = useState([]);
+  const [cloudinaryConfig, setCloudinaryConfig] = useState(null);
+  const [launchDate, setLaunchDate] = useState("");
+  const [collectionName, setCollectionName] = useState("");
 
-  const availableSizes = ["S", "M", "L", "XL"];
-  const colorPalette = [
-    { name: "negro", hex: "#000000" },
-    { name: "blanco", hex: "#ffffff" },
-    { name: "gris", hex: "#808080" },
-    { name: "beige", hex: "#f5f5dc" },
-    { name: "rojo", hex: "#dc2626" },
-    { name: "azul", hex: "#2563eb" },
-  ];
+  // --------------------------------------------------------------------------
+  // ESTADO - UI y formulario
+  // --------------------------------------------------------------------------
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [isEditing, setIsEditing] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSavingDate, setIsSavingDate] = useState(false);
 
+  // ==========================================================================
+  // EFFECTS - Carga inicial de datos
+  // ==========================================================================
+
+  /**
+   * Carga la configuración de Cloudinary al montar el componente
+   */
   useEffect(() => {
     const loadCloudinaryConfig = async () => {
       try {
@@ -62,10 +96,55 @@ const AdminPanel = () => {
     loadCloudinaryConfig();
   }, []);
 
-  // 1. OBTENER PRODUCTOS (FETCH)
+  /**
+   * Carga los productos al montar el componente
+   */
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  /**
+   * Carga la fecha de lanzamiento al montar el componente
+   */
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await api.getLaunchDate();
+        if (data.date) setLaunchDate(data.date);
+      } catch (err) {
+        console.error("Error cargando fecha:", err);
+        toast.error("No se pudo cargar la fecha de lanzamiento");
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  /**
+   * Carga el nombre de la colección al montar el componente
+   */
+  useEffect(() => {
+    const fetchCollection = async () => {
+      try {
+        const data = await api.getCollection();
+        setCollectionName(data.value);
+      } catch (err) {
+        console.error("Error cargando colección:", err);
+      }
+    };
+    fetchCollection();
+  }, []);
+
+  // ==========================================================================
+  // HANDLERS - Gestión de productos
+  // ==========================================================================
+
+  /**
+   * Obtiene y normaliza la lista de productos desde el API
+   */
   const fetchProducts = async () => {
     try {
       const data = await api.getProducts();
+      // Normalizar para asegurar que img siempre sea un array
       const normalizedData = data.map((item) => ({
         ...item,
         img: Array.isArray(item.img) ? item.img : [item.img],
@@ -77,71 +156,110 @@ const AdminPanel = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  /**
+   * Guarda o actualiza un producto en la base de datos
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // CARGAR FECHA
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await api.getLaunchDate();
-        if (data.date) setLaunchDate(data.date);
-      } catch (err) {
-        console.error("Error cargando fecha");
-        toast.error("No se pudo cargar la fecha de lanzamiento");
-      }
-    };
-    fetchSettings();
-  }, []);
+    // Validación: al menos una imagen
+    if (formData.img.length === 0) {
+      toast.warning("Debes subir al menos una imagen");
+      return;
+    }
 
-  // Cargar el nombre al iniciar
-  useEffect(() => {
-    const fetchCollection = async () => {
-      try {
-        const data = await api.getCollection();
-        setCollectionName(data.value);
-      } catch (err) {
-        console.error("Error cargando colección");
-      }
-    };
-    fetchCollection();
-  }, []);
+    setIsLoading(true);
 
-  const handleSaveDate = async () => {
-    setIsSavingDate(true);
     try {
-      await api.setLaunchDate(launchDate);
-      toast.success("Fecha de lanzamiento actualizada");
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al actualizar la fecha");
+      if (isEditing) {
+        await api.updateProduct(isEditing, formData);
+        toast.success("Producto actualizado exitosamente");
+      } else {
+        await api.createProduct(formData);
+        toast.success("Producto creado exitosamente");
+      }
+
+      // Reset del formulario y actualización de lista
+      setFormData(INITIAL_FORM_STATE);
+      setIsEditing(null);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error en la operación:", error);
+      toast.error(error.message || "Error al guardar el producto");
     } finally {
-      setIsSavingDate(false);
+      setIsLoading(false);
     }
   };
 
-  const updateCollectionName = async () => {
+  /**
+   * Elimina un producto de la base de datos
+   */
+  const handleDelete = async (id) => {
+    if (
+      !window.confirm("¿Confirmas la eliminación definitiva de esta pieza?")
+    ) {
+      return;
+    }
+
     try {
-      await api.updateCollection(collectionName);
-      toast.success("Nombre de colección actualizado");
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al actualizar la colección");
+      await api.deleteProduct(id);
+      toast.success("Producto eliminado exitosamente");
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      toast.error(error.message || "Error al eliminar el producto");
     }
   };
 
-  // 2. CLOUDINARY WIDGET (Soporte hasta 3 fotos)
+  /**
+   * Carga los datos de un producto en el formulario para editarlo
+   */
+  const startEdit = (item) => {
+    // Normalizar datos de color
+    const colorData = Array.isArray(item.color)
+      ? item.color
+      : item.color
+        ? [item.color]
+        : [];
+
+    setIsEditing(item.id);
+    setFormData({
+      title: item.title,
+      description: item.description,
+      img: Array.isArray(item.img) ? item.img : [item.img],
+      sizes: item.sizes,
+      purchase_link: item.purchase_link || "",
+      color: colorData,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /**
+   * Cancela la edición y resetea el formulario
+   */
+  const cancelEdit = () => {
+    setIsEditing(null);
+    setFormData(INITIAL_FORM_STATE);
+  };
+
+  // ==========================================================================
+  // HANDLERS - Gestión de imágenes (Cloudinary)
+  // ==========================================================================
+
+  /**
+   * Abre el widget de Cloudinary para subir imágenes
+   * Permite hasta 3 imágenes por producto
+   */
   const handleOpenWidget = () => {
     if (!cloudinaryConfig) {
       toast.error("Configuración de Cloudinary no disponible");
       return;
     }
 
-    const slotsAvailable = 3 - formData.img.length;
+    const slotsAvailable = MAX_IMAGES - formData.img.length;
 
     if (slotsAvailable <= 0) {
-      toast.warning("Límite de 3 imágenes alcanzado");
+      toast.warning(`Límite de ${MAX_IMAGES} imágenes alcanzado`);
       return;
     }
 
@@ -174,21 +292,37 @@ const AdminPanel = () => {
         if (!error && result && result.event === "queues-end") {
           const uploadedFiles = result.info.files;
           const newUrls = uploadedFiles.map(
-            (file) => file.uploadInfo.secure_url,
+            (file) => file.uploadInfo.secure_url
           );
 
           setFormData((prev) => ({
             ...prev,
-            img: [...prev.img, ...newUrls].slice(0, 3),
+            img: [...prev.img, ...newUrls].slice(0, MAX_IMAGES),
           }));
           toast.success("Imágenes subidas exitosamente");
         }
-      },
+      }
     );
     myWidget.open();
   };
 
-  // 3. SELECCIÓN DE TALLES
+  /**
+   * Elimina una imagen del producto
+   */
+  const removeImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      img: prev.img.filter((_, i) => i !== index),
+    }));
+  };
+
+  // ==========================================================================
+  // HANDLERS - Gestión de tallas y colores
+  // ==========================================================================
+
+  /**
+   * Agrega o quita una talla de la selección
+   */
   const handleSizeToggle = (size) => {
     setFormData((prev) => ({
       ...prev,
@@ -198,6 +332,9 @@ const AdminPanel = () => {
     }));
   };
 
+  /**
+   * Agrega o quita un color de la selección
+   */
   const handleColorToggle = (colorName) => {
     setFormData((prev) => ({
       ...prev,
@@ -207,82 +344,42 @@ const AdminPanel = () => {
     }));
   };
 
-  // 4. GUARDAR O ACTUALIZAR
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ==========================================================================
+  // HANDLERS - Configuración general
+  // ==========================================================================
 
-    if (formData.img.length === 0) {
-      toast.warning("Debes subir al menos una imagen");
-      return;
-    }
-
-    setIsLoading(true);
-
+  /**
+   * Guarda la fecha de lanzamiento de la colección
+   */
+  const handleSaveDate = async () => {
+    setIsSavingDate(true);
     try {
-      if (isEditing) {
-        await api.updateProduct(isEditing, formData);
-        toast.success("Producto actualizado exitosamente");
-      } else {
-        await api.createProduct(formData);
-        toast.success("Producto creado exitosamente");
-      }
-
-      setFormData({
-        title: "",
-        description: "",
-        img: [],
-        sizes: [],
-        purchase_link: "",
-        color: [],
-      });
-      setIsEditing(null);
-      fetchProducts();
-    } catch (error) {
-      console.error("Error en la operación:", error);
-      toast.error(error.message || "Error al guardar el producto");
+      await api.setLaunchDate(launchDate);
+      toast.success("Fecha de lanzamiento actualizada");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al actualizar la fecha");
     } finally {
-      setIsLoading(false);
+      setIsSavingDate(false);
     }
   };
 
-  // 5. BORRAR PRODUCTO
-  const handleDelete = async (id) => {
-    if (
-      !window.confirm("¿Confirmas la eliminación definitiva de esta pieza?")
-    ) {
-      return;
-    }
-
+  /**
+   * Actualiza el nombre de la colección
+   */
+  const updateCollectionName = async () => {
     try {
-      await api.deleteProduct(id);
-      toast.success("Producto eliminado exitosamente");
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-      toast.error(error.message || "Error al eliminar el producto");
+      await api.updateCollection(collectionName);
+      toast.success("Nombre de colección actualizado");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al actualizar la colección");
     }
   };
 
-  // 6. CARGAR PARA EDITAR
-  const startEdit = (item) => {
-    const colorData = Array.isArray(item.color)
-      ? item.color
-      : item.color
-        ? [item.color]
-        : [];
-
-    setIsEditing(item.id);
-    setFormData({
-      title: item.title,
-      description: item.description,
-      img: Array.isArray(item.img) ? item.img : [item.img],
-      sizes: item.sizes,
-      purchase_link: item.purchase_link || "",
-      color: colorData,
-    });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
+  /**
+   * Cierra la sesión del usuario
+   */
   const handleLogout = async () => {
     try {
       await api.logout();
@@ -290,16 +387,24 @@ const AdminPanel = () => {
       navigate("/login");
     } catch (err) {
       console.error("Error al cerrar sesión:", err);
-      navigate("/login"); // Redirigir de todos modos
+      navigate("/login");
     }
   };
 
+  // ==========================================================================
+  // RENDER
+  // ==========================================================================
+
   return (
     <div className="min-h-screen bg-[#050505] text-white antialiased selection:bg-red-600/30 overflow-x-hidden">
-      {/* 🟢 NAVBAR */}
+      
+      {/* ====================================================================
+          NAVBAR - Navegación superior con logo y botones
+          ==================================================================== */}
       <nav className="fixed top-0 md:top-5 w-full md:container md:mx-auto md:left-1/2 md:-translate-x-1/2 z-[100] bg-black/95 md:bg-black/80 backdrop-blur-xl border-b border-white/10">
         <div className="px-4 py-4 md:px-12 md:h-24 flex items-center justify-between relative">
-          {/* EXIT: Izquierda */}
+          
+          {/* Botón EXIT - Izquierda */}
           <div className="flex-1 flex justify-start">
             <Link
               to="/"
@@ -318,7 +423,7 @@ const AdminPanel = () => {
             </Link>
           </div>
 
-          {/* LOGO: Centro */}
+          {/* Logo - Centro */}
           <div className="flex flex-col items-center text-center absolute left-1/2 -translate-x-1/2 pointer-events-none">
             <h1 className="text-sm md:text-2xl font-[900] italic uppercase tracking-tighter leading-none text-white">
               Nomad<span className="text-red-500">.</span>Admin
@@ -328,7 +433,7 @@ const AdminPanel = () => {
             </span>
           </div>
 
-          {/* TERMINATE: Derecha */}
+          {/* Botón LOGOUT - Derecha */}
           <div className="flex-1 flex justify-end">
             <button
               onClick={handleLogout}
@@ -354,8 +459,12 @@ const AdminPanel = () => {
         </div>
       </nav>
 
+      {/* ====================================================================
+          CONFIGURACIÓN GLOBAL - Título de colección y fecha de lanzamiento
+          ==================================================================== */}
       <div className="max-w-[1600px] mx-auto px-4 md:px-10 lg:px-16 pt-28 md:pt-40">
-        {/* 🟢 BLOQUE 1: GLOBAL SEASON TITLE */}
+        
+        {/* Nombre de la colección */}
         <div className="mb-8 p-6 border border-red-600/20 bg-red-600/5 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
             <Zap size={12} className="text-red-600" />
@@ -370,7 +479,7 @@ const AdminPanel = () => {
               value={collectionName}
               onChange={(e) => setCollectionName(e.target.value)}
               placeholder="SPRING COLLECTION 2026"
-              className="bg-black/40 border border-white/10 px-4 py-3 flex-1 outline-none uppercase font-[900] italic text-xl md:text-2xl focus:border-red-600 transition-all text-white placeholder:text-neutral-800 "
+              className="bg-black/40 border border-white/10 px-4 py-3 flex-1 outline-none uppercase font-[900] italic text-xl md:text-2xl focus:border-red-600 transition-all text-white placeholder:text-neutral-800"
             />
             <button
               onClick={updateCollectionName}
@@ -381,7 +490,7 @@ const AdminPanel = () => {
           </div>
         </div>
 
-        {/* 🟢 BLOQUE 2: SYSTEM PARAMETERS */}
+        {/* Fecha de lanzamiento */}
         <div className="bg-white/[0.02] border border-white/10 p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-5 shadow-xl">
           <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="p-2.5 bg-neutral-800 border border-white/10 shrink-0">
@@ -416,9 +525,17 @@ const AdminPanel = () => {
         </div>
       </div>
 
+      {/* ====================================================================
+          LAYOUT PRINCIPAL - Grid de dos columnas (Editor + Inventario)
+          ==================================================================== */}
       <main className="max-w-[1600px] mx-auto p-4 md:p-10 lg:p-16 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 md:gap-16 lg:gap-24">
-        {/* COLUMNA IZQUIERDA: EDITOR */}
+        
+        {/* ==================================================================
+            COLUMNA IZQUIERDA: EDITOR DE PRODUCTOS
+            ================================================================== */}
         <section className="space-y-8 md:space-y-12">
+          
+          {/* Encabezado del editor */}
           <div className="flex items-center gap-4">
             <div className="h-10 w-1.5 bg-red-600 shrink-0"></div>
             <div className="min-w-0">
@@ -426,37 +543,30 @@ const AdminPanel = () => {
                 {isEditing ? "Modify Unit" : "Deploy Asset"}
               </h2>
               <p className="text-neutral-300 text-[9px] md:text-[11px] uppercase tracking-[0.2em] mt-2 font-[900] flex items-center gap-2">
-                <Zap size={10} className="text-red-500" />{" "}
+                <Zap size={10} className="text-red-500" />
                 {isEditing ? `ID: ${isEditing}` : "Operational Input Required"}
               </p>
             </div>
           </div>
 
+          {/* Formulario de producto */}
           <form
             onSubmit={handleSubmit}
             className="space-y-8 md:space-y-12 bg-white/[0.03] p-5 md:p-10 border border-white/10 relative shadow-2xl"
           >
+            
+            {/* Botón cancelar edición (solo visible en modo edición) */}
             {isEditing && (
               <button
                 type="button"
-                onClick={() => {
-                  setIsEditing(null);
-                  setFormData({
-                    title: "",
-                    description: "",
-                    img: [],
-                    sizes: [],
-                    purchase_link: "",
-                    color: [],
-                  });
-                }}
+                onClick={cancelEdit}
                 className="absolute top-4 right-4 text-red-500 hover:text-white flex items-center gap-1 text-[9px] font-[900] tracking-widest z-10 bg-black p-1.5 md:bg-transparent border border-red-600/20 md:border-none"
               >
                 ABORT <X size={14} />
               </button>
             )}
 
-            {/* DESIGNATION */}
+            {/* Campo: Título del producto */}
             <div className="space-y-3">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900] block">
                 Designation
@@ -473,13 +583,17 @@ const AdminPanel = () => {
               />
             </div>
 
-            {/* VISUALS */}
+            {/* Campo: Imágenes del producto */}
             <div className="space-y-4">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900] flex justify-between">
-                Visual Assets{" "}
-                <span className="text-red-500">{formData.img.length}/3</span>
+                Visual Assets
+                <span className="text-red-500">
+                  {formData.img.length}/{MAX_IMAGES}
+                </span>
               </label>
               <div className="grid grid-cols-3 gap-3 md:gap-6">
+                
+                {/* Imágenes cargadas */}
                 {formData.img.map((url, index) => (
                   <div
                     key={index}
@@ -488,16 +602,11 @@ const AdminPanel = () => {
                     <img
                       src={url}
                       className="w-full h-full object-cover"
-                      alt=""
+                      alt={`Imagen ${index + 1}`}
                     />
                     <button
                       type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          img: prev.img.filter((_, i) => i !== index),
-                        }))
-                      }
+                      onClick={() => removeImage(index)}
                       className="absolute inset-0 bg-red-600/90 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
                     >
                       <Trash2 size={24} className="text-white" />
@@ -507,7 +616,9 @@ const AdminPanel = () => {
                     </button>
                   </div>
                 ))}
-                {formData.img.length < 3 && (
+                
+                {/* Botón agregar imagen (solo si no se alcanzó el límite) */}
+                {formData.img.length < MAX_IMAGES && (
                   <button
                     type="button"
                     onClick={handleOpenWidget}
@@ -525,7 +636,7 @@ const AdminPanel = () => {
               </div>
             </div>
 
-            {/* SPECS */}
+            {/* Campo: Descripción del producto */}
             <div className="space-y-3">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
                 Technical Specs
@@ -541,13 +652,13 @@ const AdminPanel = () => {
               />
             </div>
 
-            {/* SIZES */}
+            {/* Campo: Tallas disponibles */}
             <div className="space-y-4">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
                 Size Protocol
               </label>
               <div className="grid grid-cols-4 gap-2 md:gap-4">
-                {availableSizes.map((size) => (
+                {AVAILABLE_SIZES.map((size) => (
                   <button
                     key={size}
                     type="button"
@@ -564,16 +675,16 @@ const AdminPanel = () => {
               </div>
             </div>
 
-            {/* COLOR SELECTION MULTIPLE */}
+            {/* Campo: Colores disponibles */}
             <div className="space-y-4">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
-                Color Protocol{" "}
-                <span className="text-red-500">
+                Color Protocol
+                <span className="text-red-500 ml-2">
                   ({formData.color.length} Seleccionados)
                 </span>
               </label>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                {colorPalette.map((c) => {
+                {COLOR_PALETTE.map((c) => {
                   const isSelected = formData.color.includes(c.name);
                   return (
                     <button
@@ -608,7 +719,7 @@ const AdminPanel = () => {
               </div>
             </div>
 
-            {/* PURCHASE LINK */}
+            {/* Campo: Link de compra */}
             <div className="space-y-3">
               <label className="text-[10px] uppercase tracking-[0.3em] text-red-500 font-[900] block">
                 Direct Purchase Access (URL)
@@ -632,6 +743,7 @@ const AdminPanel = () => {
               </p>
             </div>
 
+            {/* Botón submit */}
             <framerMotion.button
               disabled={isLoading}
               whileTap={{ scale: 0.98 }}
@@ -651,8 +763,12 @@ const AdminPanel = () => {
           </form>
         </section>
 
-        {/* COLUMNA DERECHA: INVENTORY */}
+        {/* ==================================================================
+            COLUMNA DERECHA: INVENTARIO DE PRODUCTOS
+            ================================================================== */}
         <section className="space-y-8 md:space-y-12">
+          
+          {/* Encabezado del inventario */}
           <div className="flex items-center gap-4">
             <div className="h-8 md:h-10 w-1.5 bg-neutral-700 shrink-0"></div>
             <h2 className="text-3xl md:text-4xl font-[900] uppercase italic tracking-tighter text-neutral-300 truncate">
@@ -660,6 +776,7 @@ const AdminPanel = () => {
             </h2>
           </div>
 
+          {/* Lista de productos */}
           <div className="space-y-5 max-h-[70vh] lg:max-h-[1330px] overflow-y-auto pr-3 custom-scrollbar overflow-x-hidden">
             <FramerAnimatePresence mode="popLayout">
               {products.map((item) => (
@@ -671,43 +788,79 @@ const AdminPanel = () => {
                   exit={{ opacity: 0 }}
                   className="group flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-neutral-900/40 border border-white/10 hover:border-red-500/50 hover:bg-neutral-900/60 transition-all relative"
                 >
+                  
+                  {/* Imagen del producto */}
                   <div className="w-16 h-24 md:w-24 md:h-32 bg-black shrink-0 border border-white/10 relative overflow-hidden">
                     <img
                       src={item.img[0]}
                       className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-                      alt=""
+                      alt={item.title}
                     />
                   </div>
 
+                  {/* Información del producto */}
                   <div className="flex-1 min-w-0">
+                    {/* ID de referencia */}
                     <span className="text-[7px] md:text-[8px] font-mono text-red-500 tracking-[0.2em] mb-1.5 block font-bold">
                       REF_{item.id.toString().slice(-4).toUpperCase()}
                     </span>
+                    
+                    {/* Título */}
                     <h3 className="font-[900] uppercase text-xs md:text-base truncate italic text-white tracking-wide">
                       {item.title}
                     </h3>
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {item.sizes.map((s) => (
-                        <span
-                          key={s}
-                          className="text-[7px] md:text-[9px] px-2 py-0.5 border border-white/20 text-neutral-300 font-bold uppercase bg-white/5"
-                        >
-                          {s}
-                        </span>
-                      ))}
+
+                    {/* Tallas y colores */}
+                    <div className="flex flex-col gap-2.5 mt-3">
+                      {/* Tallas */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.sizes.map((s) => (
+                          <span
+                            key={s}
+                            className="text-[7px] md:text-[9px] px-2 py-0.5 border border-white/20 text-neutral-300 font-bold uppercase bg-white/5"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Colores */}
+                      {item.color &&
+                        Array.isArray(item.color) &&
+                        item.color.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1 border-t border-white/5">
+                            {item.color.map((c) => (
+                              <div
+                                key={c}
+                                className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-white/20 shadow-sm"
+                                style={{
+                                  backgroundColor:
+                                    COLOR_MAP[c.toLowerCase()] || "#333",
+                                }}
+                                title={c.toUpperCase()}
+                              />
+                            ))}
+                          </div>
+                        )}
                     </div>
                   </div>
 
+                  {/* Botones de acción */}
                   <div className="flex flex-col gap-2">
+                    {/* Botón editar */}
                     <button
                       onClick={() => startEdit(item)}
                       className="p-3 md:p-4 bg-white/5 text-neutral-300 hover:bg-white hover:text-black transition-all border border-white/10 shadow-lg"
+                      title="Editar producto"
                     >
                       <Edit2 size={16} />
                     </button>
+                    
+                    {/* Botón eliminar */}
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="p-3 md:p-4 bg-white/5 text-neutral-300 hover:bg-red-600 hover:text-white transition-all border border-white/10 shadow-lg"
+                      title="Eliminar producto"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -716,6 +869,7 @@ const AdminPanel = () => {
               ))}
             </FramerAnimatePresence>
 
+            {/* Mensaje cuando no hay productos */}
             {products.length === 0 && (
               <div className="py-24 text-center border-2 border-dashed border-white/10">
                 <p className="text-[10px] uppercase tracking-[0.6em] text-neutral-500 font-bold">
@@ -727,11 +881,16 @@ const AdminPanel = () => {
         </section>
       </main>
 
+      {/* ====================================================================
+          FOOTER
+          ==================================================================== */}
       <footer className="mt-10 md:mt-20 border-t border-white/10 p-8 md:p-12 text-center bg-black/50">
         <p className="text-[8px] md:text-[10px] text-neutral-500 tracking-[0.6em] uppercase font-mono">
           Nomad Wear // Terminal Interface // Secure Node Access
         </p>
       </footer>
+
+      {/* Contenedor de toasts */}
       <toast.ToastContainer />
     </div>
   );
