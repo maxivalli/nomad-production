@@ -22,7 +22,7 @@ app.set("trust proxy", 1);
 // Helmet para headers de seguridad
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Ajustar según necesidad
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
   }),
 );
@@ -30,7 +30,7 @@ app.use(
 // CORS configurado correctamente
 const corsOptions = {
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true, // Permitir cookies
+  credentials: true,
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
@@ -40,14 +40,14 @@ app.use(cookieParser());
 
 // Rate limiting para prevenir ataques
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // límite de 100 requests por ventana
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: "Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde.",
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5, // Solo 5 intentos de login en 15 minutos
+  max: 5,
   message:
     "Demasiados intentos de inicio de sesión, intenta de nuevo más tarde.",
 });
@@ -270,6 +270,15 @@ const injectMetaTags = (html, product, baseUrl) => {
     <!-- Metadata adicional -->
     <meta name="description" content="${escapeHtml(product.description)}" />
     <title>NOMAD® - ${escapeHtml(product.title)}</title>
+    
+    <!-- Script para redirigir a la ruta correcta del HashRouter -->
+    <script>
+      // Redirigir al HashRouter con el slug correcto
+      if (window.location.pathname.includes('/share/')) {
+        const slug = window.location.pathname.split('/share/')[1];
+        window.location.href = '/#/producto/' + slug;
+      }
+    </script>
   `;
 
   // Reemplazar los meta tags existentes y el título
@@ -296,6 +305,8 @@ app.get('/share/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     
+    console.log('📤 Solicitud de compartir:', slug);
+    
     // Buscar el producto por título (generando el slug desde la base de datos)
     const result = await pool.query('SELECT * FROM products');
     const products = result.rows;
@@ -304,27 +315,43 @@ app.get('/share/:slug', async (req, res) => {
     const product = products.find(p => generateSlug(p.title) === slug);
     
     if (!product) {
+      console.log('❌ Producto no encontrado:', slug);
       // Si no se encuentra el producto, redirigir a la página principal
       return res.redirect('/');
     }
 
+    console.log('✅ Producto encontrado:', product.title);
+
     // Leer el archivo HTML base
-    const htmlPath = path.join(__dirname, '../client/dist/index.html');
-    
-    // En producción (Vercel), el path puede ser diferente
     let html;
-    try {
-      html = fs.readFileSync(htmlPath, 'utf8');
-    } catch (err) {
-      // Intentar ruta alternativa para Vercel
-      const altPath = path.join(__dirname, 'dist/index.html');
-      html = fs.readFileSync(altPath, 'utf8');
+    const possiblePaths = [
+      path.join(__dirname, '../client/dist/index.html'),
+      path.join(__dirname, 'dist/index.html'),
+      path.join(process.cwd(), 'client/dist/index.html'),
+      path.join(process.cwd(), 'dist/index.html'),
+    ];
+    
+    for (const htmlPath of possiblePaths) {
+      try {
+        html = fs.readFileSync(htmlPath, 'utf8');
+        console.log('✅ HTML encontrado en:', htmlPath);
+        break;
+      } catch (err) {
+        // Intentar siguiente path
+      }
+    }
+    
+    if (!html) {
+      console.error('❌ No se pudo encontrar el archivo HTML');
+      return res.redirect('/');
     }
     
     // Obtener la URL base
-    const protocol = req.protocol;
+    const protocol = req.get('x-forwarded-proto') || req.protocol;
     const host = req.get('host');
     const baseUrl = `${protocol}://${host}`;
+    
+    console.log('🔗 URL base:', baseUrl);
     
     // Inyectar meta tags dinámicos
     const modifiedHtml = injectMetaTags(html, product, baseUrl);
@@ -333,7 +360,7 @@ app.get('/share/:slug', async (req, res) => {
     res.send(modifiedHtml);
     
   } catch (err) {
-    console.error('Error en ruta de compartir:', err);
+    console.error('❌ Error en ruta de compartir:', err);
     res.redirect('/');
   }
 });
@@ -728,8 +755,6 @@ app.put("/api/settings/collection", authenticateAdmin, async (req, res) => {
 
 app.post("/api/cloudinary/signature", authenticateAdmin, async (req, res) => {
   try {
-    // Aquí podrías generar una firma para Cloudinary
-    // Por ahora devolvemos la config que el frontend necesita
     res.json({
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,
       uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET,
