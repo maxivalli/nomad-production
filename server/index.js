@@ -308,6 +308,70 @@ app.get("/api/auth/verify", authenticateAdmin, (req, res) => {
 });
 
 // ==========================================
+// RUTA DE PREVISUALIZACIÓN (WHATSAPP/SOCIAL)
+// ==========================================
+
+app.get("/share/:slug", async (req, res) => {
+  const { slug } = req.params;
+  const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
+
+  // Función de limpieza idéntica a la del frontend
+  const generarSlug = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+  };
+
+  try {
+    // Buscamos todos los productos para encontrar el que coincide con el slug
+    const result = await pool.query("SELECT title, description, img FROM products");
+    
+    const producto = result.rows.find(p => generarSlug(p.title) === slug);
+
+    if (!producto) {
+      return res.redirect(FRONTEND_URL);
+    }
+
+    const titulo = `${producto.title} | NOMAD`;
+    const desc = producto.description ? producto.description.substring(0, 150) + "..." : "Explora nuestra nueva colección.";
+    // Usamos la primera imagen del array
+    const imagen = Array.isArray(producto.img) ? producto.img[0] : producto.img;
+
+    // Enviamos el HTML con Meta Tags dinámicos
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>${titulo}</title>
+        <meta property="og:title" content="${titulo}">
+        <meta property="og:description" content="${desc}">
+        <meta property="og:image" content="${imagen}">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="${FRONTEND_URL}/#/producto/${slug}">
+        
+        <meta http-equiv="refresh" content="0;url=${FRONTEND_URL}/#/producto/${slug}">
+      </head>
+      <body style="background:black; color:white; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+        <div style="text-align:center;">
+          <h1 style="letter-spacing:0.5em;">NOMAD</h1>
+          <p style="font-size:10px; text-transform:uppercase; opacity:0.5;">Cargando producto...</p>
+        </div>
+        <script>
+          window.location.href = "${FRONTEND_URL}/#/producto/${slug}";
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error("Error en ruta share:", err);
+    res.redirect(FRONTEND_URL);
+  }
+});
+
+// ==========================================
 // RUTAS DE PRODUCTOS (PROTEGIDAS)
 // ==========================================
 

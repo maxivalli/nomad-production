@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, ArrowRight, Loader2, ShoppingBag, Share2 } from "lucide-react"; // Importamos Share2
+import {
+  X,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  ShoppingBag,
+  Share2,
+} from "lucide-react"; // Importamos Share2
 import { useNavigate } from "react-router-dom";
 
 const ProductModal = ({ item, onClose }) => {
@@ -45,17 +52,27 @@ const ProductModal = ({ item, onClose }) => {
   // --- NUEVA FUNCIÓN COMPARTIR ---
   const handleShare = (e) => {
     e.stopPropagation();
-    const shareData = {
-      title: `NOMAD - ${item.title}`,
-      url: window.location.href,
-    };
+
+    // Generamos el mismo slug
+    const slug = item.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+
+    // IMPORTANTE: Esta URL NO lleva el '#' porque va al servidor de Node
+    const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
-      navigator.share(shareData).catch((err) => console.log("Error sharing", err));
+      navigator
+        .share({
+          title: `NOMAD - ${item.title}`,
+          url: shareUrl,
+        })
+        .catch(console.error);
     } else {
-      // Fallback: Copiar al portapapeles
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copiado al portapapeles");
+      navigator.clipboard.writeText(shareUrl);
+      alert("Enlace de producto copiado al portapapeles");
     }
   };
 
@@ -83,7 +100,11 @@ const ProductModal = ({ item, onClose }) => {
             exit={{ opacity: 0 }}
             className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10"
           >
-            <Loader2 className="text-red-600 animate-spin" size={48} strokeWidth={1} />
+            <Loader2
+              className="text-red-600 animate-spin"
+              size={48}
+              strokeWidth={1}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -117,10 +138,16 @@ const ProductModal = ({ item, onClose }) => {
 
       {images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between px-2 md:px-10 z-[115] pointer-events-none">
-          <button onClick={prevImg} className="pointer-events-auto p-4 text-white/40 hover:text-white transition-colors">
+          <button
+            onClick={prevImg}
+            className="pointer-events-auto p-4 text-white/40 hover:text-white transition-colors"
+          >
             <ArrowLeft size={30} strokeWidth={1} />
           </button>
-          <button onClick={nextImg} className="pointer-events-auto p-4 text-white/40 hover:text-white transition-colors">
+          <button
+            onClick={nextImg}
+            className="pointer-events-auto p-4 text-white/40 hover:text-white transition-colors"
+          >
             <ArrowRight size={30} strokeWidth={1} />
           </button>
         </div>
@@ -131,13 +158,18 @@ const ProductModal = ({ item, onClose }) => {
           <div
             key={i}
             className={`h-1 transition-all duration-300 ${
-              i === activeIdx ? "w-6 md:w-8 bg-red-600" : "w-1.5 md:w-2 bg-white/20"
+              i === activeIdx
+                ? "w-6 md:w-8 bg-red-600"
+                : "w-1.5 md:w-2 bg-white/20"
             }`}
           />
         ))}
       </div>
 
-      <button onClick={onClose} className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors">
+      <button
+        onClick={onClose}
+        className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors"
+      >
         <X size={32} strokeWidth={1} />
       </button>
 
@@ -150,7 +182,9 @@ const ProductModal = ({ item, onClose }) => {
           <div className="flex-1">
             <h2 className="text-3xl md:text-8xl font-black uppercase italic leading-[0.8] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
               {item.title.split(" ").map((word, index) => (
-                <span key={index} className="block">{word}</span>
+                <span key={index} className="block">
+                  {word}
+                </span>
               ))}
             </h2>
 
@@ -160,36 +194,52 @@ const ProductModal = ({ item, onClose }) => {
 
             <div className="flex flex-col md:flex-row gap-4 md:gap-12">
               <div className="space-y-1 md:space-y-3">
-                <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">Size Protocol</p>
+                <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
+                  Size Protocol
+                </p>
                 <div className="flex gap-3 md:gap-6 items-center">
                   {item.sizes && item.sizes.length > 0 ? (
                     item.sizes.map((s) => (
-                      <span key={s} className="text-lg md:text-4xl font-black text-white">{s}</span>
+                      <span
+                        key={s}
+                        className="text-lg md:text-4xl font-black text-white"
+                      >
+                        {s}
+                      </span>
                     ))
                   ) : (
-                    <span className="text-[9px] uppercase tracking-widest text-gray-500 italic">N/A</span>
+                    <span className="text-[9px] uppercase tracking-widest text-gray-500 italic">
+                      N/A
+                    </span>
                   )}
                 </div>
               </div>
 
-              {item.color && Array.isArray(item.color) && item.color.length > 0 && (
-                <div className="space-y-1 md:space-y-3">
-                  <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">Color Protocol</p>
-                  <div className="flex flex-wrap items-center gap-3 md:gap-5">
-                    {item.color.map((c) => (
-                      <div key={c} className="flex items-center gap-2 group">
-                        <div
-                          className="w-3 h-3 md:w-6 md:h-6 rounded-full border border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-110"
-                          style={{ backgroundColor: colorMap[c.toLowerCase()] || "#333" }}
-                        />
-                        <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter opacity-90 group-hover:opacity-100 transition-opacity">
-                          {c}
-                        </span>
-                      </div>
-                    ))}
+              {item.color &&
+                Array.isArray(item.color) &&
+                item.color.length > 0 && (
+                  <div className="space-y-1 md:space-y-3">
+                    <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
+                      Color Protocol
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3 md:gap-5">
+                      {item.color.map((c) => (
+                        <div key={c} className="flex items-center gap-2 group">
+                          <div
+                            className="w-3 h-3 md:w-6 md:h-6 rounded-full border border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-110"
+                            style={{
+                              backgroundColor:
+                                colorMap[c.toLowerCase()] || "#333",
+                            }}
+                          />
+                          <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter opacity-90 group-hover:opacity-100 transition-opacity">
+                            {c}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
 
@@ -201,8 +251,14 @@ const ProductModal = ({ item, onClose }) => {
               >
                 <div className="absolute inset-0 bg-black translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
                 <div className="relative z-10 flex items-center gap-2 md:gap-3">
-                  <span className="text-black group-hover:text-white font-black italic uppercase tracking-tighter text-sm md:text-3xl">COMPRAR</span>
-                  <ShoppingBag size={20} className="text-red-600 md:w-8 md:h-8" strokeWidth={2.5} />
+                  <span className="text-black group-hover:text-white font-black italic uppercase tracking-tighter text-sm md:text-3xl">
+                    COMPRAR
+                  </span>
+                  <ShoppingBag
+                    size={20}
+                    className="text-red-600 md:w-8 md:h-8"
+                    strokeWidth={2.5}
+                  />
                 </div>
               </button>
             )}
