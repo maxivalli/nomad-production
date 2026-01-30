@@ -80,23 +80,21 @@ const MeliSection = () => {
           </div>
 
           {/* COLUMNA INFO */}
-
           <div className="md:w-1/2 p-8 md:p-14 flex flex-col justify-center text-black">
-            <motion.h2
+            {/* Eliminé el párrafo vacío que tenías arriba para limpiar el código */}
+            <motion.p
               variants={itemVariants}
-              className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.85] mb-8"
-            >
-              VISIT US ON <br />
-            </motion.h2>
+              className="mt-8 text-[9px] font-mono uppercase tracking-[0.2em] text-black/40 border-t border-black/5 pt-6 w-full text-center md:text-left md:text-[11px]"
+            ></motion.p>
             <motion.div
               variants={itemVariants}
-              className="flex items-center gap-3 mb-6"
+              className="flex items-center justify-center md:justify-start gap-3 mb-6"
             >
-              {/* LOGO DE MERCADO LIBRE DESDE ASSETS */}
+              {/* LOGO DE MERCADO LIBRE */}
               <img
                 src={MLlogo}
                 alt="Mercado Libre Logo"
-                className="h-8 md:h-15 w-auto object-contain"
+                className="h-12 md:h-17 w-auto object-contain"
               />
               <div className="h-6 w-[1px] bg-black/20" />
               <span className="text-[10px] font-black uppercase tracking-widest text-black/60">
@@ -104,16 +102,18 @@ const MeliSection = () => {
               </span>
             </motion.div>
 
+            {/* Título: También centrado en móvil para que acompañe al logo */}
             <motion.div variants={itemVariants} className="space-y-4 mb-10">
-              <div className="flex items-center gap-3">
-                <ShieldCheck size={20} className="text-[#00A650]" />
-                <p className="text-xs font-bold uppercase tracking-tight">
+              {/* Contenedores de checks: Ajustados para centrar en móvil */}
+              <div className="flex items-center justify-center md:justify-start gap-3">
+                <ShieldCheck size={20} className="text-[#00A650] shrink-0" />
+                <p className="text-[10px] md:text-[13px] font-bold uppercase tracking-tight">
                   Compra Protegida con Mercado Pago
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle2 size={20} className="text-[#00A650]" />
-                <p className="text-xs font-bold uppercase tracking-tight">
+              <div className="flex items-center justify-center md:justify-start gap-3">
+                <CheckCircle2 size={20} className="text-[#00A650] shrink-0" />
+                <p className="text-[10px] md:text-[13px] font-bold uppercase tracking-tight">
                   Envíos a todo el país por Mercado Envíos
                 </p>
               </div>
@@ -134,9 +134,9 @@ const MeliSection = () => {
 
             <motion.p
               variants={itemVariants}
-              className="mt-8 text-[9px] font-mono uppercase tracking-[0.2em] text-black/40 border-t border-black/5 pt-6"
+              className="mt-8 text-[9px] font-mono uppercase tracking-[0.2em] text-black/40 border-t border-black/5 pt-6 w-full text-center md:text-left md:text-[11px]"
             >
-              hasta 3 cuotas sin interés • Despacho en menos de 24hs
+              hasta 3 cuotas sin interés. Despacho en menos de 24hs.
             </motion.p>
           </div>
         </motion.div>
