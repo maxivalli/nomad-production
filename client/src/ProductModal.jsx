@@ -25,12 +25,21 @@ const ProductModal = ({ item, onClose }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-  // Bloquea el scroll del fondo
-  document.body.style.overflow = 'hidden';
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, []);
+    document.body.style.overflow = "hidden";
+
+    const setVvh = () => {
+      let vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    setVvh();
+    window.addEventListener("resize", setVvh);
+
+    return () => {
+      document.body.style.overflow = "unset";
+      window.removeEventListener("resize", setVvh);
+    };
+  }, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -101,7 +110,8 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 h-[auto] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
+      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden"
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -129,7 +139,10 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="relative h-[85%] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+          <div
+            style={{ height: "calc(var(--vh, 1vh) * 85)" }} // <--- 85% del alto real
+            className="relative aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center"
+          >
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
               className={`w-full h-full object-cover transition-opacity duration-700 ${
