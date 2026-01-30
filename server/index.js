@@ -7,8 +7,6 @@ const { Pool } = require("pg");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
-const path = require("path");
-const fs = require("fs");
 require("dotenv").config();
 
 const app = express();
@@ -22,7 +20,7 @@ app.set("trust proxy", 1);
 // Helmet para headers de seguridad
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: false, // Ajustar según necesidad
     crossOriginEmbedderPolicy: false,
   }),
 );
@@ -30,7 +28,7 @@ app.use(
 // CORS configurado correctamente
 const corsOptions = {
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true,
+  credentials: true, // Permitir cookies
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
@@ -40,14 +38,14 @@ app.use(cookieParser());
 
 // Rate limiting para prevenir ataques
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // límite de 100 requests por ventana
   message: "Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde.",
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 5, // Solo 5 intentos de login en 15 minutos
   message:
     "Demasiados intentos de inicio de sesión, intenta de nuevo más tarde.",
 });
@@ -220,152 +218,6 @@ const authenticateAdmin = (req, res, next) => {
 };
 
 // ==========================================
-// FUNCIÓN AUXILIAR: GENERAR SLUG
-// ==========================================
-
-const generateSlug = (title) => {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-");
-};
-
-// ==========================================
-// FUNCIÓN AUXILIAR: INYECTAR META TAGS
-// ==========================================
-
-const injectMetaTags = (html, product, baseUrl) => {
-  const productUrl = `${baseUrl}/share/${generateSlug(product.title)}`;
-  const imageUrl = Array.isArray(product.img) ? product.img[0] : product.img;
-  
-  // Escapar caracteres especiales para HTML
-  const escapeHtml = (text) => {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  };
-
-  const metaTags = `
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="product" />
-    <meta property="og:url" content="${escapeHtml(productUrl)}" />
-    <meta property="og:title" content="NOMAD® - ${escapeHtml(product.title.toUpperCase())}" />
-    <meta property="og:description" content="${escapeHtml(product.description)}" />
-    <meta property="og:image" content="${escapeHtml(imageUrl)}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="NOMAD® Wear" />
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="${escapeHtml(productUrl)}" />
-    <meta name="twitter:title" content="NOMAD® - ${escapeHtml(product.title.toUpperCase())}" />
-    <meta name="twitter:description" content="${escapeHtml(product.description)}" />
-    <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
-    
-    <!-- Metadata adicional -->
-    <meta name="description" content="${escapeHtml(product.description)}" />
-    <title>NOMAD® - ${escapeHtml(product.titletoUpperCase())}</title>
-    
-    <!-- Script para redirigir a la ruta correcta del HashRouter -->
-    <script>
-      // Redirigir al HashRouter con el slug correcto
-      if (window.location.pathname.includes('/share/')) {
-        const slug = window.location.pathname.split('/share/')[1];
-        window.location.href = '/#/producto/' + slug;
-      }
-    </script>
-  `;
-
-  // Reemplazar los meta tags existentes y el título
-  return html
-    .replace(/<meta property="og:type"[^>]*>/i, '')
-    .replace(/<meta property="og:url"[^>]*>/i, '')
-    .replace(/<meta property="og:title"[^>]*>/i, '')
-    .replace(/<meta property="og:description"[^>]*>/i, '')
-    .replace(/<meta property="og:image"[^>]*>/i, '')
-    .replace(/<meta property="twitter:card"[^>]*>/i, '')
-    .replace(/<meta property="twitter:url"[^>]*>/i, '')
-    .replace(/<meta property="twitter:title"[^>]*>/i, '')
-    .replace(/<meta property="twitter:description"[^>]*>/i, '')
-    .replace(/<meta property="twitter:image"[^>]*>/i, '')
-    .replace(/<title>.*?<\/title>/i, '')
-    .replace('</head>', `${metaTags}\n  </head>`);
-};
-
-// ==========================================
-// RUTA PARA COMPARTIR PRODUCTOS (SSR)
-// ==========================================
-
-app.get('/share/:slug', async (req, res) => {
-  try {
-    const { slug } = req.params;
-    
-    console.log('📤 Solicitud de compartir:', slug);
-    
-    // Buscar el producto por título (generando el slug desde la base de datos)
-    const result = await pool.query('SELECT * FROM products');
-    const products = result.rows;
-    
-    // Encontrar el producto que coincida con el slug
-    const product = products.find(p => generateSlug(p.title) === slug);
-    
-    if (!product) {
-      console.log('❌ Producto no encontrado:', slug);
-      // Si no se encuentra el producto, redirigir a la página principal
-      return res.redirect('/');
-    }
-
-    console.log('✅ Producto encontrado:', product.title);
-
-    // Leer el archivo HTML base
-    let html;
-    const possiblePaths = [
-      path.join(__dirname, '../client/dist/index.html'),
-      path.join(__dirname, 'dist/index.html'),
-      path.join(process.cwd(), 'client/dist/index.html'),
-      path.join(process.cwd(), 'dist/index.html'),
-    ];
-    
-    for (const htmlPath of possiblePaths) {
-      try {
-        html = fs.readFileSync(htmlPath, 'utf8');
-        console.log('✅ HTML encontrado en:', htmlPath);
-        break;
-      } catch (err) {
-        // Intentar siguiente path
-      }
-    }
-    
-    if (!html) {
-      console.error('❌ No se pudo encontrar el archivo HTML');
-      return res.redirect('/');
-    }
-    
-    // Obtener la URL base
-    const protocol = req.get('x-forwarded-proto') || req.protocol;
-    const host = req.get('host');
-    const baseUrl = `${protocol}://${host}`;
-    
-    console.log('🔗 URL base:', baseUrl);
-    
-    // Inyectar meta tags dinámicos
-    const modifiedHtml = injectMetaTags(html, product, baseUrl);
-    
-    // Enviar HTML modificado
-    res.send(modifiedHtml);
-    
-  } catch (err) {
-    console.error('❌ Error en ruta de compartir:', err);
-    res.redirect('/');
-  }
-});
-
-// ==========================================
 // RUTAS DE AUTENTICACIÓN
 // ==========================================
 
@@ -435,22 +287,14 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
     console.error("Error en login:", err);
     res.status(500).json({
       error: "Error del servidor",
-      message: "No se pudo procesar la autenticación",
+      message: "Ocurrió un error al procesar la solicitud",
     });
   }
 });
 
 app.post("/api/auth/logout", (req, res) => {
-  res.clearCookie("authToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  res.json({
-    success: true,
-    message: "Sesión cerrada exitosamente",
-  });
+  res.clearCookie("authToken");
+  res.json({ success: true, message: "Sesión cerrada" });
 });
 
 app.get("/api/auth/verify", authenticateAdmin, (req, res) => {
@@ -461,59 +305,138 @@ app.get("/api/auth/verify", authenticateAdmin, (req, res) => {
 });
 
 // ==========================================
-// RUTAS DE PRODUCTOS
+// RUTA DE PREVISUALIZACIÓN (WHATSAPP/SOCIAL)
 // ==========================================
 
-// GET: Todos los productos (PÚBLICO)
+app.get("/share/:slug", async (req, res) => {
+  const { slug } = req.params;
+  const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
+
+  console.log("--- DEBUG SHARE ---");
+  console.log("1. Slug recibido:", slug);
+
+  const generarSlug = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+  };
+
+  try {
+    const result = await pool.query("SELECT title, description, img FROM products");
+    const producto = result.rows.find((p) => generarSlug(p.title) === slug);
+
+    if (!producto) {
+      console.log("2. Producto no encontrado para slug:", slug);
+      return res.redirect(FRONTEND_URL);
+    }
+
+    console.log("3. Producto encontrado:", producto.title);
+
+    const formatTitle = (text) => {
+      return text
+        .toLowerCase()
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    };
+
+    const tituloLimpio = formatTitle(producto.title);
+    const tituloFinal = `${tituloLimpio} | NOMAD`;
+    
+    console.log("4. Titulo generado:", tituloFinal);
+
+    const desc = producto.description
+      ? producto.description.substring(0, 150) + "..."
+      : "Explora nuestra nueva colección.";
+    
+    // Asegurar que la imagen sea URL absoluta
+    let imagen = Array.isArray(producto.img) ? producto.img[0] : producto.img;
+    
+    // Si la imagen no empieza con http, agregarle el dominio
+    if (imagen && !imagen.startsWith('http')) {
+      imagen = `${FRONTEND_URL}${imagen.startsWith('/') ? '' : '/'}${imagen}`;
+    }
+
+    console.log("5. URL de imagen:", imagen);
+
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>${tituloFinal}</title>
+        
+        <!-- Open Graph para Facebook -->
+        <meta property="og:title" content="${tituloFinal}">
+        <meta property="og:description" content="${desc}">
+        <meta property="og:image" content="${imagen}">
+        <meta property="og:image:secure_url" content="${imagen}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="${FRONTEND_URL}/share/${slug}">
+        <meta property="og:site_name" content="NOMAD">
+        
+        <!-- Twitter Cards (bonus) -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="${tituloFinal}">
+        <meta name="twitter:description" content="${desc}">
+        <meta name="twitter:image" content="${imagen}">
+        
+        <meta http-equiv="refresh" content="0;url=${FRONTEND_URL}/#/producto/${slug}">
+      </head>
+      <body style="background:black; color:white; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+        <div style="text-align:center;">
+          <h1 style="letter-spacing:0.5em;">NOMAD</h1>
+          <p style="font-size:10px; text-transform:uppercase; opacity:0.5;">Cargando producto...</p>
+        </div>
+        <script>
+          window.location.href = "${FRONTEND_URL}/#/producto/${slug}";
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error("❌ Error en ruta share:", err);
+    res.redirect(FRONTEND_URL);
+  }
+});
+
+// ==========================================
+// RUTAS DE PRODUCTOS (PROTEGIDAS)
+// ==========================================
+
+// GET: Obtener todos los productos (PÚBLICA)
 app.get("/api/products", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT * FROM products ORDER BY created_at DESC",
     );
-    res.json(result.rows);
+
+    // Normalizar imágenes como array
+    const normalizedProducts = result.rows.map((product) => ({
+      ...product,
+      img: Array.isArray(product.img) ? product.img : [product.img],
+      color: Array.isArray(product.color)
+        ? product.color
+        : product.color
+          ? [product.color]
+          : [],
+    }));
+
+    res.json(normalizedProducts);
   } catch (err) {
     console.error("Error al obtener productos:", err);
     res.status(500).json({
       error: "Error del servidor",
-      message: "No se pudieron obtener los productos",
+      message: "No se pudieron cargar los productos",
     });
   }
 });
 
-// GET: Producto individual (PÚBLICO)
-app.get("/api/products/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (isNaN(id)) {
-      return res.status(400).json({
-        error: "ID inválido",
-        message: "El ID del producto debe ser un número",
-      });
-    }
-
-    const result = await pool.query("SELECT * FROM products WHERE id = $1", [
-      id,
-    ]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: "No encontrado",
-        message: "El producto no existe",
-      });
-    }
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("Error al obtener producto:", err);
-    res.status(500).json({
-      error: "Error del servidor",
-      message: "No se pudo obtener el producto",
-    });
-  }
-});
-
-// POST: Crear nuevo producto (PROTEGIDA)
+// POST: Crear producto (PROTEGIDA)
 app.post("/api/products", authenticateAdmin, async (req, res) => {
   try {
     // Validar datos
@@ -755,6 +678,8 @@ app.put("/api/settings/collection", authenticateAdmin, async (req, res) => {
 
 app.post("/api/cloudinary/signature", authenticateAdmin, async (req, res) => {
   try {
+    // Aquí podrías generar una firma para Cloudinary
+    // Por ahora devolvemos la config que el frontend necesita
     res.json({
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,
       uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET,
