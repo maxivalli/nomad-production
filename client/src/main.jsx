@@ -62,6 +62,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <HashRouter>
       <Routes>
         <Route path="/" element={<App />} />
+        <Route path="/producto/:slug" element={<App />} />
         <Route path="/login" element={<Login />} />
         <Route 
           path="/admin" 

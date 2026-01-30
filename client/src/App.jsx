@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { useParams, useNavigate } from "react-router-dom"; // 1. Importamos hooks
 
 // Componentes
 import PreLoader from "./PreLoader";
@@ -8,7 +9,7 @@ import Hero from "./Hero";
 import IntroMarque from "./IntroMarque";
 import Gallery from "./Gallery";
 import Manifest from "./Manifest";
-import Packing from "./Packing"
+import Packing from "./Packing";
 import StudioMarque from "./StudioMarque";
 import TheStudio from "./TheStudio";
 import Stockists from "./Stockists";
@@ -27,6 +28,40 @@ function App() {
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
 
+  const { slug } = useParams(); // 2. Obtenemos el slug de la URL
+  const navigate = useNavigate(); // 3. Para poder cambiar la URL al cerrar
+
+  // Sincronizar URL con el estado del Modal
+  useEffect(() => {
+    if (slug && products.length > 0) {
+      // Buscamos el producto aplicando la misma limpieza que usamos al generar el link
+      const product = products.find((p) => {
+        const cleanTitle = p.title
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, "") // Borra comillas y caracteres especiales
+          .replace(/\s+/g, "-"); // Convierte espacios en guiones
+
+        return cleanTitle === slug;
+      });
+
+      if (product) {
+        setSelectedItem(product);
+      } else {
+        // Si después de limpiar no hay coincidencia, volvemos a la home
+        navigate("/", { replace: true });
+      }
+    } else if (!slug) {
+      setSelectedItem(null);
+    }
+  }, [slug, products, navigate]);
+
+  // Función para cerrar el modal y actualizar la URL
+  const handleCloseModal = () => {
+    setSelectedItem(null);
+    navigate("/"); // Quitamos el slug de la barra de direcciones
+  };
+
   // Mostrar error si hay problemas cargando productos
   useEffect(() => {
     if (error) {
@@ -42,7 +77,7 @@ function App() {
 
   // Bloqueo de Scroll global
   useEffect(() => {
-    document.body.style.overflow = (loading || selectedItem) ? "hidden" : "auto";
+    document.body.style.overflow = loading || selectedItem ? "hidden" : "auto";
   }, [loading, selectedItem]);
 
   return (
@@ -52,11 +87,10 @@ function App() {
 
       <div className="bg-black text-white selection:bg-white selection:text-black">
         <Navbar />
-        
+
         <main>
           <Hero />
-          
-          {/* Mostrar mensaje si hay error */}
+
           {error && (
             <div className="container mx-auto px-6 py-12">
               <div className="bg-red-900/20 border border-red-500 p-6 rounded text-center">
@@ -70,8 +104,7 @@ function App() {
               </div>
             </div>
           )}
-          
-          {/* Mostrar loading o galería */}
+
           {productsLoading ? (
             <div className="min-h-[50vh] flex items-center justify-center">
               <p className="text-neutral-500 text-sm uppercase tracking-wider">
@@ -81,7 +114,7 @@ function App() {
           ) : (
             <Gallery items={products} setSelectedItem={setSelectedItem} />
           )}
-          
+
           <Manifest />
           <IntroMarque />
           <Packing />
@@ -98,7 +131,7 @@ function App() {
           {selectedItem && (
             <ProductModal
               item={selectedItem}
-              onClose={() => setSelectedItem(null)}
+              onClose={handleCloseModal} // 4. Usamos la nueva función de cierre
             />
           )}
         </AnimatePresence>
