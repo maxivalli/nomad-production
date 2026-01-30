@@ -180,7 +180,7 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
                 className="text-white p-2"
               >
-                <X size={40} strokeWidth={1} />
+                <X size={42} strokeWidth={1} />
               </motion.button>
             </div>
 

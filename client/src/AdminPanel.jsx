@@ -771,8 +771,8 @@ const AdminPanel = () => {
           {/* Encabezado del inventario */}
           <div className="flex items-center gap-4">
             <div className="h-8 md:h-10 w-1.5 bg-neutral-700 shrink-0"></div>
-            <h2 className="text-3xl md:text-4xl font-[900] uppercase italic tracking-tighter text-neutral-300 truncate">
-              Core <span className="text-white font-[900]">Database</span>
+            <h2 className="text-3xl md:text-4xl font-[900] uppercase italic tracking-tighter text-neutral-300">
+              Inventory <span className="text-white font-[900]">DB</span>
             </h2>
           </div>
 

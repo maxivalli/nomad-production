@@ -171,7 +171,7 @@ const ProductModal = ({ item, onClose }) => {
         onClick={onClose}
         className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors"
       >
-        <X size={32} strokeWidth={1} />
+        <X size={42} strokeWidth={1} />
       </button>
 
       <div className="relative z-[110] w-full h-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">

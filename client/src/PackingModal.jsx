@@ -33,7 +33,7 @@ const PackingModal = ({ selectedImg, onClose }) => {
               onClose();
             }}
           >
-            <X size={32} strokeWidth={1} />
+            <X size={42} strokeWidth={1} />
           </motion.button>
 
           {/* Contenedor de Imagen: Eliminamos el p-4 en móvil y usamos p-0 */}
