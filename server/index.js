@@ -694,6 +694,27 @@ app.post("/api/cloudinary/signature", authenticateAdmin, async (req, res) => {
 });
 
 // ==========================================
+// SERVIR ARCHIVOS ESTÁTICOS (SI APLICA)
+// ==========================================
+
+// Solo en producción, servir el build del frontend
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path');
+  
+  // Servir archivos estáticos del build
+  app.use(express.static(path.join(__dirname, 'dist')));
+  
+  // SPA Fallback - DEBE IR AL FINAL para no interceptar /share/:slug
+  app.get('*', (req, res) => {
+    // No interceptar rutas de API ni /share
+    if (req.path.startsWith('/api') || req.path.startsWith('/share')) {
+      return res.status(404).json({ error: 'Ruta no encontrada' });
+    }
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  });
+}
+
+// ==========================================
 // MANEJO DE ERRORES GLOBAL
 // ==========================================
 
