@@ -249,11 +249,13 @@ const injectMetaTags = (html, product, baseUrl) => {
       .replace(/'/g, '&#039;');
   };
 
+  const tituloFormateado = escapeHtml(product.title.toUpperCase());
+
   const metaTags = `
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="product" />
     <meta property="og:url" content="${escapeHtml(productUrl)}" />
-    <meta property="og:title" content="NOMAD® - ${escapeHtml(product.title)}" />
+    <meta property="og:title" content="NOMAD® - ${tituloFormateado}" />
     <meta property="og:description" content="${escapeHtml(product.description)}" />
     <meta property="og:image" content="${escapeHtml(imageUrl)}" />
     <meta property="og:image:width" content="1200" />
@@ -269,7 +271,7 @@ const injectMetaTags = (html, product, baseUrl) => {
     
     <!-- Metadata adicional -->
     <meta name="description" content="${escapeHtml(product.description)}" />
-    <title>NOMAD® - ${escapeHtml(product.title)}</title>
+    <title>NOMAD® - ${tituloFormateado}</title>
     
     <!-- Script para redirigir a la ruta correcta del HashRouter -->
     <script>
