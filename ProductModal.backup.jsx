@@ -7,7 +7,7 @@ import {
   Loader2,
   ShoppingBag,
   Share2,
-} from "lucide-react"; // Importamos Share2
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const ProductModal = ({ item, onClose }) => {
@@ -23,6 +23,13 @@ const ProductModal = ({ item, onClose }) => {
   useEffect(() => {
     setIsImageLoading(true);
   }, [activeIdx]);
+
+  useEffect(() => {
+  document.body.style.overflow = 'hidden';
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -50,18 +57,13 @@ const ProductModal = ({ item, onClose }) => {
     setActiveIdx((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // --- NUEVA FUNCIÓN COMPARTIR ---
   const handleShare = (e) => {
     e.stopPropagation();
-
-    // Generamos el mismo slug
     const slug = item.title
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
-
-    // Usamos window.location.origin para asegurar que la URL sea absoluta
     const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
@@ -86,12 +88,19 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
+  const handleGlobalClick = () => {
+    if (showFullText) {
+      setShowFullText(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden"
+      onClick={handleGlobalClick}
+      className="fixed inset-0 h-[100svh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -119,7 +128,7 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="relative h-full aspect-[2/3] max-w-full overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+          <div className="relative h-[100dvh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
               className={`w-full h-full object-cover transition-opacity duration-700 ${
@@ -130,9 +139,26 @@ const ProductModal = ({ item, onClose }) => {
             />
           </div>
 
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute bottom-0 left-0 w-full h-[50%] bg-gradient-to-t from-black via-black/50 to-transparent md:hidden" />
-            <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
+          {/* CAPA DE DEGRADADOS DINÁMICOS */}
+          <div className="absolute inset-0 pointer-events-none z-[105]">
+            <motion.div
+              animate={{
+                background: showFullText
+                  ? "linear-gradient(to top, black 40%, rgba(0,0,0,0.7) 70%, transparent 100%)"
+                  : "linear-gradient(to top, black 0%, rgba(0,0,0,0.5) 10%, transparent 50%)",
+              }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 md:hidden"
+            />
+            <motion.div
+              animate={{
+                background: showFullText
+                  ? "linear-gradient(to right, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)"
+                  : "linear-gradient(to right, rgba(0,0,0,0.8) 0%, transparent 50%)",
+              }}
+              transition={{ duration: 0.5 }}
+              className="hidden md:block absolute inset-0"
+            />
           </div>
         </motion.div>
       </AnimatePresence>
@@ -168,7 +194,10 @@ const ProductModal = ({ item, onClose }) => {
       </div>
 
       <button
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors"
       >
         <X size={42} strokeWidth={1} />
@@ -192,7 +221,6 @@ const ProductModal = ({ item, onClose }) => {
               ))}
             </h2>
 
-            {/* BOTÓN MAESTRO DE CONTROL */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -203,7 +231,6 @@ const ProductModal = ({ item, onClose }) => {
               {showFullText ? "— OCULTAR DETALLES" : "+ VER DETALLES"}
             </button>
 
-            {/* BLOQUE ANIMADO: DESCRIPCIÓN + TALLES + COLORES */}
             <AnimatePresence>
               {showFullText && (
                 <motion.div
@@ -212,6 +239,7 @@ const ProductModal = ({ item, onClose }) => {
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.4, ease: "easeInOut" }}
                   className="overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <p className="text-gray-300 text-[10px] md:text-sm mb-4 md:mb-8 max-w-[190px] md:max-w-md italic font-light leading-relaxed text-justify">
                     {item.description}
@@ -223,49 +251,55 @@ const ProductModal = ({ item, onClose }) => {
                         Size Protocol
                       </p>
                       <div className="flex gap-3 md:gap-6 items-center">
-                        {item.sizes && item.sizes.length > 0 ? (
-                          item.sizes.map((s) => (
-                            <span key={s} className="text-lg md:text-4xl font-black text-white">
-                              {s}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-[9px] uppercase tracking-widest text-gray-500 italic">
+                        {item.sizes?.map((s) => (
+                          <span
+                            key={s}
+                            className="text-lg md:text-4xl font-black text-white"
+                          >
+                            {s}
+                          </span>
+                        )) || (
+                          <span className="text-[9px] text-gray-500 italic">
                             N/A
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {item.color && Array.isArray(item.color) && item.color.length > 0 && (
-                      <div className="space-y-1 md:space-y-3">
-                        <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
-                          Color Protocol
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3 md:gap-5">
-                          {item.color.map((c) => (
-                            <div key={c} className="flex items-center gap-2 group">
+                    {item.color &&
+                      Array.isArray(item.color) &&
+                      item.color.length > 0 && (
+                        <div className="space-y-1 md:space-y-3">
+                          <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
+                            Color Protocol
+                          </p>
+                          <div className="flex flex-wrap items-center gap-3 md:gap-5">
+                            {item.color.map((c) => (
                               <div
-                                className="w-3 h-3 md:w-6 md:h-6 rounded-full border border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-110"
-                                style={{
-                                  backgroundColor: colorMap[c.toLowerCase()] || "#333",
-                                }}
-                              />
-                              <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter opacity-90 group-hover:opacity-100 transition-opacity">
-                                {c}
-                              </span>
-                            </div>
-                          ))}
+                                key={c}
+                                className="flex items-center gap-2 group"
+                              >
+                                <div
+                                  className="w-3 h-3 md:w-6 md:h-6 rounded-full border border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-110"
+                                  style={{
+                                    backgroundColor:
+                                      colorMap[c.toLowerCase()] || "#333",
+                                  }}
+                                />
+                                <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter opacity-90 group-hover:opacity-100 transition-opacity">
+                                  {c}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* BOTONES: SIEMPRE VISIBLES */}
           <div className="flex flex-col gap-3 ml-auto">
             {item.purchase_link && (
               <button
@@ -277,7 +311,11 @@ const ProductModal = ({ item, onClose }) => {
                   <span className="text-black group-hover:text-white font-black italic uppercase tracking-tighter text-sm md:text-3xl">
                     COMPRAR
                   </span>
-                  <ShoppingBag size={20} className="text-red-600 md:w-8 md:h-8" strokeWidth={2.5} />
+                  <ShoppingBag
+                    size={20}
+                    className="text-red-600 md:w-8 md:h-8"
+                    strokeWidth={2.5}
+                  />
                 </div>
               </button>
             )}
