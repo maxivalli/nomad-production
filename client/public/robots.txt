@@ -1,0 +1,18 @@
+# 1. Aplicar reglas a todos los buscadores (Google, Bing, DuckDuckGo, etc.)
+User-agent: *
+
+# 2. Impedir que el panel de administración y login salgan en Google
+# Esto evita que usuarios curiosos encuentren la puerta trasera por error
+Disallow: /admin
+Disallow: /login
+
+# 3. Evitar que se indexen archivos de configuración sensibles si los hubiera
+Disallow: /config/
+Disallow: /services/api
+
+# 4. Permitir todo lo demás (productos, home, meli section)
+Allow: /
+
+# 5. Indicar la ubicación del mapa del sitio para indexar tus productos rápido
+# Reemplaza 'tu-dominio.com' por tu URL real de Vercel
+Sitemap: https://tu-dominio.com/sitemap.xml
