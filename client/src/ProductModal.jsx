@@ -25,19 +25,12 @@ const ProductModal = ({ item, onClose }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-    const scrollY = window.scrollY;
-
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-
-    return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
-    };
-  }, []);
+  // Bloquea el scroll del fondo
+  document.body.style.overflow = 'hidden';
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -108,8 +101,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden touch-none" 
-      style={{ height: "100%", position: "fixed", top: 0, left: 0 }}
+      className="sticky inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
     >
       <AnimatePresence>
         {isImageLoading && (
