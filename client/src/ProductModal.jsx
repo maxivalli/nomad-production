@@ -25,27 +25,18 @@ const ProductModal = ({ item, onClose }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-  const scrollY = window.scrollY;
-  window.scrollTo(0, scrollY + 1);
-  setTimeout(() => {
-    window.scrollTo(0, scrollY);
-  }, 10);
-  
-  setTimeout(() => {
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.top = `-${scrollY}px`;
-  }, 50);
-  
-  return () => {
-    document.body.style.overflow = 'unset';
-    document.body.style.position = '';
-    document.body.style.width = '';
-    document.body.style.top = '';
-    window.scrollTo(0, scrollY);
-  };
-}, []);
+    const scrollY = window.scrollY;
+    window.scrollTo(0, 100);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
