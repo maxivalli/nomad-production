@@ -1,6 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ShoppingCart, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ShoppingCart, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
+// Importación del logo desde tus assets
+import MLlogo from "../src/assets/MLlogo.png";
 
 const MeliSection = () => {
   const meliLink = "https://www.mercadolibre.com.ar";
@@ -27,10 +29,10 @@ const MeliSection = () => {
   };
 
   return (
-    <section className="py-20 bg-black px-6 flex flex-col items-center">
-      {/* 1. CONTENEDOR DE TÍTULOS: Al 90% del ancho de la pantalla */}
-      <div className="w-full max-w-[90vw]">
-        <div className="mb-12">
+    <section className="py-20 bg-black px-6 flex flex-col items-center overflow-hidden">
+      <div className="w-full max-w-[90vw] flex flex-col items-center">
+        {/* ENCABEZADO NOMAD */}
+        <div className="mb-12 w-full max-w-[1200px]">
           <motion.span
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -43,59 +45,66 @@ const MeliSection = () => {
             official <br /> <span className="text-red-600">Store</span>
           </h2>
         </div>
-      </div>
 
-      {/* 2. CONTENEDOR DE LA CARD: Centrado pero limitado a 1200px */}
-      <div className="w-full flex justify-start lg:justify-center"> 
+        {/* CARD DE MELI */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="bg-[#FFE600] rounded-sm overflow-hidden flex flex-col md:flex-row items-stretch border border-white/10 w-full max-w-[1200px]"
+          className="bg-[#FFE600] rounded-sm overflow-hidden flex flex-col md:flex-row items-stretch border border-white/10 w-full max-w-[1200px] shadow-2xl"
         >
           {/* COLUMNA FOTO */}
           <div className="md:w-1/2 relative bg-white flex items-center justify-center p-8 border-b md:border-b-0 md:border-r border-black/5 overflow-hidden">
             <motion.div
               variants={itemVariants}
-              className="absolute top-4 left-4 flex gap-2 z-10"
+              className="absolute top-4 left-4 flex flex-col gap-2 z-10"
             >
-              <span className="bg-[#303370] text-white text-[10px] font-bold px-2 py-0.5 rounded-sm">
+              <span className="bg-[#3483fa] text-white text-[10px] font-bold px-2 py-1 rounded-sm tracking-wide">
                 MÁS VENDIDO
               </span>
+              <div className="flex items-center gap-1 bg-[#00a650] text-white text-[10px] font-bold px-2 py-1 rounded-sm w-fit">
+                <Zap size={10} className="fill-current" />
+                FULL
+              </div>
             </motion.div>
 
             <motion.img
               variants={itemVariants}
               animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               src={productImg}
-              alt="Producto en Meli"
-              className="w-full h-auto max-h-[400px] object-contain mix-blend-multiply drop-shadow-xl"
+              alt="Product View"
+              className="w-full h-auto max-h-[400px] object-contain mix-blend-multiply drop-shadow-2xl"
             />
           </div>
 
           {/* COLUMNA INFO */}
-          <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center text-black">
+
+          <div className="md:w-1/2 p-8 md:p-14 flex flex-col justify-center text-black">
+            <motion.h2
+              variants={itemVariants}
+              className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.85] mb-8"
+            >
+              VISIT US ON <br />
+            </motion.h2>
             <motion.div
               variants={itemVariants}
-              className="flex items-center gap-2 mb-4"
+              className="flex items-center gap-3 mb-6"
             >
+              {/* LOGO DE MERCADO LIBRE DESDE ASSETS */}
+              <img
+                src={MLlogo}
+                alt="Mercado Libre Logo"
+                className="h-8 md:h-15 w-auto object-contain"
+              />
+              <div className="h-6 w-[1px] bg-black/20" />
               <span className="text-[10px] font-black uppercase tracking-widest text-black/60">
                 Official Store
               </span>
-              <div className="h-[1px] w-12 bg-black/20" />
             </motion.div>
 
-            <motion.h2
-              variants={itemVariants}
-              className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6"
-            >
-              VISIT US ON <br />
-              <span className="text-[#303370]">MERCADO LIBRE</span>
-            </motion.h2>
-
-            <motion.div variants={itemVariants} className="space-y-4 mb-8">
+            <motion.div variants={itemVariants} className="space-y-4 mb-10">
               <div className="flex items-center gap-3">
                 <ShieldCheck size={20} className="text-[#00A650]" />
                 <p className="text-xs font-bold uppercase tracking-tight">
@@ -115,7 +124,7 @@ const MeliSection = () => {
               href={meliLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative inline-flex items-center justify-between bg-[#303370] text-white px-8 py-4 transition-all hover:bg-black active:scale-95 shadow-xl"
+              className="group relative inline-flex items-center justify-between bg-[#3483fa] text-white px-8 py-5 transition-all hover:bg-black active:scale-95 shadow-xl rounded-md"
             >
               <span className="font-black italic uppercase tracking-tighter text-sm md:text-xl">
                 Ir a la tienda oficial
@@ -125,7 +134,7 @@ const MeliSection = () => {
 
             <motion.p
               variants={itemVariants}
-              className="mt-6 text-[9px] font-mono uppercase tracking-widest text-black/40"
+              className="mt-8 text-[9px] font-mono uppercase tracking-[0.2em] text-black/40 border-t border-black/5 pt-6"
             >
               hasta 3 cuotas sin interés • Despacho en menos de 24hs
             </motion.p>
