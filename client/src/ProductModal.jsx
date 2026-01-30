@@ -21,24 +21,18 @@ const ProductModal = ({ item, onClose }) => {
   const images = Array.isArray(item.img) ? item.img : [item.img];
 
   useEffect(() => {
-    // Previene el scroll del body
+    setIsImageLoading(true);
+  }, [activeIdx]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 10);
     document.body.style.overflow = "hidden";
-
-    // Fija la altura del viewport al valor actual
-    const setVH = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
-
-    setVH();
-
-    // Opcional: actualizar si cambia el tamaño
-    // window.addEventListener('resize', setVH);
 
     return () => {
       document.body.style.overflow = "unset";
-      document.documentElement.style.removeProperty("--vh");
-      // window.removeEventListener('resize', setVH);
     };
   }, []);
 
@@ -99,8 +93,7 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  const handleGlobalClick = (e) => {
-    e.preventDefault();
+  const handleGlobalClick = () => {
     if (showFullText) {
       setShowFullText(false);
     }
@@ -112,8 +105,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
-      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+      className="fixed inset-0 h-[100svh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
     >
       <AnimatePresence>
         {isImageLoading && (
