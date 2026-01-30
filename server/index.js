@@ -304,74 +304,74 @@ app.get("/api/auth/verify", authenticateAdmin, (req, res) => {
   });
 });
 
-// ==========================================
-// RUTA DE PREVISUALIZACIÓN (WHATSAPP/SOCIAL)
-// ==========================================
-
 app.get("/share/:slug", async (req, res) => {
   const { slug } = req.params;
   const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
 
-  console.log("--- DEBUG SHARE ---");
-  console.log("1. Slug recibido:", slug);
-
-  const generarSlug = (text) => {
-    return text
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-  };
-
   try {
     const result = await pool.query("SELECT title, description, img FROM products");
-    const producto = result.rows.find((p) => generarSlug(p.title) === slug);
+    const producto = result.rows.find((p) => {
+      const pSlug = p.title
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-");
+      return pSlug === slug;
+    });
 
     if (!producto) {
-      console.log("2. Producto no encontrado para slug:", slug);
       return res.redirect(FRONTEND_URL);
     }
 
-    console.log("3. Producto encontrado:", producto.title);
+    // 1. Formatear Título y escapar comillas para que no rompan el HTML
+    const tituloLimpio = producto.title
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+      .replace(/"/g, "'"); // Cambio clave: comillas dobles a simples
 
-    const formatTitle = (text) => {
-      return text
-        .toLowerCase()
-        .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-    };
-
-    const tituloLimpio = formatTitle(producto.title);
     const tituloFinal = `${tituloLimpio} | NOMAD`;
-    
-    console.log("4. Titulo generado:", tituloFinal);
-
     const desc = producto.description
-      ? producto.description.substring(0, 150) + "..."
+      ? producto.description.substring(0, 150).replace(/"/g, "'") + "..."
       : "Explora nuestra nueva colección.";
-    const imagen = Array.isArray(producto.img) ? producto.img[0] : producto.img;
 
-    // IMPORTANTE: fíjate en las comillas dobles en content="${tituloFinal}"
-    // Si no hay comillas, WhatsApp corta en el espacio.
+    // 2. Optimizar Imagen para Redes Sociales (Facebook/Instagram)
+    let imagenOriginal = Array.isArray(producto.img) ? producto.img[0] : producto.img;
+    
+    // Forzamos a Cloudinary a entregar un tamaño que Facebook acepte (1200x630 es el estándar)
+    const imagenSocial = imagenOriginal.includes("cloudinary.com") 
+      ? imagenOriginal.replace("/upload/", "/upload/f_auto,q_auto,w_1200,h_630,c_fill,g_auto/")
+      : imagenOriginal;
+
     res.send(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="UTF-8">
         <title>${tituloFinal}</title>
+        
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="${FRONTEND_URL}/share/${slug}">
         <meta property="og:title" content="${tituloFinal}">
         <meta property="og:description" content="${desc}">
-        <meta property="og:image" content="${imagen}">
-        <meta property="og:type" content="website">
-        <meta property="og:url" content="${FRONTEND_URL}/#/producto/${slug}">
+        <meta property="og:image" content="${imagenSocial}">
+        <meta property="og:image:secure_url" content="${imagenSocial}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:type" content="image/jpeg">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="${tituloFinal}">
+        <meta name="twitter:description" content="${desc}">
+        <meta name="twitter:image" content="${imagenSocial}">
         
         <meta http-equiv="refresh" content="0;url=${FRONTEND_URL}/#/producto/${slug}">
       </head>
-      <body style="background:black; color:white; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+      <body style="background:black; color:white; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; margin:0;">
         <div style="text-align:center;">
-          <h1 style="letter-spacing:0.5em;">NOMAD</h1>
-          <p style="font-size:10px; text-transform:uppercase; opacity:0.5;">Cargando producto...</p>
+          <h1 style="letter-spacing:0.5em; font-weight:900;">NOMAD</h1>
+          <p style="font-size:10px; text-transform:uppercase; opacity:0.5; letter-spacing:0.2em;">Connecting Terminal...</p>
         </div>
         <script>
           window.location.href = "${FRONTEND_URL}/#/producto/${slug}";
