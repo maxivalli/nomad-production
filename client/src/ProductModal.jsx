@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 const ProductModal = ({ item, onClose }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [showFullText, setShowFullText] = useState(false);
   const navigate = useNavigate();
 
   if (!item) return null;
@@ -180,69 +181,91 @@ const ProductModal = ({ item, onClose }) => {
           className="w-full flex flex-row items-end justify-between gap-4 pointer-events-auto"
         >
           <div className="flex-1">
-            <h2 className="text-3xl md:text-8xl font-black uppercase italic leading-[0.8] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
+            <h2 className="text-4xl md:text-8xl font-black uppercase italic leading-[0.8] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
               {item.title.split(" ").map((word, index) => (
-                <span key={index} className="block">
+                <span
+                  key={index}
+                  className={`block ${index === 0 ? "text-red-600" : "text-white"}`}
+                >
                   {word}
                 </span>
               ))}
             </h2>
 
-            <p className="text-gray-300 text-[10px] md:text-sm mb-4 md:mb-8 max-w-[280px] md:max-w-md italic font-light leading-relaxed">
-              {item.description}
-            </p>
+            {/* BOTÓN MAESTRO DE CONTROL */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowFullText(!showFullText);
+              }}
+              className="mb-4 text-[8px] md:text-[10px] uppercase tracking-[0.2em] text-white/50 hover:text-red-600 transition-colors font-bold underline decoration-red-600 underline-offset-4"
+            >
+              {showFullText ? "— OCULTAR DETALLES" : "+ VER DETALLES"}
+            </button>
 
-            <div className="flex flex-col md:flex-row gap-4 md:gap-12">
-              <div className="space-y-1 md:space-y-3">
-                <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
-                  Size Protocol
-                </p>
-                <div className="flex gap-3 md:gap-6 items-center">
-                  {item.sizes && item.sizes.length > 0 ? (
-                    item.sizes.map((s) => (
-                      <span
-                        key={s}
-                        className="text-lg md:text-4xl font-black text-white"
-                      >
-                        {s}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-[9px] uppercase tracking-widest text-gray-500 italic">
-                      N/A
-                    </span>
-                  )}
-                </div>
-              </div>
+            {/* BLOQUE ANIMADO: DESCRIPCIÓN + TALLES + COLORES */}
+            <AnimatePresence>
+              {showFullText && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <p className="text-gray-300 text-[10px] md:text-sm mb-4 md:mb-8 max-w-[190px] md:max-w-md italic font-light leading-relaxed text-justify">
+                    {item.description}
+                  </p>
 
-              {item.color &&
-                Array.isArray(item.color) &&
-                item.color.length > 0 && (
-                  <div className="space-y-1 md:space-y-3">
-                    <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
-                      Color Protocol
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 md:gap-5">
-                      {item.color.map((c) => (
-                        <div key={c} className="flex items-center gap-2 group">
-                          <div
-                            className="w-3 h-3 md:w-6 md:h-6 rounded-full border border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-110"
-                            style={{
-                              backgroundColor:
-                                colorMap[c.toLowerCase()] || "#333",
-                            }}
-                          />
-                          <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter opacity-90 group-hover:opacity-100 transition-opacity">
-                            {c}
+                  <div className="flex flex-col md:flex-row gap-4 md:gap-12 mb-6 md:mb-0">
+                    <div className="space-y-1 md:space-y-3">
+                      <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
+                        Size Protocol
+                      </p>
+                      <div className="flex gap-3 md:gap-6 items-center">
+                        {item.sizes && item.sizes.length > 0 ? (
+                          item.sizes.map((s) => (
+                            <span key={s} className="text-lg md:text-4xl font-black text-white">
+                              {s}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[9px] uppercase tracking-widest text-gray-500 italic">
+                            N/A
                           </span>
-                        </div>
-                      ))}
+                        )}
+                      </div>
                     </div>
+
+                    {item.color && Array.isArray(item.color) && item.color.length > 0 && (
+                      <div className="space-y-1 md:space-y-3">
+                        <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
+                          Color Protocol
+                        </p>
+                        <div className="flex flex-wrap items-center gap-3 md:gap-5">
+                          {item.color.map((c) => (
+                            <div key={c} className="flex items-center gap-2 group">
+                              <div
+                                className="w-3 h-3 md:w-6 md:h-6 rounded-full border border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-110"
+                                style={{
+                                  backgroundColor: colorMap[c.toLowerCase()] || "#333",
+                                }}
+                              />
+                              <span className="text-lg md:text-4xl font-black text-white uppercase italic tracking-tighter opacity-90 group-hover:opacity-100 transition-opacity">
+                                {c}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-            </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
+          {/* BOTONES: SIEMPRE VISIBLES */}
           <div className="flex flex-col gap-3 ml-auto">
             {item.purchase_link && (
               <button
@@ -254,16 +277,11 @@ const ProductModal = ({ item, onClose }) => {
                   <span className="text-black group-hover:text-white font-black italic uppercase tracking-tighter text-sm md:text-3xl">
                     COMPRAR
                   </span>
-                  <ShoppingBag
-                    size={20}
-                    className="text-red-600 md:w-8 md:h-8"
-                    strokeWidth={2.5}
-                  />
+                  <ShoppingBag size={20} className="text-red-600 md:w-8 md:h-8" strokeWidth={2.5} />
                 </div>
               </button>
             )}
 
-            {/* BOTÓN COMPARTIR REUTILIZADO */}
             <button
               onClick={handleShare}
               className="group relative flex items-center justify-center gap-2 bg-transparent border border-white/20 px-6 py-3 md:px-8 md:py-3 overflow-hidden transition-all active:scale-95"

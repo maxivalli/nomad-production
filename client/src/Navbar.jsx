@@ -146,7 +146,7 @@ const Navbar = () => {
         {/* REDES Y MENÚ MÓVIL */}
         <div className="flex-1 flex justify-end gap-6 items-center">
           <motion.a
-            href="https://instagram.com/nomadwear.ok"
+            href="https://instagram.com/nomadwearok"
             target="_blank"
             className="text-white"
             whileHover={{ color: "#dc2626", scale: 1.2, rotate: 12 }}

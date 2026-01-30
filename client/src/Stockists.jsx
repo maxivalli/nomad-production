@@ -23,18 +23,21 @@ const Stockists = () => {
       city: "SAN CRISTÓBAL,SFE",
       code: "R-04",
       img: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=1000",
+      locate: "https://maps.app.goo.gl/hWGK6FApUEWRkdPn9",
     },
     {
-      name: "Mihouse",
+      name: "Coming soon...",
       city: "SAN GUILLERMO,SFE",
       code: "R-23",
       img: "https://i.etsystatic.com/54504602/r/il/3dcc51/6777432993/il_fullxfull.6777432993_mybe.jpg",
+      locate: "",
     },
     {
-      name: "Urbano",
+      name: "Coming soon...",
       city: "CÓRDOBA,CBA",
       code: "R-51",
       img: "https://rijiz.co/wp-content/uploads/2025/07/t-shirts-1024x683.webp",
+      locate: "",
     },
   ];
 
@@ -122,9 +125,34 @@ const Stockists = () => {
                   <p className="text-gray-500 uppercase italic font-light tracking-tighter text-lg">
                     Terminal {index + 1} // Authorized Station
                   </p>
-                  <button className="whitespace-nowrap bg-white text-black font-black italic uppercase px-4 py-2 md:px-6 text-[10px] md:text-xs tracking-tighter hover:bg-red-600 hover:text-white transition-all active:scale-95 flex items-center justify-center min-w-[100px]">
-                    LOCATE +
-                  </button>
+                  {shop.locate ? (
+                    <motion.a
+                      href={shop.locate}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      // Animamos el 'outline' en lugar de 'box-shadow' para un efecto más glitch/industrial
+                      animate={{
+                        outline: [
+                          "2px solid rgba(220, 38, 38, 0)",
+                          "2px solid rgba(220, 38, 38, 0.8)",
+                          "2px solid rgba(220, 38, 38, 0)",
+                        ],
+                        outlineOffset: [0, 4, 0], 
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "easeInOut",
+                      }}
+                      className="whitespace-nowrap bg-white text-black font-black italic uppercase px-4 py-2 md:px-6 text-[10px] md:text-xs tracking-tighter hover:bg-red-600 hover:text-white transition-all active:scale-95 flex items-center justify-center min-w-[100px] border border-transparent"
+                    >
+                      LOCATE +
+                    </motion.a>
+                  ) : (
+                    <div className="whitespace-nowrap bg-white/5 text-white/20 font-black italic uppercase px-4 py-2 md:px-6 text-[10px] md:text-xs tracking-tighter flex items-center justify-center min-w-[100px] border border-white/5 cursor-not-allowed">
+                      OFFLINE
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

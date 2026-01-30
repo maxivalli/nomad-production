@@ -9,7 +9,7 @@ const Contacto = () => {
     >
       {/* Enlace al Instagram que envuelve el Marquee */}
       <a
-        href="https://instagram.com/nomadwear.ok"
+        href="https://instagram.com/nomadwear"
         target="_blank"
         rel="noopener noreferrer"
         className="relative z-10 block"
@@ -34,7 +34,7 @@ const Contacto = () => {
                   md:group-hover:[text-shadow:_-1px_-1px_0_#fff,1px_-1px_0_#fff,-1px_1px_0_#fff,1px_1px_0_#fff]
                   group-hover:text-red-600 md:group-hover:text-transparent"
                 >
-                  FOLLOW @NOMADWEAR.OK
+                  FOLLOW @NOMADWEAROK
                 </span>
                 <span className="text-3xl md:text-6xl px-6 md:px-12 opacity-20 md:opacity-10 md:group-hover:text-red-600 md:group-hover:opacity-100 transition-all duration-500">
                   ///
