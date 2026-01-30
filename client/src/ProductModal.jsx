@@ -25,18 +25,11 @@ const ProductModal = ({ item, onClose }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-    const scrollY = window.scrollY;
-    window.scrollTo(0, 100);
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-    });
-
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, []);
+  document.body.style.overflow = 'hidden';
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;

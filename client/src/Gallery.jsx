@@ -43,22 +43,22 @@ const Gallery = ({ items, setSelectedItem }) => {
   const { scrollYProgress } = useScroll({ target: targetRef });
   const [totalScroll, setTotalScroll] = useState(0);
 
-  useEffect(() => {
-    const calculateScroll = () => {
-      if (typeof window !== "undefined") {
-        const isMobile = window.innerWidth < 768;
-        const cardWidth = isMobile ? 340 : 450;
-        const gap = isMobile ? 24 : 48;
-        const padding = isMobile ? 48 : 96;
-        const contentWidth =
-          items.length * cardWidth + (items.length - 1) * gap;
-        setTotalScroll(-(contentWidth - window.innerWidth + padding));
-      }
-    };
-    calculateScroll();
-    window.addEventListener("resize", calculateScroll);
-    return () => window.removeEventListener("resize", calculateScroll);
-  }, [items.length]);
+  // useEffect(() => {
+  //   const calculateScroll = () => {
+  //     if (typeof window !== "undefined") {
+  //       const isMobile = window.innerWidth < 768;
+  //       const cardWidth = isMobile ? 340 : 450;
+  //       const gap = isMobile ? 24 : 48;
+  //       const padding = isMobile ? 48 : 96;
+  //       const contentWidth =
+  //         items.length * cardWidth + (items.length - 1) * gap;
+  //       setTotalScroll(-(contentWidth - window.innerWidth + padding));
+  //     }
+  //   };
+  //   calculateScroll();
+  //   window.addEventListener("resize", calculateScroll);
+  //   return () => window.removeEventListener("resize", calculateScroll);
+  // }, [items.length]);
 
   const xPx = useTransform(
     scrollYProgress,
