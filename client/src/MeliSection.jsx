@@ -75,7 +75,7 @@ const MeliSection = () => {
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               src={productImg}
               alt="Product View"
-              className="w-full h-auto max-h-[400px] object-contain mix-blend-multiply drop-shadow-2xl"
+              className="w-full h-auto max-h-[480px] object-contain mix-blend-multiply drop-shadow-2xl"
             />
           </div>
 
@@ -88,13 +88,13 @@ const MeliSection = () => {
             ></motion.p>
             <motion.div
               variants={itemVariants}
-              className="flex items-center justify-center md:justify-start gap-3 mb-6"
+              className="flex items-center justify-center md:justify-start gap-3 mb-20"
             >
               {/* LOGO DE MERCADO LIBRE */}
               <img
                 src={MLlogo}
                 alt="Mercado Libre Logo"
-                className="h-12 md:h-17 w-auto object-contain"
+                className="h-8 md:h-21 w-auto object-contain"
               />
               <div className="h-6 w-[1px] bg-black/20" />
               <span className="text-[10px] font-black uppercase tracking-widest text-black/60">
@@ -105,13 +105,13 @@ const MeliSection = () => {
             {/* Título: También centrado en móvil para que acompañe al logo */}
             <motion.div variants={itemVariants} className="space-y-4 mb-10">
               {/* Contenedores de checks: Ajustados para centrar en móvil */}
-              <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="flex items-center md:justify-start gap-3">
                 <ShieldCheck size={20} className="text-[#00A650] shrink-0" />
                 <p className="text-[10px] md:text-[13px] font-bold uppercase tracking-tight">
                   Compra Protegida con Mercado Pago
                 </p>
               </div>
-              <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="flex items-center md:justify-start gap-3">
                 <CheckCircle2 size={20} className="text-[#00A650] shrink-0" />
                 <p className="text-[10px] md:text-[13px] font-bold uppercase tracking-tight">
                   Envíos a todo el país por Mercado Envíos
