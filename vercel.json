@@ -15,12 +15,12 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/share/:slug",
       "destination": "/server/index.js"
     },
     {
-      "source": "/share/:slug",
-      "destination": "/api/share?slug=:slug"
+      "source": "/api/:path*",
+      "destination": "/server/index.js"
     },
     {
       "source": "/(.*)",
