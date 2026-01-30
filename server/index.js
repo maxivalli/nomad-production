@@ -181,12 +181,9 @@ const productSchema = Joi.object({
     .items(Joi.string().valid("S", "M", "L", "XL"))
     .default([]),
   purchase_link: Joi.string().uri().allow("").default(""),
-  color: Joi.array()
-    .items(Joi.string().max(50))
-    .default([])
-    .messages({
-      "array.base": "El campo color debe ser una lista de colores",
-    }),
+  color: Joi.array().items(Joi.string().max(50)).default([]).messages({
+    "array.base": "El campo color debe ser una lista de colores",
+  }),
 });
 
 const loginSchema = Joi.object({
@@ -313,7 +310,8 @@ app.get("/api/auth/verify", authenticateAdmin, (req, res) => {
 
 app.get("/share/:slug", async (req, res) => {
   const { slug } = req.params;
-  const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
+  const FRONTEND_URL =
+    process.env.FRONTEND_URL || "https://www.nomadwear.com.ar";
 
   // Función de limpieza idéntica a la del frontend
   const generarSlug = (text) => {
@@ -326,16 +324,28 @@ app.get("/share/:slug", async (req, res) => {
 
   try {
     // Buscamos todos los productos para encontrar el que coincide con el slug
-    const result = await pool.query("SELECT title, description, img FROM products");
-    
-    const producto = result.rows.find(p => generarSlug(p.title) === slug);
+    const result = await pool.query(
+      "SELECT title, description, img FROM products",
+    );
+
+    const producto = result.rows.find((p) => generarSlug(p.title) === slug);
 
     if (!producto) {
       return res.redirect(FRONTEND_URL);
     }
 
-    const titulo = `${producto.title} | NOMAD`;
-    const desc = producto.description ? producto.description.substring(0, 150) + "..." : "Explora nuestra nueva colección.";
+    const formatTitle = (text) => {
+      return text
+        .toLowerCase()
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    };
+
+    const titulo = `${formatTitle(producto.title)} | NOMAD`;
+    const desc = producto.description
+      ? producto.description.substring(0, 150) + "..."
+      : "Explora nuestra nueva colección.";
     // Usamos la primera imagen del array
     const imagen = Array.isArray(producto.img) ? producto.img[0] : producto.img;
 
@@ -386,7 +396,11 @@ app.get("/api/products", async (req, res) => {
     const normalizedProducts = result.rows.map((product) => ({
       ...product,
       img: Array.isArray(product.img) ? product.img : [product.img],
-      color: Array.isArray(product.color) ? product.color : (product.color ? [product.color] : []),
+      color: Array.isArray(product.color)
+        ? product.color
+        : product.color
+          ? [product.color]
+          : [],
     }));
 
     res.json(normalizedProducts);
