@@ -25,11 +25,11 @@ const ProductModal = ({ item, onClose }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-  document.body.style.overflow = 'hidden';
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, []);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -128,10 +128,10 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="w-screen md:w-auto h-full max-h-[100dvh] md:max-h-[90vh] object-contain shadow-2xl">
+          <div className="relative flex items-center justify-center w-full h-full p-0 md:p-4">
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
-              className={`w-full h-full object-cover transition-opacity duration-700 ${
+              className={`w-screen md:w-auto h-full max-h-[100dvh] md:max-h-[90vh] object-contain shadow-2xl ${
                 isImageLoading ? "opacity-0" : "opacity-100"
               }`}
               alt={item.title}
