@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // 1. Importamos useNavigate
+import { useNavigate } from "react-router-dom"; 
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
@@ -36,7 +36,7 @@ const Gallery = ({ items, setSelectedItem }) => {
       .replace(/[^a-z0-9\s-]/g, "") 
       .replace(/\s+/g, "-"); 
     navigate(`/producto/${slug}`);
-
+    
     setSelectedItem(item);
   };
 
