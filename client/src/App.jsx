@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // Componentes
 import PreLoader from "./PreLoader";
@@ -28,11 +28,20 @@ function App() {
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
 
-  const { slug } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  // Extraer slug del hash de la URL
+  const getSlugFromHash = () => {
+    const hash = window.location.hash;
+    const match = hash.match(/#\/producto\/([^/?]+)/);
+    return match ? match[1] : null;
+  };
 
   // Sincronizar URL con el estado del Modal (para links compartidos)
   useEffect(() => {
+    const slug = getSlugFromHash();
+    
     if (slug && products.length > 0) {
       const product = products.find((p) => {
         const cleanTitle = p.title
@@ -46,14 +55,27 @@ function App() {
 
       if (product) {
         setSelectedItem(product);
-        // Volver a "/" inmediatamente (sin que se note)
-        navigate("/", { replace: true });
+        // Limpiar la URL pero mantener el hash router
+        window.history.replaceState(null, '', '#/');
       } else {
-        // Si no encuentra el producto, ir a home
-        navigate("/", { replace: true });
+        // Si no encuentra el producto, limpiar URL
+        window.history.replaceState(null, '', '#/');
       }
     }
-  }, [slug, products, navigate]);
+  }, [products]);
+
+  // Listener para detectar cuando cierran el modal con botón atrás
+  useEffect(() => {
+    const handlePopState = () => {
+      const slug = getSlugFromHash();
+      if (!slug) {
+        setSelectedItem(null);
+      }
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Función para cerrar el modal
   const handleCloseModal = () => {

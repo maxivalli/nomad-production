@@ -22,14 +22,24 @@ const ProductModal = ({ item, onClose }) => {
     setIsImageLoading(true);
   }, [activeIdx]);
 
+  // Listener para el botón "atrás" del navegador
+  useEffect(() => {
+    const handlePopState = (e) => {
+      onClose();
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [onClose]);
+
   // Listener para tecla Escape
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
+  }, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -91,6 +101,17 @@ const ProductModal = ({ item, onClose }) => {
   const handleGlobalClick = () => {
     if (showFullText) {
       setShowFullText(false);
+    }
+  };
+
+  // Función para cerrar el modal y manejar el historial
+  const handleClose = () => {
+    // Si el modal fue abierto con pushState, ir atrás
+    if (window.history.state?.modal) {
+      window.history.back();
+    } else {
+      // Si no, solo cerrar
+      onClose();
     }
   };
 
@@ -196,7 +217,7 @@ const ProductModal = ({ item, onClose }) => {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onClose();
+          handleClose();
         }}
         className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors p-4"
       >
