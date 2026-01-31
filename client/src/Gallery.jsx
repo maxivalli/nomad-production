@@ -35,7 +35,7 @@ const Gallery = ({ items, setSelectedItem }) => {
       .trim()
       .replace(/[^a-z0-9\s-]/g, "") 
       .replace(/\s+/g, "-"); 
-    navigate(`/producto/${slug}`);
+    // navigate(`/producto/${slug}`);
     
     setSelectedItem(item);
   };
