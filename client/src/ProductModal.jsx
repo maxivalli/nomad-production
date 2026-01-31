@@ -123,7 +123,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none"
+      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none select-none"
     >
       <AnimatePresence>
         {isImageLoading && (

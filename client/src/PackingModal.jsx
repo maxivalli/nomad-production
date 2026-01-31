@@ -35,16 +35,16 @@ const PackingModal = ({ selectedImg, onClose }) => {
             <X size={42} strokeWidth={1} />
           </motion.button>
 
-          {/* Contenedor de Imagen: Eliminamos el p-4 en móvil y usamos p-0 */}
-          <div className="relative flex items-center justify-center w-full h-full p-0 md:p-4">
+          {/* CONTENEDOR DE IMAGEN: Forzamos altura completa */}
+          <div className="relative w-auto h-[100dvh] flex items-center justify-center">
             <motion.img
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              exit={{ scale: 1.1, opacity: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
               src={selectedImg}
               alt="Nomad Full View"
-              className="w-screen md:w-auto h-full max-h-[100dvh] md:max-h-[90vh] object-contain shadow-2xl"
+              className="w-auto h-full object-cover md:object-cover" 
               onClick={(e) => e.stopPropagation()}
             />
           </div>
@@ -58,7 +58,7 @@ const PackingModal = ({ selectedImg, onClose }) => {
             >
               <div className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
               <span className="text-white font-mono text-[9px] md:text-[10px] tracking-[0.4em] uppercase font-black">
-                Nomad Protective Systems // Archive_26
+                Nomad Packing System // Archive_26
               </span>
             </motion.div>
           </div>

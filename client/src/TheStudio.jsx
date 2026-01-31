@@ -69,7 +69,7 @@ const ProcessCard = ({ step }) => {
           loop
           muted
           playsInline
-          onCanPlayThrough={() => setIsVideoLoading(false)} // Se activa cuando hay suficiente video cargado
+          onCanPlayThrough={() => setIsVideoLoading(false)} 
           style={{
             filter: grayscale,
             opacity: isVideoLoading ? 0 : opacity,
