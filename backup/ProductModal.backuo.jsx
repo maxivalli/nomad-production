@@ -24,12 +24,16 @@ const ProductModal = ({ item, onClose }) => {
     setIsImageLoading(true);
   }, [activeIdx]);
 
+  // ELIMINADO: Todo el useEffect que manipulaba document.body.style.overflow
+  // Eso es lo que causaba el problema con la barra de navegación
+
   useEffect(() => {
-  document.body.style.overflow = 'hidden';
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, []);
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -100,7 +104,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 h-[100svh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
+      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-pointer touch-none"
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -198,7 +202,7 @@ const ProductModal = ({ item, onClose }) => {
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors"
+        className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors p-4"
       >
         <X size={42} strokeWidth={1} />
       </button>

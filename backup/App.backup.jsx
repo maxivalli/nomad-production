@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // 1. Importamos hooks
 
 // Componentes
 import PreLoader from "./PreLoader";
@@ -28,36 +28,38 @@ function App() {
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
 
-  const { slug } = useParams();
-  const navigate = useNavigate();
+  const { slug } = useParams(); // 2. Obtenemos el slug de la URL
+  const navigate = useNavigate(); // 3. Para poder cambiar la URL al cerrar
 
-  // Sincronizar URL con el estado del Modal (para links compartidos)
+  // Sincronizar URL con el estado del Modal
   useEffect(() => {
     if (slug && products.length > 0) {
+      // Buscamos el producto aplicando la misma limpieza que usamos al generar el link
       const product = products.find((p) => {
         const cleanTitle = p.title
           .toLowerCase()
           .trim()
-          .replace(/[^a-z0-9\s-]/g, "")
-          .replace(/\s+/g, "-");
+          .replace(/[^a-z0-9\s-]/g, "") // Borra comillas y caracteres especiales
+          .replace(/\s+/g, "-"); // Convierte espacios en guiones
 
         return cleanTitle === slug;
       });
 
       if (product) {
         setSelectedItem(product);
-        // Volver a "/" inmediatamente (sin que se note)
-        navigate("/", { replace: true });
       } else {
-        // Si no encuentra el producto, ir a home
+        // Si después de limpiar no hay coincidencia, volvemos a la home
         navigate("/", { replace: true });
       }
+    } else if (!slug) {
+      setSelectedItem(null);
     }
   }, [slug, products, navigate]);
 
-  // Función para cerrar el modal
+  // Función para cerrar el modal y actualizar la URL
   const handleCloseModal = () => {
     setSelectedItem(null);
+    navigate("/"); // Quitamos el slug de la barra de direcciones
   };
 
   // Mostrar error si hay problemas cargando productos
@@ -65,7 +67,7 @@ function App() {
     if (error) {
       toast.error(error);
     }
-  }, [error, toast]);
+  }, [error]);
 
   // Timer del Loader
   useEffect(() => {
@@ -129,7 +131,7 @@ function App() {
           {selectedItem && (
             <ProductModal
               item={selectedItem}
-              onClose={handleCloseModal}
+              onClose={handleCloseModal} // 4. Usamos la nueva función de cierre
             />
           )}
         </AnimatePresence>

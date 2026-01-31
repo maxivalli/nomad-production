@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; 
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
   const [collectionName, setCollectionName] = useState("");
   const [loaded, setLoaded] = useState({});
 
@@ -34,14 +34,10 @@ const Gallery = ({ items, setSelectedItem }) => {
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, "") 
-      .replace(/\s+/g, "-");
+      .replace(/\s+/g, "-"); 
+    // navigate(`/producto/${slug}`);
     
-    // Primero establecer el item (esto abre el modal)
     setSelectedItem(item);
-    
-    // Luego navegar a la ruta (esto permite compartir el link)
-    // Con replace: true para que no se agregue al historial
-    navigate(`/producto/${slug}`, { replace: true });
   };
 
   const { scrollYProgress } = useScroll({ target: targetRef });

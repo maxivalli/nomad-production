@@ -8,13 +8,11 @@ import {
   ShoppingBag,
   Share2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const ProductModal = ({ item, onClose }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
-  const navigate = useNavigate();
 
   if (!item) return null;
 
@@ -24,9 +22,7 @@ const ProductModal = ({ item, onClose }) => {
     setIsImageLoading(true);
   }, [activeIdx]);
 
-  // ELIMINADO: Todo el useEffect que manipulaba document.body.style.overflow
-  // Eso es lo que causaba el problema con la barra de navegación
-
+  // Listener para tecla Escape
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") onClose();
@@ -68,7 +64,7 @@ const ProductModal = ({ item, onClose }) => {
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
-    const shareUrl = `${window.location.origin}/share/${slug}`;
+    const shareUrl = `${window.location.origin}/#/producto/${slug}`;
 
     if (navigator.share) {
       navigator
@@ -104,7 +100,7 @@ const ProductModal = ({ item, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-pointer touch-none"
+      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none"
     >
       <AnimatePresence>
         {isImageLoading && (
