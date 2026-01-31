@@ -13,22 +13,45 @@ const Navbar = () => {
     "Packing",
     "Studio",
     "Tiendas",
+    "Retailers",
     "Contacto",
   ];
 
-  const handleScrollToSection = (section) => {
-    // Primero navega a la home si no estás ahí
-    if (window.location.hash !== "#/" && window.location.hash !== "") {
-      navigate("/");
+  const handleLinkClick = (item) => {
+    // 1. Caso especial: Si ya estás en Retailers y haces clic en Retailers, no hace nada
+    if (item === "Retailers" && window.location.hash.includes("/retailers")) {
+      setIsMenuOpen(false);
+      return;
     }
 
-    // Pequeño delay para asegurar que estás en home antes de hacer scroll
-    setTimeout(() => {
-      const element = document.getElementById(section.toLowerCase());
+    // 2. Navegar a la página de Retailers
+    if (item === "Retailers") {
+      navigate("/retailers");
+      setIsMenuOpen(false);
+      return;
+    }
+
+    // 3. Si quieres ir a una sección de la Home pero estás en otra ruta (como Retailers)
+    const isHome = window.location.hash === "#/" || window.location.hash === "";
+
+    if (!isHome) {
+      // Primero volvemos a la Home
+      navigate("/");
+
+      // Esperamos a que el componente App se monte para buscar el ID
+      setTimeout(() => {
+        const element = document.getElementById(item.toLowerCase());
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 300); // Un delay un poco más largo para asegurar la carga
+    } else {
+      // Si ya estamos en Home, scroll normal
+      const element = document.getElementById(item.toLowerCase());
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
       }
-    }, 100);
+    }
 
     setIsMenuOpen(false);
   };
@@ -116,7 +139,7 @@ const Navbar = () => {
           {menuLinks.map((item) => (
             <motion.button
               key={item}
-              onClick={() => handleScrollToSection(item)}
+              onClick={() => handleLinkClick(item)} // Cambiamos a la nueva función
               initial="initial"
               whileHover="hover"
               className="relative py-2 text-[10px] tracking-[0.4em] uppercase font-medium cursor-pointer text-white"
@@ -126,17 +149,15 @@ const Navbar = () => {
                   initial: { opacity: 1 },
                   hover: { opacity: 0.6 },
                 }}
+                className={item === "Retailers" ? "text-red-600 font-bold" : ""} // Opcional: Destacar Retailers
               >
                 {item}
               </motion.span>
-
-              {/* LÍNEA ROJA EXPANSIVA */}
               <motion.span
                 variants={{
                   initial: { width: "0%", left: "50%" },
                   hover: { width: "100%", left: "0%" },
                 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 className="absolute bottom-0 h-[1px] bg-red-600"
               />
             </motion.button>
@@ -188,11 +209,13 @@ const Navbar = () => {
               {menuLinks.map((item, idx) => (
                 <motion.button
                   key={item}
-                  onClick={() => handleScrollToSection(item)}
+                  onClick={() => handleLinkClick(item)}
                   initial={{ x: 30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 * idx }}
-                  className="text-4xl font-black uppercase italic tracking-tighter text-white hover:text-red-600 transition-colors text-left flex items-baseline"
+                  className={`text-4xl font-black uppercase italic tracking-tighter hover:text-red-600 transition-colors text-left flex items-baseline ${
+                    item === "Retailers" ? "text-red-600" : "text-white"
+                  }`}
                 >
                   {item}
                   {/* PUNTO ROJO MÓVIL CON PULSO SUTIL */}

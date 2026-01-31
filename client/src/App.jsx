@@ -62,10 +62,20 @@ function App() {
   }, [error, toast]);
 
   // Timer del Loader
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
+  // Dentro de App.js
+useEffect(() => {
+  const hasLoaded = sessionStorage.getItem("app_loaded");
+
+  if (hasLoaded) {
+    setLoading(false); // Si ya cargó antes, lo desactivamos instantáneamente
+  } else {
+    const timer = setTimeout(() => {
+      setLoading(false);
+      sessionStorage.setItem("app_loaded", "true");
+    }, 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }
+}, []);
 
   // Bloqueo de Scroll global
   useEffect(() => {
@@ -75,7 +85,6 @@ function App() {
   return (
     <>
       <toast.ToastContainer />
-      <PreLoader />
 
       <div className="bg-black text-white selection:bg-white selection:text-black">
         <Navbar />

@@ -1,16 +1,19 @@
-import React, { useEffect, useState, lazy, Suspense } from 'react' // 1. Agregamos lazy y Suspense
-import ReactDOM from 'react-dom/client'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import App from './App.jsx'
-import Login from './Login.jsx'
-import api from './services/api.js'
-import { Loader2 } from 'lucide-react' // Opcional: para el spinner
-import './index.css'
+import React, { useEffect, useState, lazy, Suspense } from "react";
+import { useLocation } from "react-router-dom";
+import ReactDOM from "react-dom/client";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import App from "./App.jsx";
+import Login from "./Login.jsx";
+import Retailers from "./Retailers.jsx";
+import PreLoader from "./PreLoader.jsx";
+import api from "./services/api.js";
+import { Loader2 } from "lucide-react";
+import "./index.css";
 
-// 2. Cargamos AdminPanel de forma perezosa (Lazy Load)
-const AdminPanel = lazy(() => import('./AdminPanel.jsx'));
+// Lazy Load del Panel
+const AdminPanel = lazy(() => import("./AdminPanel.jsx"));
 
-// --- COMPONENTE DE PROTECCIÓN MEJORADO ---
+// --- 1. COMPONENTE DE PROTECCIÓN DE RUTAS ---
 const PrivateRoute = ({ children }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -45,7 +48,7 @@ const PrivateRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-// 3. Componente de carga para el Suspense (Fallback)
+// --- 2. FALLBACK PARA SUSPENSE ---
 const PageLoader = () => (
   <div className="min-h-screen bg-black flex items-center justify-center">
     <div className="flex flex-col items-center gap-3">
@@ -57,26 +60,71 @@ const PageLoader = () => (
   </div>
 );
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    // Forzamos el scroll al inicio cada vez que cambia la ruta
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
+// --- 3. COMPONENTE ROOT (Orquestador Global) ---
+const Root = () => {
+  const [showLoader, setShowLoader] = useState(false);
+
+  useEffect(() => {
+    // Intentar leer de sessionStorage de forma segura para evitar el error de "Access denied"
+    let hasLoadedBefore = false;
+    try {
+      hasLoadedBefore = sessionStorage.getItem("app_loaded");
+    } catch (e) {
+      console.warn("Storage access not allowed, loader will show every time.");
+    }
+
+    if (!hasLoadedBefore) {
+      setShowLoader(true);
+      const timer = setTimeout(() => {
+        setShowLoader(false);
+        try {
+          sessionStorage.setItem("app_loaded", "true");
+        } catch (e) {}
+      }, 2500); // Ajusta el tiempo del loader aquí
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  return (
     <HashRouter>
+      <ScrollToTop />
+      {showLoader && <PreLoader />}
+
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/producto/:slug" element={<App />} />
         <Route path="/login" element={<Login />} />
-        <Route 
-          path="/admin" 
+        <Route path="/retailers" element={<Retailers />} />
+        <Route
+          path="/admin"
           element={
             <PrivateRoute>
-              {/* 4. Envolvemos el componente lazy en Suspense */}
               <Suspense fallback={<PageLoader />}>
                 <AdminPanel />
               </Suspense>
             </PrivateRoute>
-          } 
+          }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </HashRouter>
+  );
+};
+
+// --- 4. RENDER FINAL ---
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <Root />
   </React.StrictMode>,
-)
+);
