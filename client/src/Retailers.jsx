@@ -105,12 +105,12 @@ const Retailers = () => {
                 <div className="space-y-6">
                   <div className="relative border-b border-white/20 focus-within:border-red-600 transition-colors group">
                     <label className="text-[9px] uppercase tracking-widest text-red-600 font-bold">Razon Social / Local</label>
-                    <div className="flex items-center gap-3 pb-2"><User size={16} className="text-white/20"/><input required name="nombre" value={formData.nombre} onChange={handleChange} placeholder="NOMBRE" className="bg-transparent border-none outline-none w-full text-sm uppercase tracking-tighter placeholder:text-white/5"/></div>
+                    <div className="flex items-center gap-3 pb-2"><User size={16} className="text-white/30"/><input required name="nombre" value={formData.nombre} onChange={handleChange} placeholder="NOMBRE" className="bg-transparent border-none outline-none w-full text-sm uppercase tracking-tighter placeholder:text-white/30"/></div>
                   </div>
 
                   <div className="relative border-b border-white/20 focus-within:border-red-600 transition-colors group">
                     <label className="text-[9px] uppercase tracking-widest text-red-600 font-bold">Localidad</label>
-                    <div className="flex items-center gap-3 pb-2"><MapPin size={16} className="text-white/20"/><input required name="localidad" value={formData.localidad} onChange={handleChange} placeholder="CIUDAD, PAIS" className="bg-transparent border-none outline-none w-full text-sm uppercase tracking-tighter placeholder:text-white/5"/></div>
+                    <div className="flex items-center gap-3 pb-2"><MapPin size={16} className="text-white/30"/><input required name="localidad" value={formData.localidad} onChange={handleChange} placeholder="CIUDAD, PAIS" className="bg-transparent border-none outline-none w-full text-sm uppercase tracking-tighter placeholder:text-white/30"/></div>
                   </div>
 
                   <div className="relative border-b border-white/20 focus-within:border-red-600 transition-colors group">
@@ -118,7 +118,7 @@ const Retailers = () => {
                       <label className="text-[9px] uppercase tracking-widest text-red-600 font-bold">Propuesta / Stock</label>
                       <span className="text-[8px] text-white/30">{formData.mensaje.length}/{CHARACTER_LIMIT}</span>
                     </div>
-                    <div className="flex items-start gap-3 pb-2 pt-2"><MessageSquare size={16} className="text-white/20 mt-1"/><textarea required name="mensaje" rows="4" value={formData.mensaje} onChange={handleChange} placeholder="EJ: INTERESADO EN CONSIGNACIÓN..." className="bg-transparent border-none outline-none w-full text-sm uppercase tracking-tighter placeholder:text-white/5 resize-none"/></div>
+                    <div className="flex items-start gap-3 pb-2 pt-2"><MessageSquare size={16} className="text-white/30 mt-1"/><textarea required name="mensaje" rows="4" value={formData.mensaje} onChange={handleChange} placeholder="EJ: INTERESADO EN CONSIGNACIÓN..." className="bg-transparent border-none outline-none w-full text-sm uppercase tracking-tighter placeholder:text-white/30 resize-none"/></div>
                   </div>
                 </div>
 
