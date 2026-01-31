@@ -1,9 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom"; 
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
+  const navigate = useNavigate(); 
   const [collectionName, setCollectionName] = useState("");
   const [loaded, setLoaded] = useState({});
 
@@ -32,18 +34,10 @@ const Gallery = ({ items, setSelectedItem }) => {
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, "") 
-      .replace(/\s+/g, "-");
+      .replace(/\s+/g, "-"); 
+    // navigate(`/producto/${slug}`);
     
-    // Primero establecer el item (esto abre el modal)
     setSelectedItem(item);
-    
-    // Cambiar URL usando pushState (NO despliega la barra)
-    const newUrl = `${window.location.pathname}#/producto/${slug}`;
-    window.history.pushState(
-      { modal: true, itemId: item.id },
-      '',
-      newUrl
-    );
   };
 
   const { scrollYProgress } = useScroll({ target: targetRef });
