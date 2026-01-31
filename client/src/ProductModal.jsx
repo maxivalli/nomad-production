@@ -19,6 +19,7 @@ const ProductModal = ({ item, onClose }) => {
 
   const images = Array.isArray(item.img) ? item.img : [item.img];
 
+  // Efecto para resetear el loader cada vez que cambia la imagen activa
   useEffect(() => {
     setIsImageLoading(true);
   }, [activeIdx]);
@@ -28,9 +29,8 @@ const ProductModal = ({ item, onClose }) => {
     const handlePopState = () => {
       onClose();
     };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [onClose]);
 
   // Listener para tecla Escape
@@ -60,14 +60,28 @@ const ProductModal = ({ item, onClose }) => {
     azul: "#2563eb",
   };
 
+  // NAVEGACIÓN CON LÍMITES BLOQUEADOS (No infinito)
   const nextImg = (e) => {
-    e.stopPropagation();
-    setActiveIdx((prev) => (prev + 1) % images.length);
+    if (e) e.stopPropagation();
+    if (activeIdx < images.length - 1) {
+      setActiveIdx((prev) => prev + 1);
+    }
   };
 
   const prevImg = (e) => {
-    e.stopPropagation();
-    setActiveIdx((prev) => (prev - 1 + images.length) % images.length);
+    if (e) e.stopPropagation();
+    if (activeIdx > 0) {
+      setActiveIdx((prev) => prev - 1);
+    }
+  };
+
+  const onDragEnd = (e, { offset }) => {
+    // Solo permite swipe si hay imágenes en esa dirección
+    if (offset.x < -dragThreshold && activeIdx < images.length - 1) {
+      nextImg();
+    } else if (offset.x > dragThreshold && activeIdx > 0) {
+      prevImg();
+    }
   };
 
   const handleShare = (e) => {
@@ -107,25 +121,13 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  // Función para cerrar el modal
   const handleClose = () => {
-    // Si hay historial del modal (state.modal === true), ir atrás
     if (window.history.state?.modal) {
       window.history.back();
     } else {
-      // Si no hay historial, solo cerrar
       onClose();
     }
   };
-
-  const onDragEnd = (e, { offset, velocity }) => {
-  // Si el arrastre fue mayor al umbral o la velocidad es alta, cambiamos de imagen
-  if (offset.x < -dragThreshold) {
-    nextImg(e);
-  } else if (offset.x > dragThreshold) {
-    prevImg(e);
-  }
-};
 
   return (
     <motion.div
@@ -135,7 +137,7 @@ const ProductModal = ({ item, onClose }) => {
       onClick={handleGlobalClick}
       className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none select-none"
     >
-      {/* LOADER DE IMAGEN: Ahora solo se muestra si la imagen activa realmente no ha cargado */}
+      {/* CAPA DEL LOADER */}
       <AnimatePresence>
         {isImageLoading && (
           <motion.div
@@ -153,7 +155,7 @@ const ProductModal = ({ item, onClose }) => {
         )}
       </AnimatePresence>
 
-      {/* ÁREA DEL CARRUSEL 3D */}
+      {/* ÁREA DE CONTENIDO: CARRUSEL 3D LINEAL */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden touch-pan-y perspective-[1200px]">
         {images.map((img, index) => {
           const offset = index - activeIdx;
@@ -162,14 +164,14 @@ const ProductModal = ({ item, onClose }) => {
           return (
             <motion.div
               key={index}
-              drag="x"
+              drag={images.length > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
               onDragEnd={onDragEnd}
               initial={false}
               animate={{
                 x: `${offset * 85}%`,
                 scale: isActive ? 1 : 0.7,
-                opacity: isActive ? 1 : 0.6,
+                opacity: isActive ? 1 : 0.6, // Mayor opacidad para fotos laterales
                 zIndex: isActive ? 20 : 10,
                 rotateY: isActive ? 0 : offset > 0 ? -30 : 30,
               }}
@@ -194,16 +196,17 @@ const ProductModal = ({ item, onClose }) => {
                   alt={`${item.title} - ${index}`}
                   draggable="false"
                   onLoad={() => {
-                    // Solo quitamos el loading si es la imagen que el usuario debe ver
                     if (isActive) setIsImageLoading(false);
                   }}
-                  // Fallback: si la imagen ya estaba en cache y no dispara onLoad
                   ref={(el) => {
+                    // Fix infalible para imágenes cacheadas
                     if (el && el.complete && isActive && isImageLoading) {
                       setIsImageLoading(false);
                     }
                   }}
                 />
+                
+                {/* VELO DE OSCURIDAD SUTIL PARA LATERALES */}
                 {!isActive && (
                   <div className="absolute inset-0 bg-black/20 transition-opacity duration-500" />
                 )}
@@ -235,25 +238,35 @@ const ProductModal = ({ item, onClose }) => {
         />
       </div>
 
-      {/* CONTROLES DE NAVEGACIÓN */}
+      {/* BOTONES DE NAVEGACIÓN CON LÓGICA DE VISIBILIDAD */}
       {images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between px-2 md:px-10 z-[115] pointer-events-none">
           <button
             onClick={prevImg}
-            className="pointer-events-auto p-4 text-white/40 hover:text-white transition-colors"
+            disabled={activeIdx === 0}
+            className={`pointer-events-auto p-4 transition-all duration-300 ${
+              activeIdx === 0 
+              ? "text-white/0 opacity-0 cursor-default" 
+              : "text-white/40 hover:text-white"
+            }`}
           >
             <ArrowLeft size={30} strokeWidth={1} />
           </button>
           <button
             onClick={nextImg}
-            className="pointer-events-auto p-4 text-white/40 hover:text-white transition-colors"
+            disabled={activeIdx === images.length - 1}
+            className={`pointer-events-auto p-4 transition-all duration-300 ${
+              activeIdx === images.length - 1 
+              ? "text-white/0 opacity-0 cursor-default" 
+              : "text-white/40 hover:text-white"
+            }`}
           >
             <ArrowRight size={30} strokeWidth={1} />
           </button>
         </div>
       )}
 
-      {/* INDICADORES */}
+      {/* INDICADORES DE POSICIÓN */}
       <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-[120]">
         {images.map((_, i) => (
           <div
@@ -278,7 +291,7 @@ const ProductModal = ({ item, onClose }) => {
         <X size={42} strokeWidth={1} />
       </button>
 
-      {/* TEXTOS Y DETALLES */}
+      {/* INFORMACIÓN DEL PRODUCTO */}
       <div className="relative z-[110] w-full h-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
