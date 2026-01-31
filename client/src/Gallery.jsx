@@ -76,7 +76,7 @@ const Gallery = ({ items, setSelectedItem }) => {
     <section
       id="colecciones"
       ref={targetRef}
-      className="relative h-[auto] bg-neutral-900/20"
+      className="relative h-[600vh] bg-neutral-900/20"
     >
       <div className="sticky top-5 h-screen flex flex-col justify-center overflow-hidden">
         <motion.div
