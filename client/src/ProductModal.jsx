@@ -8,13 +8,11 @@ import {
   ShoppingBag,
   Share2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const ProductModal = ({ item, onClose }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
-  const navigate = useNavigate();
 
   if (!item) return null;
 
@@ -24,13 +22,26 @@ const ProductModal = ({ item, onClose }) => {
     setIsImageLoading(true);
   }, [activeIdx]);
 
+  // Listener para el botón "atrás" del navegador (móvil y desktop)
+  useEffect(() => {
+    const handlePopState = () => {
+      onClose();
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [onClose]);
+
+  // Listener para tecla Escape
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        handleClose();
+      }
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
+  }, []);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -65,7 +76,7 @@ const ProductModal = ({ item, onClose }) => {
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
-    const shareUrl = `${window.location.origin}/share/${slug}`;
+    const shareUrl = `${window.location.origin}/#/producto/${slug}`;
 
     if (navigator.share) {
       navigator
@@ -95,13 +106,24 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
+  // Función para cerrar el modal
+  const handleClose = () => {
+    // Si hay historial del modal (state.modal === true), ir atrás
+    if (window.history.state?.modal) {
+      window.history.back();
+    } else {
+      // Si no hay historial, solo cerrar
+      onClose();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={handleGlobalClick}
-      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-pointer touch-none"
+      className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none"
     >
       <AnimatePresence>
         {isImageLoading && (
@@ -197,7 +219,7 @@ const ProductModal = ({ item, onClose }) => {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onClose();
+          handleClose();
         }}
         className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors p-4"
       >

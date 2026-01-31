@@ -1,11 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
-  const navigate = useNavigate();
   const [collectionName, setCollectionName] = useState("");
   const [loaded, setLoaded] = useState({});
 
@@ -30,14 +28,16 @@ const Gallery = ({ items, setSelectedItem }) => {
   }, []);
 
   const handleOpenProduct = (item) => {
-    const slug = item.title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-    navigate(`/producto/${slug}`);
-
+    // Abrir el modal
     setSelectedItem(item);
+    
+    // Crear entrada en el historial SIN cambiar la URL visible
+    // Esto permite que el botón "atrás" funcione
+    window.history.pushState(
+      { modal: true, itemId: item.id },
+      '',
+      window.location.href // Misma URL, solo agrega al historial
+    );
   };
 
   const { scrollYProgress } = useScroll({ target: targetRef });
