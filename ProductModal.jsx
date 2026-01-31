@@ -24,6 +24,9 @@ const ProductModal = ({ item, onClose }) => {
     setIsImageLoading(true);
   }, [activeIdx]);
 
+  // ELIMINADO: Todo el useEffect que manipulaba document.body.style.overflow
+  // Eso es lo que causaba el problema con la barra de navegación
+
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") onClose();
