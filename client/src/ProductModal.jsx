@@ -14,16 +14,18 @@ const ProductModal = ({ item, onClose }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
+  const [modalHeight, setModalHeight] = useState(null);
   const navigate = useNavigate();
 
   if (!item) return null;
 
   const images = Array.isArray(item.img) ? item.img : [item.img];
 
+  /* ───────────── FREEZE HEIGHT (MOBILE SAFE) ───────────── */
   useEffect(() => {
-    window.scrollTo(0, 1);
-
+    setModalHeight(window.innerHeight);
     document.body.style.overflow = "hidden";
+
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -66,6 +68,7 @@ const ProductModal = ({ item, onClose }) => {
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
+
     const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
@@ -90,27 +93,24 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  const handleGlobalClick = () => {
-    if (showFullText) {
-      setShowFullText(false);
-    }
-  };
+  if (!modalHeight) return null;
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={handleGlobalClick}
-      className="fixed inset-0 h-[100svh] z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
+      style={{ height: modalHeight }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black overflow-hidden cursor-default"
     >
+      {/* LOADER */}
       <AnimatePresence>
         {isImageLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10"
+            className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10 z-[200]"
           >
             <Loader2
               className="text-red-600 animate-spin"
@@ -121,6 +121,7 @@ const ProductModal = ({ item, onClose }) => {
         )}
       </AnimatePresence>
 
+      {/* IMAGEN */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeIdx}
@@ -130,7 +131,10 @@ const ProductModal = ({ item, onClose }) => {
           transition={{ duration: 0.4 }}
           className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="relative h-[100svh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+          <div
+            style={{ height: modalHeight }}
+            className="relative w-full max-w-[420px] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center"
+          >
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
               className={`w-full h-full object-cover transition-opacity duration-700 ${
@@ -165,6 +169,7 @@ const ProductModal = ({ item, onClose }) => {
         </motion.div>
       </AnimatePresence>
 
+      {/* NAV */}
       {images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between px-2 md:px-10 z-[115] pointer-events-none">
           <button
@@ -182,6 +187,7 @@ const ProductModal = ({ item, onClose }) => {
         </div>
       )}
 
+      {/* INDICADORES */}
       <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-[120]">
         {images.map((_, i) => (
           <div
@@ -195,16 +201,15 @@ const ProductModal = ({ item, onClose }) => {
         ))}
       </div>
 
+      {/* CLOSE */}
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
+        onClick={onClose}
         className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors"
       >
         <X size={42} strokeWidth={1} />
       </button>
 
+      {/* INFO */}
       <div className="relative z-[110] w-full h-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -216,7 +221,9 @@ const ProductModal = ({ item, onClose }) => {
               {item.title.split(" ").map((word, index) => (
                 <span
                   key={index}
-                  className={`block ${index === 0 ? "text-red-600" : "text-white"}`}
+                  className={`block ${
+                    index === 0 ? "text-red-600" : "text-white"
+                  }`}
                 >
                   {word}
                 </span>
@@ -224,10 +231,7 @@ const ProductModal = ({ item, onClose }) => {
             </h2>
 
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowFullText(!showFullText);
-              }}
+              onClick={() => setShowFullText(!showFullText)}
               className="mb-4 text-[8px] md:text-[10px] uppercase tracking-[0.2em] text-white/50 hover:text-red-600 transition-colors font-bold underline decoration-red-600 underline-offset-4"
             >
               {showFullText ? "— OCULTAR DETALLES" : "+ VER DETALLES"}
@@ -241,7 +245,6 @@ const ProductModal = ({ item, onClose }) => {
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.4, ease: "easeInOut" }}
                   className="overflow-hidden"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <p className="text-gray-300 text-[10px] md:text-sm mb-4 md:mb-8 max-w-[190px] md:max-w-md italic font-light leading-relaxed text-justify">
                     {item.description}
