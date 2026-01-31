@@ -13,6 +13,7 @@ const ProductModal = ({ item, onClose }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
+  const dragThreshold = 50;
 
   if (!item) return null;
 
@@ -27,9 +28,9 @@ const ProductModal = ({ item, onClose }) => {
     const handlePopState = () => {
       onClose();
     };
-    
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [onClose]);
 
   // Listener para tecla Escape
@@ -117,6 +118,15 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
+  const onDragEnd = (e, { offset, velocity }) => {
+  // Si el arrastre fue mayor al umbral o la velocidad es alta, cambiamos de imagen
+  if (offset.x < -dragThreshold) {
+    nextImg(e);
+  } else if (offset.x > dragThreshold) {
+    prevImg(e);
+  }
+};
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -125,13 +135,14 @@ const ProductModal = ({ item, onClose }) => {
       onClick={handleGlobalClick}
       className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none select-none"
     >
+      {/* LOADER DE IMAGEN: Ahora solo se muestra si la imagen activa realmente no ha cargado */}
       <AnimatePresence>
         {isImageLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10"
+            className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10 z-[140] pointer-events-none"
           >
             <Loader2
               className="text-red-600 animate-spin"
@@ -142,50 +153,89 @@ const ProductModal = ({ item, onClose }) => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+      {/* ÁREA DEL CARRUSEL 3D */}
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden touch-pan-y perspective-[1200px]">
+        {images.map((img, index) => {
+          const offset = index - activeIdx;
+          const isActive = index === activeIdx;
+
+          return (
+            <motion.div
+              key={index}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={onDragEnd}
+              initial={false}
+              animate={{
+                x: `${offset * 85}%`,
+                scale: isActive ? 1 : 0.7,
+                opacity: isActive ? 1 : 0.6,
+                zIndex: isActive ? 20 : 10,
+                rotateY: isActive ? 0 : offset > 0 ? -30 : 30,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 25,
+              }}
+              style={{ transformStyle: "preserve-3d" }}
+              className="absolute h-[60dvh] md:h-[80dvh] aspect-[2/3] cursor-grab active:cursor-grabbing"
+              onClick={(e) => {
+                if (!isActive) {
+                  e.stopPropagation();
+                  setActiveIdx(index);
+                }
+              }}
+            >
+              <div className="relative w-full h-full shadow-[0_30px_60px_rgba(0,0,0,0.8)] border border-white/5 bg-neutral-900">
+                <img
+                  src={optimizeCloudinaryUrl(img)}
+                  className="w-full h-full object-cover"
+                  alt={`${item.title} - ${index}`}
+                  draggable="false"
+                  onLoad={() => {
+                    // Solo quitamos el loading si es la imagen que el usuario debe ver
+                    if (isActive) setIsImageLoading(false);
+                  }}
+                  // Fallback: si la imagen ya estaba en cache y no dispara onLoad
+                  ref={(el) => {
+                    if (el && el.complete && isActive && isImageLoading) {
+                      setIsImageLoading(false);
+                    }
+                  }}
+                />
+                {!isActive && (
+                  <div className="absolute inset-0 bg-black/20 transition-opacity duration-500" />
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* CAPA DE DEGRADADOS DINÁMICOS */}
+      <div className="absolute inset-0 pointer-events-none z-[105]">
         <motion.div
-          key={activeIdx}
-          initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.4 }}
-          className="absolute inset-0 w-full h-full flex items-center justify-center"
-        >
-          <div className="relative h-[100dvh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
-            <img
-              src={optimizeCloudinaryUrl(images[activeIdx])}
-              className={`w-full h-full object-cover transition-opacity duration-700 ${
-                isImageLoading ? "opacity-0" : "opacity-100"
-              }`}
-              alt={item.title}
-              onLoad={() => setIsImageLoading(false)}
-            />
-          </div>
+          animate={{
+            background: showFullText
+              ? "linear-gradient(to top, black 40%, rgba(0,0,0,0.7) 70%, transparent 100%)"
+              : "linear-gradient(to top, black 0%, rgba(0,0,0,0.5) 10%, transparent 50%)",
+          }}
+          transition={{ duration: 0.5 }}
+          className="absolute inset-0 md:hidden"
+        />
+        <motion.div
+          animate={{
+            background: showFullText
+              ? "linear-gradient(to right, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)"
+              : "linear-gradient(to right, rgba(0,0,0,0.8) 0%, transparent 50%)",
+          }}
+          transition={{ duration: 0.5 }}
+          className="hidden md:block absolute inset-0"
+        />
+      </div>
 
-          {/* CAPA DE DEGRADADOS DINÁMICOS */}
-          <div className="absolute inset-0 pointer-events-none z-[105]">
-            <motion.div
-              animate={{
-                background: showFullText
-                  ? "linear-gradient(to top, black 40%, rgba(0,0,0,0.7) 70%, transparent 100%)"
-                  : "linear-gradient(to top, black 0%, rgba(0,0,0,0.5) 10%, transparent 50%)",
-              }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 md:hidden"
-            />
-            <motion.div
-              animate={{
-                background: showFullText
-                  ? "linear-gradient(to right, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)"
-                  : "linear-gradient(to right, rgba(0,0,0,0.8) 0%, transparent 50%)",
-              }}
-              transition={{ duration: 0.5 }}
-              className="hidden md:block absolute inset-0"
-            />
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
+      {/* CONTROLES DE NAVEGACIÓN */}
       {images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between px-2 md:px-10 z-[115] pointer-events-none">
           <button
@@ -203,6 +253,7 @@ const ProductModal = ({ item, onClose }) => {
         </div>
       )}
 
+      {/* INDICADORES */}
       <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-[120]">
         {images.map((_, i) => (
           <div
@@ -216,6 +267,7 @@ const ProductModal = ({ item, onClose }) => {
         ))}
       </div>
 
+      {/* BOTÓN CERRAR */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -226,6 +278,7 @@ const ProductModal = ({ item, onClose }) => {
         <X size={42} strokeWidth={1} />
       </button>
 
+      {/* TEXTOS Y DETALLES */}
       <div className="relative z-[110] w-full h-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
