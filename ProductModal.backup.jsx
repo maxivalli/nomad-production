@@ -108,7 +108,7 @@ const ProductModal = ({ item, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 w-full flex items-center justify-center p-4 md:p-10"
+            className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10"
           >
             <Loader2
               className="text-red-600 animate-spin"
@@ -126,12 +126,12 @@ const ProductModal = ({ item, onClose }) => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.4 }}
-          className="absolute inset-0 w-full flex items-center justify-center"
+          className="absolute inset-0 w-full h-full flex items-center justify-center"
         >
-          <div className="relative h-[100svh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+          <div className="relative h-[100dvh] aspect-[2/3] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
             <img
               src={optimizeCloudinaryUrl(images[activeIdx])}
-              className={`w-full object-cover transition-opacity duration-700 ${
+              className={`w-full h-full object-cover transition-opacity duration-700 ${
                 isImageLoading ? "opacity-0" : "opacity-100"
               }`}
               alt={item.title}
@@ -203,7 +203,7 @@ const ProductModal = ({ item, onClose }) => {
         <X size={42} strokeWidth={1} />
       </button>
 
-      <div className="relative z-[110] w-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">
+      <div className="relative z-[110] w-full h-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

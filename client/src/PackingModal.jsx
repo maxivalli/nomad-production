@@ -20,7 +20,7 @@ const PackingModal = ({ selectedImg, onClose }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-10 cursor-zoom-out touch-none"
+          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-10 touch-none"
         >
           {/* Botón de Cierre - Más grande en móvil para accesibilidad */}
           <motion.button
