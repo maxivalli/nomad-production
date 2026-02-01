@@ -68,10 +68,10 @@ const Stockists = () => {
             whileInView={{ opacity: 1 }}
             className="text-red-600 text-[10px] font-bold uppercase tracking-[0.4em] block mb-1"
           >
-            Offline Terminals
+            Terminales offline
           </motion.span>
           <h2 className="text-white text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.75]">
-            official <br /> <span className="text-red-600">retailers</span>
+            tiendas <br /> <span className="text-red-600">oficiales</span>
           </h2>
         </div>
 
@@ -123,7 +123,7 @@ const Stockists = () => {
 
                 <div className="mt-8 flex justify-between items-end">
                   <p className="text-gray-500 uppercase italic font-light tracking-tighter text-lg">
-                    Terminal {index + 1} // Authorized Station
+                    Terminal {index + 1} // Tienda autorizada
                   </p>
                   {shop.locate ? (
                     <motion.a
@@ -146,7 +146,7 @@ const Stockists = () => {
                       }}
                       className="whitespace-nowrap bg-white text-black font-black italic uppercase px-4 py-2 md:px-6 text-[10px] md:text-xs tracking-tighter hover:bg-red-600 hover:text-white transition-all active:scale-95 flex items-center justify-center min-w-[100px] border border-transparent"
                     >
-                      LOCATE +
+                      LOCALIZACIÓN +
                     </motion.a>
                   ) : (
                     <div className="whitespace-nowrap bg-white/5 text-white/20 font-black italic uppercase px-4 py-2 md:px-6 text-[10px] md:text-xs tracking-tighter flex items-center justify-center min-w-[100px] border border-white/5 cursor-not-allowed">

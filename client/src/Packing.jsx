@@ -107,12 +107,12 @@ const Packaging = () => {
           whileInView={{ opacity: 1, x: 0 }}
           className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-2 pl-1"
         >
-          THE EXPERIENCE
+          LA EXPERIENCIA
         </motion.span>
         <div className="mb-24 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           {/* ... Tu Encabezado ... */}
           <h2 className="text-white text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.8]">
-            Premium <br/> Packaging
+            Packaging <br/> Premium
           </h2>
         </div>
 

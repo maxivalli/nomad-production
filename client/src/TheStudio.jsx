@@ -26,7 +26,7 @@ const ProcessCard = ({ step }) => {
   });
 
   const grayscale = useTransform(smoothProgress, [0, 1], ["grayscale(100%)", "grayscale(10%)"]);
-  const opacity = useTransform(smoothProgress, [0, 1], [0.3, 1]);
+  const opacity = useTransform(smoothProgress, [0, 1], [0.6, 1]);
 
   return (
     <div ref={cardRef} className="flex flex-col">
@@ -109,19 +109,19 @@ const Studio = () => {
   const processSteps = [
     {
       id: "01",
-      title: "TOP QUALITY",
+      title: "calidad",
       desc: "Todas la prendas están confeccionadas con algodón peinado 24.1. Durabilidad testeada bajo condiciones urbanas reales.",
       video: "https://res.cloudinary.com/det2xmstl/video/upload/v1769665843/6460112-sd_960_540_25fps_wmmcsw.mp4",
     },
     {
       id: "02",
-      title: "HAND MADE",
+      title: "dedicación",
       desc: "Cada pieza es ensamblada individualmente en nuestro taller. El error no es una opción; la precisión manual es nuestra ley.",
       video: "https://res.cloudinary.com/det2xmstl/video/upload/v1769665851/3936483-sd_960_540_30fps_rrr305.mp4",
     },
     {
       id: "03",
-      title: "UNIQUE DESIGN",
+      title: "diseño",
       desc: "Nuestros diseños capturan el caos y la geometría del arte urbano. Transformamos la ciudad en piezas únicas.",
       video: "https://res.cloudinary.com/det2xmstl/video/upload/v1769665841/14970144_960_540_25fps_ieytzu.mp4",
     },
@@ -134,7 +134,7 @@ const Studio = () => {
         <div className="mb-16 relative">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0">
-              the hole of rabbit
+              Nuestro lugar
             </span>
           </div>
           <h2 className="text-white text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.8]">

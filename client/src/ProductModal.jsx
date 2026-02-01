@@ -354,7 +354,7 @@ const ProductModal = ({ item, onClose }) => {
                   <div className="flex flex-col md:flex-row gap-4 md:gap-12 mb-6 md:mb-0">
                     <div className="space-y-1 md:space-y-3">
                       <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
-                        Size Protocol
+                        Talles disponibles
                       </p>
                       <div className="flex gap-3 md:gap-6 items-center">
                         {item.sizes?.map((s) => (
@@ -377,7 +377,7 @@ const ProductModal = ({ item, onClose }) => {
                       item.color.length > 0 && (
                         <div className="space-y-1 md:space-y-3">
                           <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-red-600 font-bold">
-                            Color Protocol
+                            Colores disponibles
                           </p>
                           <div className="flex flex-wrap items-center gap-3 md:gap-5">
                             {item.color.map((c) => (

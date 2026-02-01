@@ -42,10 +42,10 @@ const Retailers = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-32 items-end">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
               <span className="text-red-600 text-[10px] font-black uppercase tracking-[0.6em] block mb-4">
-                RETAIL PARTNERSHIP PROGRAM
+                programa de asociación minorista
               </span>
-              <h1 className="text-7xl md:text-9xl font-black italic uppercase leading-[0.8] tracking-tighter">
-                SCALE THE <br /> <span className="text-red-600">IMPACT.</span>
+              <h1 className="text-5xl md:text-8xl font-black italic uppercase leading-[0.8] tracking-tighter">
+                ESCALAR EL<br /> <span className="text-red-600">IMPACTO.</span>
               </h1>
             </motion.div>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
@@ -63,7 +63,7 @@ const Retailers = () => {
               <section className="space-y-6">
                 <div className="flex items-center gap-4 text-red-600">
                   <ShieldCheck size={20} />
-                  <h3 className="font-black uppercase tracking-tighter text-xl italic">Premium Tech Specs</h3>
+                  <h3 className="font-black uppercase tracking-tighter text-xl italic">ESPECIFICACIONES PREMIUM</h3>
                 </div>
                 <p className="text-justify text-gray-400 text-sm uppercase leading-relaxed tracking-wider italic">
                   Nuestras prendas utilizan textiles de alta densidad (Premium Cotton 24.1) y costuras reforzadas. El fit es testeado para durabilidad extrema, manteniendo la forma tras múltiples ciclos de lavado.
@@ -74,7 +74,7 @@ const Retailers = () => {
               <section className="space-y-8">
                 <div className="flex items-center gap-4 text-red-600">
                   <Layout size={20} />
-                  <h3 className="font-black uppercase tracking-tighter text-xl italic">Mobile Display Units</h3>
+                  <h3 className="font-black uppercase tracking-tighter text-xl italic">EXHIBIDORES PORTÁTILES</h3>
                 </div>
                 <div className="border border-white/10 bg-neutral-900/40 overflow-hidden group">
                   <img 
@@ -92,7 +92,7 @@ const Retailers = () => {
               <section className="space-y-8">
                 <div className="flex items-center gap-4 text-red-600">
                   <Box size={20} />
-                  <h3 className="font-black uppercase tracking-tighter text-xl italic">Unboxing Experience</h3>
+                  <h3 className="font-black uppercase tracking-tighter text-xl italic">EXPERIENCIA UNBOXIN</h3>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {packagingImages.map((img, idx) => (
@@ -113,7 +113,7 @@ const Retailers = () => {
               <section className="space-y-10">
                 <div className="flex items-center gap-4 text-red-600">
                   <Zap size={20} />
-                  <h3 className="font-black uppercase tracking-tighter text-xl italic">Business Protocol</h3>
+                  <h3 className="font-black uppercase tracking-tighter text-xl italic">PROTOCOLO DE NEGOCIO</h3>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -139,7 +139,7 @@ const Retailers = () => {
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-red-600" />
               <div className="mb-8">
-                <h2 className="text-2xl font-black uppercase italic tracking-tighter">Apply for Access_</h2>
+                <h2 className="text-2xl font-black uppercase italic tracking-tighter">ENVÍA TU CONSULTA</h2>
                 <p className="text-[8px] text-white/30 font-mono mt-1 uppercase tracking-[0.2em]">Retail_Partnership_V2.0 // EST. 2026</p>
               </div>
 
@@ -178,7 +178,7 @@ const Retailers = () => {
 
                 <button type="submit" className="group relative w-full bg-white py-5 flex items-center justify-center gap-3 overflow-hidden active:scale-[0.98] transition-all">
                   <div className="absolute inset-0 bg-red-600 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
-                  <span className="relative z-10 text-black group-hover:text-white font-black italic uppercase text-lg tracking-tighter transition-colors">SUBMIT APPLICATION</span>
+                  <span className="relative z-10 text-black group-hover:text-white font-black italic uppercase text-lg tracking-tighter transition-colors">ENVIAR MENSAJE</span>
                   <Send size={18} className="relative z-10 text-red-600 group-hover:text-white transition-colors" />
                 </button>
 

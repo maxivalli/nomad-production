@@ -34,7 +34,7 @@ const Contacto = () => {
                   md:group-hover:[text-shadow:_-1px_-1px_0_#fff,1px_-1px_0_#fff,-1px_1px_0_#fff,1px_1px_0_#fff]
                   group-hover:text-red-600 md:group-hover:text-transparent"
                 >
-                  FOLLOW @NOMADWEAROK
+                  seguinos @NOMADWEAROK
                 </span>
                 <span className="text-3xl md:text-6xl px-6 md:px-12 opacity-20 md:opacity-10 md:group-hover:text-red-600 md:group-hover:opacity-100 transition-all duration-500">
                   ///
@@ -56,7 +56,7 @@ const Contacto = () => {
               viewport={{ once: true }}
               className="text-[10px] tracking-[0.4em] text-gray-400 uppercase font-bold"
             >
-              Contact Sales
+              Contacto
             </motion.p>
           </div>
           
@@ -81,10 +81,10 @@ const Contacto = () => {
         {/* Columna Derecha: Ubicación (Ajustada para que no se corte) */}
         <div className="text-left md:text-right transition-colors md:group-hover:text-white w-full md:w-auto md:min-w-max border-t md:border-none border-black/5 pt-6 md:pt-0">
           <p className="text-[10px] tracking-[0.3em] uppercase opacity-60 md:opacity-40 whitespace-nowrap">
-            Based in Santa Fe, AR
+            Establecidos en Santa Fe, AR
           </p>
           <p className="text-[10px] tracking-[0.3em] uppercase opacity-60 md:opacity-40 whitespace-nowrap">
-            Worldwide Shipping
+            Envíos a todo el mundo
           </p>
         </div>
       </div>

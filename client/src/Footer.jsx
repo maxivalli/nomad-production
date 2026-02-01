@@ -19,7 +19,7 @@ const Footer = () => {
       {/* Copyright & Links */}
       <div className="flex flex-col items-center gap-4">
         <p className="text-gray-600 text-[10px] uppercase tracking-widest">
-          © {currentYear} Nomad Wear. All rights reserved.
+          © {currentYear} Nomad Wear. Todos los derechos reservado.
         </p>
         
         <div className="admin-access flex gap-6">

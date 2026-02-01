@@ -98,7 +98,7 @@ const Gallery = ({ items, setSelectedItem }) => {
       <div className="sticky top-5 h-screen flex flex-col justify-center overflow-hidden">
         <motion.div style={{ x: titleX, opacity }} className="relative z-10 px-6 md:px-12 mb-4 md:mb-6 pointer-events-auto">
           <motion.span className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0 pl-1">
-            THE CATALOG
+            EL CATÁLOGO
           </motion.span>
           
           <h2 className="text-white text-5xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
@@ -118,10 +118,10 @@ const Gallery = ({ items, setSelectedItem }) => {
           {/* Filtro de colecciones */}
           {availableCollections.length > 0 && (
             <div className="mt-6 flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900/50 border border-white/10">
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-neutral-900/50 border border-white/10">
                 <Filter size={14} className="text-red-600" />
                 <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400">
-                  Filter
+                  Filtro
                 </span>
               </div>
               <select

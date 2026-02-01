@@ -674,7 +674,7 @@ const AdminPanel = () => {
             {/* Campo: Tallas disponibles */}
             <div className="space-y-4">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
-                Size Protocol
+                talles disponibles
               </label>
               <div className="grid grid-cols-4 gap-2 md:gap-4">
                 {AVAILABLE_SIZES.map((size) => (
@@ -697,7 +697,7 @@ const AdminPanel = () => {
             {/* Campo: Colores disponibles */}
             <div className="space-y-4">
               <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
-                Color Protocol
+                Colores disponibles
                 <span className="text-red-500 ml-2">
                   ({formData.color.length} Seleccionados)
                 </span>
