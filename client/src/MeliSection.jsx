@@ -39,7 +39,7 @@ const MeliSection = () => {
             viewport={{ once: true }}
             className="text-red-600 text-[10px] font-bold uppercase tracking-[0.4em] block mb-1"
           >
-            Online Terminal
+            Terminal Online 
           </motion.span>
           <h2 className="text-white text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.75]">
             official <br /> <span className="text-red-600">Store</span>
