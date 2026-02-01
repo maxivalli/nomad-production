@@ -34,7 +34,7 @@ const Footer = () => {
       </div>
 
       {/* Crédito técnico sutil */}
-      <div className="mt-4 opacity-20 hover:opacity-100 transition-opacity">
+      <div className="mt-4 opacity-50 hover:opacity-100 transition-opacity">
         <p className="text-[8px] uppercase tracking-tighter text-gray-500">
           Built for the modern nomad
         </p>

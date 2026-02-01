@@ -112,7 +112,7 @@ const Hero = () => {
           }`}
         >
           <source
-            src="https://res.cloudinary.com/det2xmstl/video/upload/q_auto,f_auto/v1769384250/nomad_nz8rov.mov"
+            src="https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,vc_vp9,w_1280/v1769986761/11788451-hd_1920_1080_24fps_wh1x8p.mp4"
             type="video/mp4"
           />
         </video>
