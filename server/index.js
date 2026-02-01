@@ -83,6 +83,8 @@ const initDB = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
+        season VARCHAR(50),
+        year INTEGER,
         title VARCHAR(255) NOT NULL,
         description TEXT,
         img TEXT[] NOT NULL, 
@@ -97,6 +99,8 @@ const initDB = async () => {
     // Migración: Agregar columnas si no existen
     await pool.query(`
       ALTER TABLE products 
+        ADD COLUMN IF NOT EXISTS season VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS year INTEGER,
         ADD COLUMN IF NOT EXISTS purchase_link TEXT,
         ADD COLUMN IF NOT EXISTS color TEXT,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -165,6 +169,24 @@ initDB();
 // ==========================================
 
 const productSchema = Joi.object({
+  season: Joi.string()
+    .valid("spring", "summer", "autumn", "winter")
+    .required()
+    .messages({
+      "any.only": "La temporada debe ser spring, summer, autumn o winter",
+      "any.required": "La temporada es obligatoria",
+    }),
+  year: Joi.number()
+    .integer()
+    .min(2026)
+    .max(2050)
+    .required()
+    .messages({
+      "number.base": "El año debe ser un número",
+      "number.min": "El año debe ser al menos 2026",
+      "number.max": "El año no puede ser mayor a 2050",
+      "any.required": "El año es obligatorio",
+    }),
   title: Joi.string().min(3).max(255).required().messages({
     "string.min": "El título debe tener al menos 3 caracteres",
     "string.max": "El título no puede exceder 255 caracteres",
@@ -174,18 +196,29 @@ const productSchema = Joi.object({
     "string.min": "La descripción debe tener al menos 10 caracteres",
     "any.required": "La descripción es obligatoria",
   }),
-  img: Joi.array().items(Joi.string().uri()).min(1).max(3).required().messages({
+  img: Joi.array().items(Joi.string().uri()).min(1).max(5).required().messages({
     "array.min": "Debes proporcionar al menos 1 imagen",
-    "array.max": "No puedes subir más de 3 imágenes",
+    "array.max": "No puedes subir más de 5 imágenes",
     "any.required": "Las imágenes son obligatorias",
   }),
   sizes: Joi.array()
     .items(Joi.string().valid("S", "M", "L", "XL"))
-    .default([]),
+    .min(1)
+    .required()
+    .messages({
+      "array.min": "Debes seleccionar al menos una talla",
+      "any.required": "Las tallas son obligatorias",
+    }),
   purchase_link: Joi.string().uri().allow("").default(""),
-  color: Joi.array().items(Joi.string().max(50)).default([]).messages({
-    "array.base": "El campo color debe ser una lista de colores",
-  }),
+  color: Joi.array()
+    .items(Joi.string().max(50))
+    .min(1)
+    .required()
+    .messages({
+      "array.base": "El campo color debe ser una lista de colores",
+      "array.min": "Debes seleccionar al menos un color",
+      "any.required": "Los colores son obligatorios",
+    }),
 });
 
 const loginSchema = Joi.object({
@@ -527,12 +560,12 @@ app.post("/api/products", authenticateAdmin, async (req, res) => {
       });
     }
 
-    const { title, description, img, sizes, purchase_link, color } = value;
+    const { season, year, title, description, img, sizes, purchase_link, color } = value;
 
     const result = await pool.query(
-      `INSERT INTO products (title, description, img, sizes, purchase_link, color) 
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [title, description, img, sizes, purchase_link, color],
+      `INSERT INTO products (season, year, title, description, img, sizes, purchase_link, color) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [season, year, title, description, img, sizes, purchase_link, color],
     );
 
     res.status(201).json({
@@ -571,14 +604,14 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       });
     }
 
-    const { title, description, img, sizes, purchase_link, color } = value;
+    const { season, year, title, description, img, sizes, purchase_link, color } = value;
 
     const result = await pool.query(
       `UPDATE products 
-       SET title = $1, description = $2, img = $3, sizes = $4, 
-           purchase_link = $5, color = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7 RETURNING *`,
-      [title, description, img, sizes, purchase_link, color, id],
+       SET season = $1, year = $2, title = $3, description = $4, img = $5, sizes = $6, 
+           purchase_link = $7, color = $8, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $9 RETURNING *`,
+      [season, year, title, description, img, sizes, purchase_link, color, id],
     );
 
     if (result.rows.length === 0) {

@@ -171,7 +171,7 @@ const ProductModal = ({ item, onClose }) => {
               animate={{
                 x: `${offset * 85}%`,
                 scale: isActive ? 1 : 0.7,
-                opacity: isActive ? 1 : 0.6, // Mayor opacidad para fotos laterales
+                opacity: isActive ? 1 : 0.7, // Mayor opacidad para fotos laterales
                 zIndex: isActive ? 20 : 10,
                 rotateY: isActive ? 0 : offset > 0 ? -30 : 30,
               }}
@@ -299,7 +299,8 @@ const ProductModal = ({ item, onClose }) => {
           className="w-full flex flex-row items-end justify-between gap-4 pointer-events-auto"
         >
           <div className="flex-1">
-            <h2 className="text-4xl md:text-8xl font-black uppercase italic leading-[0.8] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
+            {/* Título: Absolute en móvil para ir arriba a la izquierda, Relative en desktop */}
+            <h2 className="absolute top-20 left-6 md:relative md:top-0 md:left-0 text-4xl md:text-8xl font-black uppercase italic leading-[0.8] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
               {item.title.split(" ").map((word, index) => (
                 <span
                   key={index}

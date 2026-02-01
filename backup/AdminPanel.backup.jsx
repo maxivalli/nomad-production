@@ -25,9 +25,6 @@ import { Link, useNavigate } from "react-router-dom";
 const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
 const MAX_IMAGES = 5;
 
-const SEASONS = ["summer", "autumn", "winter", "spring"];
-const YEARS = Array.from({ length: 25 }, (_, i) => 2026 + i); // 2026 a 2050
-
 const COLOR_PALETTE = [
   { name: "negro", hex: "#000000" },
   { name: "blanco", hex: "#ffffff" },
@@ -47,8 +44,6 @@ const COLOR_MAP = {
 };
 
 const INITIAL_FORM_STATE = {
-  season: "",
-  year: "",
   title: "",
   description: "",
   img: [],
@@ -169,18 +164,6 @@ const AdminPanel = () => {
 
     // VALIDACIONES OBLIGATORIAS
 
-    // Validación: Temporada
-    if (!formData.season || formData.season === "") {
-      toast.warning("Debes seleccionar una temporada");
-      return;
-    }
-
-    // Validación: Año
-    if (!formData.year || formData.year === "") {
-      toast.warning("Debes seleccionar un año");
-      return;
-    }
-
     // Validación: Título
     if (!formData.title || formData.title.trim() === "") {
       toast.warning("El título es obligatorio");
@@ -210,8 +193,6 @@ const AdminPanel = () => {
       toast.warning("Debes seleccionar al menos un color");
       return;
     }
-
-    // NOTA: purchase_link es OPCIONAL, no se valida
 
     setIsLoading(true);
 
@@ -269,8 +250,6 @@ const AdminPanel = () => {
 
     setIsEditing(item.id);
     setFormData({
-      season: item.season || "",
-      year: item.year || "",
       title: item.title,
       description: item.description,
       img: Array.isArray(item.img) ? item.img : [item.img],
@@ -515,7 +494,7 @@ const AdminPanel = () => {
           </div>
 
           <label className="text-[10px] uppercase tracking-[0.4em] text-red-600 font-[900] block mb-4">
-            Next season title
+            Deployment season title
           </label>
 
           <div className="flex flex-col md:flex-row gap-4">
@@ -606,67 +585,6 @@ const AdminPanel = () => {
                 ABORT <X size={14} />
               </button>
             )}
-
-            {/* Campos: Temporada y Año */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              {/* Campo: Temporada */}
-              <div className="space-y-3">
-                <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900] block">
-                  Season
-                </label>
-                <select
-                  required
-                  value={formData.season}
-                  onChange={(e) =>
-                    setFormData({ ...formData, season: e.target.value })
-                  }
-                  className="w-full bg-neutral-900/50 border border-white/10 px-4 py-3 text-sm outline-none focus:border-red-500 transition-all uppercase font-[900] text-white appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23dc2626' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 1rem center",
-                  }}
-                >
-                  <option value="" disabled>
-                    Select Season
-                  </option>
-                  {SEASONS.map((season) => (
-                    <option key={season} value={season}>
-                      {season}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Campo: Año */}
-              <div className="space-y-3">
-                <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900] block">
-                  Year
-                </label>
-                <select
-                  required
-                  value={formData.year}
-                  onChange={(e) =>
-                    setFormData({ ...formData, year: e.target.value })
-                  }
-                  className="w-full bg-neutral-900/50 border border-white/10 px-4 py-3 text-sm outline-none focus:border-red-500 transition-all uppercase font-[900] text-white appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23dc2626' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 1rem center",
-                  }}
-                >
-                  <option value="" disabled>
-                    Select Year
-                  </option>
-                  {YEARS.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
             {/* Campo: Título del producto */}
             <div className="space-y-3">
@@ -903,18 +821,6 @@ const AdminPanel = () => {
                     <span className="text-[7px] md:text-[8px] font-mono text-red-500 tracking-[0.2em] mb-1.5 block font-bold">
                       REF_{item.id.toString().slice(-4).toUpperCase()}
                     </span>
-
-                    {/* Temporada y Año */}
-                    {item.season && item.year && (
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[7px] md:text-[8px] px-2 py-0.5 bg-red-600/20 border border-red-600/30 text-red-400 font-bold uppercase tracking-wider">
-                          {item.season}
-                        </span>
-                        <span className="text-[7px] md:text-[8px] px-2 py-0.5 bg-neutral-800 border border-white/10 text-neutral-400 font-bold">
-                          {item.year}
-                        </span>
-                      </div>
-                    )}
 
                     {/* Título */}
                     <h3 className="font-[900] uppercase text-xs md:text-base truncate italic text-white tracking-wide">

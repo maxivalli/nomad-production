@@ -29,7 +29,7 @@ const Retailers = () => {
   const packagingImages = [
     "https://res.cloudinary.com/det2xmstl/image/upload/v1769696323/tuv0nsw9yjlot50opwxc.jpg",
     "https://res.cloudinary.com/det2xmstl/image/upload/v1769696292/sbvoik8lyhocv9rvkrnf.jpg",
-    "https://res.cloudinary.com/det2xmstl/image/upload/v1769645630/ecommerce_xrhppt.jpg"
+    "https://res.cloudinary.com/det2xmstl/image/upload/v1769970095/Gemini_Generated_Image_6zmp3p6zmp3p6zmp_de_taman%CC%83o_grande_djl4fm.jpg"
   ];
 
   return (
@@ -49,7 +49,7 @@ const Retailers = () => {
               </h1>
             </motion.div>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-              className="text-gray-500 uppercase text-xs md:text-sm tracking-[0.2em] leading-relaxed italic border-l border-white/10 pl-6">
+              className="text-justify text-gray-400 uppercase text-xs md:text-sm tracking-[0.2em] leading-relaxed italic border-l border-white/30 pl-6">
               Buscamos socios estratégicos, no puntos de venta. NOMAD ofrece una infraestructura de diseño técnico y logística optimizada para locales que entienden el lenguaje de la calle.
             </motion.p>
           </div>
@@ -65,7 +65,7 @@ const Retailers = () => {
                   <ShieldCheck size={20} />
                   <h3 className="font-black uppercase tracking-tighter text-xl italic">Premium Tech Specs</h3>
                 </div>
-                <p className="text-gray-400 text-sm uppercase leading-relaxed tracking-wider italic">
+                <p className="text-justify text-gray-400 text-sm uppercase leading-relaxed tracking-wider italic">
                   Nuestras prendas utilizan textiles de alta densidad (Premium Cotton 24.1) y costuras reforzadas. El fit es testeado para durabilidad extrema, manteniendo la forma tras múltiples ciclos de lavado.
                 </p>
               </section>
@@ -83,7 +83,7 @@ const Retailers = () => {
                     className="w-full h-auto transition-all duration-700"
                   />
                 </div>
-                <p className="text-gray-500 text-[10px] md:text-xs tracking-widest uppercase italic leading-loose">
+                <p className="text-justify text-gray-500 text-[10px] md:text-xs tracking-widest uppercase italic leading-loose">
                   // SISTEMA DE EXHIBICIÓN AUTOPORTANTE CON GRÁFICA URBANA CUSTOMIZADA. DISEÑADO PARA ALTO IMPACTO VISUAL EN LOCALES Y EVENTOS POP-UP.
                 </p>
               </section>
@@ -103,7 +103,7 @@ const Retailers = () => {
                 </div>
                 <div className="flex items-start gap-4 p-4 bg-white/[0.02] border-l-2 border-red-600">
                   <Award className="text-red-600 shrink-0" size={18} />
-                  <p className="text-[10px] text-gray-400 uppercase tracking-widest leading-relaxed">
+                  <p className="text-justify text-[10px] text-gray-400 uppercase tracking-widest leading-relaxed">
                     Cada drop incluye <span className="text-white">Etiquetas de seguridad holográficas</span>, packaging reforzado y merchandising exclusivo para el cliente final.
                   </p>
                 </div>
@@ -119,12 +119,12 @@ const Retailers = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-neutral-900/50 p-6 border border-white/5">
                     <p className="text-red-600 font-black text-[10px] tracking-[0.3em] uppercase mb-2">Margen de Escala</p>
-                    <p className="text-xs text-gray-400 leading-relaxed uppercase italic">Descuentos progresivos por volumen trimestral y protección de zona (Geo-Exclusivity).</p>
+                    <p className="text-justify text-xs text-gray-400 leading-relaxed uppercase italic">Descuentos progresivos por volumen trimestral y protección de zona (Geo-Exclusivity).</p>
                   </div>
                   
                   <div className="bg-red-600/10 p-6 border border-red-600/20">
                     <p className="text-red-600 font-black text-[10px] tracking-[0.3em] uppercase mb-2">Venta a Consignación</p>
-                    <p className="text-xs text-gray-300 leading-relaxed uppercase italic">Para locales de alto tráfico: rotación de inventario sin riesgo financiero inicial.</p>
+                    <p className="text-justify text-xs text-gray-300 leading-relaxed uppercase italic">Para locales de alto tráfico: rotación de inventario sin riesgo financiero inicial.</p>
                   </div>
                 </div>
               </section>

@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 
 const Hero = () => {
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [collectionName, setCollectionName] = useState("LOADING_PROTOCOL"); // Estado para el nombre dinámico
   const [timeLeft, setTimeLeft] = useState({
     dias: "00",
     horas: "00",
@@ -13,25 +14,42 @@ const Hero = () => {
   const [targetDateLabel, setTargetDateLabel] = useState("SYNC_PENDING...");
 
   useEffect(() => {
-    const fetchLaunchDate = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/settings/launch-date");
-        const data = await res.json();
+        // 1. Obtener Fecha de Lanzamiento
+        const resDate = await fetch("/api/settings/launch-date");
+        const dataDate = await resDate.json();
 
-        if (data.date) {
-          const [y, m, d] = data.date.split("-");
+        // 2. Obtener Colecciones para sacar el nombre de la última
+        const resCol = await fetch("/api/settings/collection");
+        const dataCol = await resCol.json();
+        console.log(dataCol)
+
+        // Lógica de Fecha
+        if (dataDate.date) {
+          const [y, m, d] = dataDate.date.split("-");
           const meses = [
             "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
             "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE",
           ];
           setTargetDateLabel(`${d}_${meses[parseInt(m) - 1]}_${y}`);
-
-          const targetTime = new Date(`${data.date}T00:00:00`).getTime();
+          const targetTime = new Date(`${dataDate.date}T00:00:00`).getTime();
           startTimer(targetTime);
         }
+
+        // Lógica de Nombre de Colección
+        // Asumiendo que dataCol es un array y el primero es el más reciente
+        if (dataCol && dataCol.value) {
+          // Reemplazamos espacios por guiones bajos para mantener el look técnico (opcional)
+          setCollectionName(dataCol.value.toUpperCase().replace(/\s+/g, '_'));
+        } else {
+          setCollectionName("NOMAD_CORE");
+        }
+
       } catch (err) {
-        console.error("Error conectando con el servidor de tiempo:", err);
+        console.error("Error en sincronización:", err);
         setTargetDateLabel("ERROR_SYNC_FAILED");
+        setCollectionName("SYSTEM_OFFLINE");
       }
     };
 
@@ -60,14 +78,13 @@ const Hero = () => {
       return () => clearInterval(intervalo);
     };
 
-    fetchLaunchDate();
+    fetchData();
   }, []);
 
   return (
     <section className="relative h-screen flex flex-col items-center px-4 overflow-hidden bg-black select-none">
       {/* Video Background Layer */}
       <div className="absolute inset-0 z-0 bg-black">
-        {/* Spinner de Carga */}
         <AnimatePresence>
           {!videoLoaded && (
             <motion.div
@@ -99,8 +116,6 @@ const Hero = () => {
             type="video/mp4"
           />
         </video>
-        
-        {/* Overlay Gradients */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-10" />
       </div>
 
@@ -130,8 +145,9 @@ const Hero = () => {
         <div className="flex flex-col items-center gap-5">
           <div className="flex items-center gap-3">
             <span className="h-[1px] w-3 bg-red-600/50"></span>
+            {/* AQUÍ ESTÁ EL CAMBIO: Usamos la variable collectionName */}
             <span className="text-red-600 font-mono text-[8px] md:text-[14px] tracking-[0.5em] uppercase font-black">
-              AUTUMN_COLLECTION
+              {collectionName}
             </span>
             <span className="h-[1px] w-3 bg-red-600/50"></span>
           </div>
@@ -144,9 +160,7 @@ const Hero = () => {
               { etiqueta: "SEG", valor: timeLeft.segundos },
             ].map((unidad, index) => (
               <div key={index} className="flex flex-col items-center group">
-                <span
-                  className="text-3xl md:text-5xl font-[1000] italic uppercase text-white tracking-[-0.05em] tabular-nums leading-none group-hover:text-red-600 transition-colors duration-300"
-                >
+                <span className="text-3xl md:text-5xl font-[1000] italic uppercase text-white tracking-[-0.05em] tabular-nums leading-none group-hover:text-red-600 transition-colors duration-300">
                   {unidad.valor}
                 </span>
                 <span className="text-[6px] md:text-[8px] text-white/40 uppercase tracking-[0.4em] font-black mt-2">

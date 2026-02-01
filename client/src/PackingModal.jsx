@@ -36,7 +36,7 @@ const PackingModal = ({ selectedImg, onClose }) => {
           </motion.button>
 
           {/* CONTENEDOR DE IMAGEN: Forzamos altura completa */}
-          <div className="relative w-auto h-[100dvh] flex items-center justify-center">
+          <div className="relative w-auto h-[80dvh] flex items-center justify-center">
             <motion.img
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}

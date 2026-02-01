@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Lock, User } from "lucide-react";
 import api from "./services/api";
 import { useToast } from "./components/Toast";
+import Navbar from "./Navbar";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -56,6 +57,7 @@ const Login = () => {
   return (
     <>
       <toast.ToastContainer />
+      <Navbar/>
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
