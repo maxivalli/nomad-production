@@ -45,7 +45,7 @@ const Retailers = () => {
                 programa de asociación minorista
               </span>
               <h1 className="text-5xl md:text-8xl font-black italic uppercase leading-[0.8] tracking-tighter">
-                ESCALAR EL<br /> <span className="text-red-600">IMPACTO.</span>
+                AMPLIFICA<br /> <span className="text-red-600">EL IMPACTO</span>
               </h1>
             </motion.div>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
