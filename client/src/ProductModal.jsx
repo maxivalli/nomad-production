@@ -291,6 +291,22 @@ const ProductModal = ({ item, onClose }) => {
         <X size={42} strokeWidth={1} />
       </button>
 
+      {/* TÍTULO EN MÓVIL (posición absoluta independiente) */}
+      <motion.h2
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="md:hidden absolute top-20 left-6 z-[110] text-4xl font-black uppercase italic leading-[0.8] tracking-tighter text-white flex flex-col pointer-events-none"
+      >
+        {item.title.split(" ").map((word, index) => (
+          <span
+            key={index}
+            className={`block ${index === 0 ? "text-red-600" : "text-white"}`}
+          >
+            {word}
+          </span>
+        ))}
+      </motion.h2>
+
       {/* INFORMACIÓN DEL PRODUCTO */}
       <div className="relative z-[110] w-full h-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">
         <motion.div
@@ -299,8 +315,8 @@ const ProductModal = ({ item, onClose }) => {
           className="w-full flex flex-row items-end justify-between gap-4 pointer-events-auto"
         >
           <div className="flex-1">
-            {/* Título: Absolute en móvil para ir arriba a la izquierda, Relative en desktop */}
-            <h2 className="absolute top-20 left-6 md:relative md:top-0 md:left-0 text-4xl md:text-8xl font-black uppercase italic leading-[0.8] mb-2 md:mb-4 tracking-tighter text-white flex flex-col">
+            {/* Título en desktop (posición relativa) */}
+            <h2 className="hidden md:flex text-8xl font-black uppercase italic leading-[0.8] mb-4 tracking-tighter text-white flex-col">
               {item.title.split(" ").map((word, index) => (
                 <span
                   key={index}
