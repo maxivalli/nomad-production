@@ -78,7 +78,7 @@ const Retailers = () => {
                 </div>
                 <div className="border border-white/10 bg-neutral-900/40 overflow-hidden group">
                   <img 
-                    src="https://res.cloudinary.com/det2xmstl/image/upload/v1769903449/Stands_yd8zuv.jpg" 
+                    src="https://res.cloudinary.com/det2xmstl/image/upload/v1769983171/exhibidor_qy5ygu.jpg" 
                     alt="NOMAD Mobile Stands" 
                     className="w-full h-auto transition-all duration-700"
                   />
