@@ -91,7 +91,7 @@ const ProductModal = ({ item, onClose }) => {
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
-    const shareUrl = `${window.location.origin}/#/producto/${slug}`;
+    const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
       navigator
