@@ -166,6 +166,27 @@ const Navbar = () => {
 
         {/* REDES Y MENÚ MÓVIL */}
         <div className="flex-1 flex justify-end gap-6 items-center">
+          {/* Icono de Spotify */}
+          <motion.a
+            href="https://open.spotify.com/embed/playlist/7vkNPoNq32Mm1185d8Xiey?utm_source=generator" // Reemplaza con el link de tu lista Nomad
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white"
+            whileHover={{ color: "#1DB954", scale: 1.2, rotate: -12 }} // Verde Spotify al hover
+            whileTap={{ scale: 0.9 }}
+          >
+            {/* Nota: Algunas versiones de lucide-react usan 'Music' o un SVG personalizado para Spotify */}
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.5 17.33c-.22.36-.68.47-1.05.25-2.83-1.73-6.4-2.12-10.58-1.16-.41.09-.82-.17-.92-.58-.09-.41.17-.82.58-.92 4.58-1.05 8.54-.6 11.72 1.35.37.23.49.69.25 1.06zm1.47-3.27c-.28.45-.87.59-1.32.32-3.24-1.99-8.18-2.57-12-1.41-.51.15-1.05-.14-1.2-.65-.15-.51.14-1.05.65-1.2 4.36-1.32 9.81-.67 13.56 1.63.45.28.59.87.31 1.31zm.13-3.41c-3.89-2.31-10.31-2.53-14.07-1.39-.6.18-1.24-.15-1.42-.75-.18-.6.15-1.24.75-1.42 4.31-1.31 11.41-1.05 15.91 1.62.54.32.72 1.02.4 1.56-.32.53-1.02.72-1.57.38z" />
+            </svg>
+          </motion.a>
+
           <motion.a
             href="https://instagram.com/nomadwearok"
             target="_blank"
