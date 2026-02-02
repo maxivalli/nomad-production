@@ -152,7 +152,7 @@ const Studio = () => {
           <div className="space-y-4">
             <span className="text-white/30 font-mono text-[9px] tracking-[0.4em] uppercase">Operational_Manual // Dev_Phase</span>
             <p className="text-gray-400 text-xs md:text-sm uppercase tracking-[0.1em] leading-relaxed italic font-light text-justify">
-              En NOMAD, el proceso creativo no comienza en un lienzo, sino en el asfalto. Nuestra metodología fusiona la ingeniería textil con la cultura underground, interpretando las texturas de la ciudad para transformarlas en indumentaria técnica de alto rendimiento. Cada pieza es un prototipo diseñado para resistir el movimiento constante.
+              En NOMAD, el proceso creativo no comienza en un lienzo, sino en el asfalto. Nuestra metodología fusiona la ingeniería textil con la cultura underground, interpretando las texturas de la ciudad para transformarlas en indumentaria urbana de alto rendimiento. Cada pieza es un prototipo diseñado para resistir el movimiento constante.
             </p>
           </div>
           <div className="flex flex-col justify-end space-y-4">

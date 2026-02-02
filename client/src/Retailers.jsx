@@ -78,7 +78,7 @@ const Retailers = () => {
             >
               <p className="text-justify text-gray-400 uppercase text-xs md:text-sm tracking-[0.2em] leading-relaxed italic">
                 No somos solo una marca, somos un estudio creativo aplicado a la
-                indumentaria técnica. Buscamos puntos de distribución que
+                indumentaria urbana. Buscamos puntos de distribución que
                 funcionen como terminales de nuestro ecosistema urbano.
               </p>
               <div className="flex gap-4 opacity-30">
