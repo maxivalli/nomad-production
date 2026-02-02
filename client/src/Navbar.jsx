@@ -179,6 +179,7 @@ const Navbar = () => {
           <button
             onClick={() => setIsMenuOpen(true)}
             className="md:hidden text-white p-1"
+            aria-label="abrir menú"
           >
             <Menu size={24} />
           </button>

@@ -15,4 +15,4 @@ Allow: /
 
 # 5. Indicar la ubicación del mapa del sitio para indexar tus productos rápido
 # Reemplaza 'tu-dominio.com' por tu URL real de Vercel
-Sitemap: https://tu-dominio.com/sitemap.xml
+Sitemap: https://www.nomadwear.com.ar/sitemap.xml

@@ -62,12 +62,12 @@ const Packaging = () => {
       rotation: -3,
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/v1769642575/SECURITY_ner5ki.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/v1770005786/nomad_etiqueta_rk9y3l.jpg",
       speed: -70,
       rotation: -2,
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/v1769611238/p5_begtlw.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_1000/v1769611238/p5_begtlw.jpg",
       speed: -100,
       rotation: 3,
     },
