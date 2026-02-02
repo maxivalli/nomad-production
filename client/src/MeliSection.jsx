@@ -7,7 +7,7 @@ import MLlogo from "../src/assets/MLlogo.png";
 const MeliSection = () => {
   const meliLink = "https://www.mercadolibre.com.ar";
   const productImg =
-    "https://res.cloudinary.com/det2xmstl/image/upload/v1769708493/unqvrrh5cftb010pnwx5.jpg";
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769708493/unqvrrh5cftb010pnwx5.jpg";
 
   const containerVariants = {
     hidden: { opacity: 0, y: 30 },

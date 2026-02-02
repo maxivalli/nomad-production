@@ -111,19 +111,19 @@ const Studio = () => {
       id: "01",
       title: "calidad",
       desc: "Todas la prendas están confeccionadas con algodón peinado 24.1. Durabilidad testeada bajo condiciones urbanas reales.",
-      video: "https://res.cloudinary.com/det2xmstl/video/upload/v1769665843/6460112-sd_960_540_25fps_wmmcsw.mp4",
+      video: "https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,w_800/v1769665843/6460112-sd_960_540_25fps_wmmcsw.mp4",
     },
     {
       id: "02",
       title: "dedicación",
       desc: "Cada pieza es ensamblada individualmente en nuestro taller. El error no es una opción; la precisión manual es nuestra ley.",
-      video: "https://res.cloudinary.com/det2xmstl/video/upload/v1769665851/3936483-sd_960_540_30fps_rrr305.mp4",
+      video: "https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,w_800/v1769665851/3936483-sd_960_540_30fps_rrr305.mp4",
     },
     {
       id: "03",
       title: "diseño",
       desc: "Nuestros diseños capturan el caos y la geometría del arte urbano. Transformamos la ciudad en piezas únicas.",
-      video: "https://res.cloudinary.com/det2xmstl/video/upload/v1769665841/14970144_960_540_25fps_ieytzu.mp4",
+      video: "https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,w_800/v1769665841/14970144_960_540_25fps_ieytzu.mp4",
     },
   ];
 

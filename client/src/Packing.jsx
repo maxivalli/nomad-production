@@ -52,22 +52,22 @@ const Packaging = () => {
 
   const images = [
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/v1769644669/Box_black_nbx2gu.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769644669/Box_black_nbx2gu.jpg",
       speed: -40,
       rotation: 3,
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/v1769645630/ecommerce_xrhppt.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769645630/ecommerce_xrhppt.jpg",
       speed: -40,
       rotation: -3,
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/v1770005786/nomad_etiqueta_rk9y3l.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770005786/nomad_etiqueta_rk9y3l.jpg",
       speed: -70,
       rotation: -2,
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_1000/v1769611238/p5_begtlw.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769611238/p5_begtlw.jpg",
       speed: -100,
       rotation: 3,
     },

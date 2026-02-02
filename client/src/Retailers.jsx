@@ -46,9 +46,9 @@ const Retailers = () => {
   };
 
   const packagingImages = [
-    "https://res.cloudinary.com/det2xmstl/image/upload/v1769696323/tuv0nsw9yjlot50opwxc.jpg",
-    "https://res.cloudinary.com/det2xmstl/image/upload/v1769696292/sbvoik8lyhocv9rvkrnf.jpg",
-    "https://res.cloudinary.com/det2xmstl/image/upload/v1769970095/Gemini_Generated_Image_6zmp3p6zmp3p6zmp_de_taman%CC%83o_grande_djl4fm.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769696323/tuv0nsw9yjlot50opwxc.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769696292/sbvoik8lyhocv9rvkrnf.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769970095/Gemini_Generated_Image_6zmp3p6zmp3p6zmp_de_taman%CC%83o_grande_djl4fm.jpg",
   ];
 
   return (
