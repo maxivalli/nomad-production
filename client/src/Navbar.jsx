@@ -168,7 +168,7 @@ const Navbar = () => {
         <div className="flex-1 flex justify-end gap-6 items-center">
           {/* Icono de Spotify */}
           <motion.a
-            href="https://open.spotify.com/embed/playlist/7vkNPoNq32Mm1185d8Xiey?utm_source=generator" // Reemplaza con el link de tu lista Nomad
+            href="https://open.spotify.com/playlist/7vkNPoNq32Mm1185d8Xiey?si=jH6vO2sjRB6yYbb2NROh3w" // Reemplaza con el link de tu lista Nomad
             target="_blank"
             rel="noopener noreferrer"
             className="text-white"
