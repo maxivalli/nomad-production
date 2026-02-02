@@ -1,15 +1,17 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll, AnimatePresence } from "framer-motion";
-import { Loader2, Filter } from "lucide-react";
+import { Loader2, Filter, ChevronUp, ChevronDown } from "lucide-react";
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
-  const [collectionName, setCollectionName] = useState("");
+  const [collectionName, setCollectionName] = useState(""); 
   const [loaded, setLoaded] = useState({});
   const [availableCollections, setAvailableCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [showGuide, setShowGuide] = useState(true); // Estado para la guía móvil
+  
+  // NUEVO: Estado para detectar gesto horizontal incorrecto
+  const [showVerticalGuidance, setShowVerticalGuidance] = useState(false);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -18,7 +20,49 @@ const Gallery = ({ items, setSelectedItem }) => {
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
 
-  // 1. Extraer colecciones únicas
+  // NUEVA FUNCIÓN: Detector de dirección de scroll en móvil
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e) => {
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      
+      const deltaX = Math.abs(touchX - touchStartX);
+      const deltaY = Math.abs(touchY - touchStartY);
+
+      // Si el usuario arrastra más de 30px hacia los lados y poco hacia arriba/abajo
+      if (deltaX > deltaY && deltaX > 30) {
+        setShowVerticalGuidance(true);
+      } else if (deltaY > 10) {
+        // Si empieza a scrollear bien (vertical), ocultamos la guía
+        setShowVerticalGuidance(false);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      // Opcional: ocultar con delay al soltar
+      setTimeout(() => setShowVerticalGuidance(false), 1500);
+    };
+
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove", handleTouchMove);
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
+  // 1. Extraer colecciones únicas y ordenar (Tu lógica original)
   useEffect(() => {
     if (items && items.length > 0) {
       const collections = items
@@ -41,13 +85,14 @@ const Gallery = ({ items, setSelectedItem }) => {
       });
 
       setAvailableCollections(uniqueCollections);
+
       if (uniqueCollections.length > 0 && !selectedCollection) {
         setSelectedCollection(uniqueCollections[0].id);
       }
     }
   }, [items]);
 
-  // 2. Filtrado y Nombre de Colección
+  // 2. Actualizar collectionName basado en la selección (Tu lógica original)
   useEffect(() => {
     if (selectedCollection && items) {
       const [season, year] = selectedCollection.split("-");
@@ -58,19 +103,18 @@ const Gallery = ({ items, setSelectedItem }) => {
         (item) => item.season === season && item.year === parseInt(year)
       );
       setFilteredItems(filtered);
+    } else {
+      setFilteredItems(items);
     }
   }, [selectedCollection, items]);
 
+  const handleOpenProduct = (item) => {
+    setSelectedItem(item);
+    window.history.pushState({ modal: true, itemId: item.id }, '', window.location.href);
+  };
+
   const { scrollYProgress } = useScroll({ target: targetRef });
   const [totalScroll, setTotalScroll] = useState(0);
-
-  // Ocultar guía al scrollear
-  useEffect(() => {
-    const unsubscribe = scrollYProgress.onChange((v) => {
-      if (v > 0.01 && showGuide) setShowGuide(false);
-    });
-    return () => unsubscribe();
-  }, [scrollYProgress, showGuide]);
 
   useEffect(() => {
     const calculateScroll = () => {
@@ -96,44 +140,33 @@ const Gallery = ({ items, setSelectedItem }) => {
     <section id="colecciones" ref={targetRef} className="relative h-[600vh] bg-neutral-900/20">
       <div className="sticky top-5 h-screen flex flex-col justify-center overflow-hidden">
         
-        {/* INDICADOR SWIPE INDUSTRIAL (Móvil) */}
+        {/* OVERLAY DE CORRECCIÓN VERTICAL - Solo aparece si el usuario intenta scroll lateral */}
         <AnimatePresence>
-          {showGuide && (
+          {showVerticalGuidance && (
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-50 pointer-events-none md:hidden flex justify-between px-4"
+              className="md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none"
             >
-              {/* Lado Izquierdo */}
-              <div className="flex flex-col items-center gap-1 opacity-40">
-                <div className="h-12 w-[1px] bg-white/30 mb-2" />
-                <span className="text-[10px] font-black tracking-[0.4em] uppercase text-white [writing-mode:vertical-lr] rotate-180">
-                  SWIPE
-                </span>
-              </div>
-
-              {/* Lado Derecho (Activo) */}
               <motion.div 
-                animate={{ x: [0, 10, 0] }}
-                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                className="flex flex-col items-center gap-1"
+                animate={{ y: [-30, 30, -30] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                className="flex flex-col items-center"
               >
-                <div className="h-12 w-[2px] bg-red-600 mb-2 shadow-[0_0_10px_rgba(220,38,38,0.5)]" />
-                <span className="text-[10px] font-black tracking-[0.4em] uppercase text-red-600 [writing-mode:vertical-lr]">
-                  SWIPE
-                </span>
-                <motion.div 
-                  animate={{ opacity: [1, 0, 1] }}
-                  transition={{ repeat: Infinity, duration: 0.2, times: [0, 0.1, 1] }}
-                  className="w-2 h-2 bg-red-600 rotate-45 mt-2"
-                />
+                <ChevronUp size={100} className="text-red-600 mb-[-20px]" strokeWidth={1.5} />
+                <div className="flex flex-col items-center py-10">
+                  <span className="text-white font-black italic text-4xl tracking-tighter uppercase leading-none">Scroll</span>
+                  <span className="text-red-600 font-black italic text-6xl tracking-tighter uppercase leading-none">Vertical</span>
+                </div>
+                <ChevronDown size={100} className="text-red-600 mt-[-20px]" strokeWidth={1.5} />
               </motion.div>
+              <p className="text-white/40 text-[10px] font-bold tracking-[0.5em] uppercase mt-8">Navegación Técnica Nomad</p>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <motion.div style={{ x: titleX, opacity }} className="relative z-10 px-6 md:px-12 mb-4 md:mb-6">
+        <motion.div style={{ x: titleX, opacity }} className="relative z-10 px-6 md:px-12 mb-4 md:mb-6 pointer-events-auto">
           <motion.span className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0 pl-1">
             EL CATÁLOGO
           </motion.span>
@@ -155,7 +188,9 @@ const Gallery = ({ items, setSelectedItem }) => {
             <div className="mt-6 flex items-center gap-3">
               <div className="flex items-center gap-2 px-3 py-2.5 bg-neutral-900/50 border border-white/10">
                 <Filter size={14} className="text-red-600" />
-                <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400">Filtro</span>
+                <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400">
+                  Filtro
+                </span>
               </div>
               <select
                 value={selectedCollection || ""}
@@ -167,8 +202,10 @@ const Gallery = ({ items, setSelectedItem }) => {
                   backgroundPosition: "right 0.75rem center",
                 }}
               >
-                {availableCollections.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
+                {availableCollections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -184,7 +221,7 @@ const Gallery = ({ items, setSelectedItem }) => {
               return (
                 <div
                   key={item.id}
-                  onClick={() => setSelectedItem(item)}
+                  onClick={() => handleOpenProduct(item)}
                   className="group relative h-[442px] w-[340px] md:h-[550px] md:w-[450px] flex-none overflow-hidden bg-neutral-800 shrink-0 cursor-pointer shadow-2xl transition-transform duration-500"
                 >
                   {!isImgLoaded && (
@@ -192,6 +229,7 @@ const Gallery = ({ items, setSelectedItem }) => {
                       <Loader2 className="text-red-600 animate-spin" size={48} strokeWidth={1} />
                     </div>
                   )}
+
                   <img
                     src={optimizeCloudinaryUrl(rawImage)}
                     alt={item.title}
@@ -199,11 +237,15 @@ const Gallery = ({ items, setSelectedItem }) => {
                     onLoad={() => setLoaded((prev) => ({ ...prev, [item.id]: true }))}
                     className={`h-full w-full object-cover transition-all duration-1000 group-hover:scale-110 ${isImgLoaded ? "opacity-100" : "opacity-0"}`}
                   />
+                  <div className="absolute inset-0 group-hover:bg-black/10 transition-colors duration-500" />
+                  
                   <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full bg-gradient-to-t from-black via-transparent to-transparent">
                     <p className="text-xl md:text-2xl font-black uppercase italic tracking-tighter group-hover:text-red-600 transition-colors text-white">
                       {item.title}
                     </p>
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-white/50 mt-1 font-bold">DETALLES +</p>
+                    <p className="text-[9px] uppercase tracking-[0.3em] text-white/50 mt-1 font-bold">
+                      DETALLES +
+                    </p>
                   </div>
                 </div>
               );
