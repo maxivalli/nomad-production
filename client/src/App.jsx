@@ -3,7 +3,6 @@ import { AnimatePresence } from "framer-motion";
 import { useParams } from "react-router-dom";
 
 // Componentes
-import PreLoader from "./PreLoader";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import IntroMarque from "./IntroMarque";
@@ -90,7 +89,6 @@ useEffect(() => {
         <Navbar />
 
         <main>
-          <PreLoader />
           <Hero />
 
           {error && (

@@ -32,13 +32,6 @@ const Stockists = () => {
       img: "https://i.etsystatic.com/54504602/r/il/3dcc51/6777432993/il_fullxfull.6777432993_mybe.jpg",
       locate: "",
     },
-    {
-      name: "Coming soon...",
-      city: "CÓRDOBA,CBA",
-      code: "R-51",
-      img: "https://rijiz.co/wp-content/uploads/2025/07/t-shirts-1024x683.webp",
-      locate: "",
-    },
   ];
 
   return (

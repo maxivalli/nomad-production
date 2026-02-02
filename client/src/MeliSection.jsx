@@ -1,7 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ShoppingCart, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
-// Importación del logo desde tus assets
 import MLlogo from "../src/assets/MLlogo.png";
 
 const MeliSection = () => {
@@ -9,57 +8,32 @@ const MeliSection = () => {
   const productImg =
     "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769708493/unqvrrh5cftb010pnwx5.jpg";
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: "easeOut",
-        when: "beforeChildren",
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.5 } },
-  };
-
   return (
     <section className="py-20 bg-black px-6 flex flex-col items-center overflow-hidden">
       <div className="w-full max-w-[90vw] flex flex-col items-center">
-        {/* ENCABEZADO NOMAD */}
+        
+        {/* ENCABEZADO NOMAD - Estático */}
         <div className="mb-12 w-full max-w-[1200px]">
-          <motion.span
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-red-600 text-[10px] font-bold uppercase tracking-[0.4em] block mb-1"
-          >
+          <span className="text-red-600 text-[10px] font-bold uppercase tracking-[0.4em] block mb-1">
             Terminal Online 
-          </motion.span>
+          </span>
           <h2 className="text-white text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.75]">
             official <br /> <span className="text-red-600">Store</span>
           </h2>
         </div>
 
-        {/* CARD DE MELI */}
+        {/* CARD DE MELI - Único elemento con animación de desplazamiento */}
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
+          initial={{ opacity: 0, x: -100 }}
+          whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="bg-[#FFE600] rounded-sm overflow-hidden flex flex-col md:flex-row items-stretch border border-white/10 w-full max-w-[1200px] shadow-2xl"
         >
+          
           {/* COLUMNA FOTO */}
           <div className="md:w-1/2 relative bg-white flex items-center justify-center p-8 border-b md:border-b-0 md:border-r border-black/5 overflow-hidden">
-            <motion.div
-              variants={itemVariants}
-              className="absolute top-4 left-4 flex flex-col gap-2 z-10"
-            >
+            <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
               <span className="bg-[#3483fa] text-white text-[10px] font-bold px-2 py-1 rounded-sm tracking-wide">
                 MÁS VENDIDO
               </span>
@@ -67,12 +41,9 @@ const MeliSection = () => {
                 <Zap size={10} className="fill-current" />
                 FULL
               </div>
-            </motion.div>
+            </div>
 
-            <motion.img
-              variants={itemVariants}
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            <img
               src={productImg}
               alt="Product View"
               className="w-full h-auto max-h-[480px] object-contain mix-blend-multiply drop-shadow-2xl"
@@ -81,16 +52,7 @@ const MeliSection = () => {
 
           {/* COLUMNA INFO */}
           <div className="md:w-1/2 p-8 md:p-14 flex flex-col justify-center text-black">
-            {/* Eliminé el párrafo vacío que tenías arriba para limpiar el código */}
-            <motion.p
-              variants={itemVariants}
-              className="mt-8 text-[9px] font-mono uppercase tracking-[0.2em] text-black/40 border-t border-black/5 pt-6 w-full text-center md:text-left md:text-[11px]"
-            ></motion.p>
-            <motion.div
-              variants={itemVariants}
-              className="flex items-center justify-center md:justify-start gap-3 mb-20"
-            >
-              {/* LOGO DE MERCADO LIBRE */}
+            <div className="flex items-center justify-center md:justify-start gap-3 mb-20">
               <img
                 src={MLlogo}
                 alt="Mercado Libre Logo"
@@ -100,11 +62,9 @@ const MeliSection = () => {
               <span className="text-[10px] font-black uppercase tracking-widest text-black/60">
                 Official Store
               </span>
-            </motion.div>
+            </div>
 
-            {/* Título: También centrado en móvil para que acompañe al logo */}
-            <motion.div variants={itemVariants} className="space-y-4 mb-10">
-              {/* Contenedores de checks: Ajustados para centrar en móvil */}
+            <div className="space-y-4 mb-10">
               <div className="flex items-center md:justify-start gap-3">
                 <ShieldCheck size={20} className="text-[#00A650] shrink-0" />
                 <p className="text-[10px] md:text-[13px] font-bold uppercase tracking-tight">
@@ -117,10 +77,9 @@ const MeliSection = () => {
                   Envíos a todo el país por Mercado Envíos
                 </p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.a
-              variants={itemVariants}
+            <a
               href={meliLink}
               target="_blank"
               rel="noopener noreferrer"
@@ -130,14 +89,11 @@ const MeliSection = () => {
                 Ir a la tienda oficial
               </span>
               <ShoppingCart className="ml-4 group-hover:rotate-[-12deg] transition-transform" />
-            </motion.a>
+            </a>
 
-            <motion.p
-              variants={itemVariants}
-              className="mt-8 text-[9px] font-mono uppercase tracking-[0.2em] text-black/40 border-t border-black/5 pt-6 w-full text-center md:text-left md:text-[11px]"
-            >
+            <p className="mt-8 text-[9px] font-mono uppercase tracking-[0.2em] text-black/40 border-t border-black/5 pt-6 w-full text-center md:text-left md:text-[11px]">
               hasta 3 cuotas sin interés. Despacho en menos de 24hs.
-            </motion.p>
+            </p>
           </div>
         </motion.div>
       </div>
