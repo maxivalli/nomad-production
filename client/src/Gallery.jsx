@@ -157,11 +157,11 @@ const Gallery = ({ items, setSelectedItem }) => {
                 <ChevronUp size={100} className="text-red-600 mb-[-20px]" strokeWidth={1.5} />
                 <div className="flex flex-col items-center py-10">
                   <span className="text-white font-black italic text-4xl tracking-tighter uppercase leading-none">Scroll</span>
-                  <span className="text-red-600 font-black italic text-6xl tracking-tighter uppercase leading-none">Vertical</span>
+                  <span className="text-red-600 font-black italic text-4xl tracking-tighter uppercase leading-none">Vertical</span>
                 </div>
                 <ChevronDown size={100} className="text-red-600 mt-[-20px]" strokeWidth={1.5} />
               </motion.div>
-              <p className="text-white/40 text-[10px] font-bold tracking-[0.5em] uppercase mt-8">Navegación Técnica Nomad</p>
+              <p className="text-white/40 text-[8px] font-bold tracking-[0.5em] uppercase mt-8">VERTICAL_SWIPE_NAVIGATION_V2.0</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -171,7 +171,7 @@ const Gallery = ({ items, setSelectedItem }) => {
             EL CATÁLOGO
           </motion.span>
           
-          <h2 className="text-white text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
+          <h2 className="text-white text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
             {collectionName ? (
               <>
                 <span className="block text-red-600">{collectionName.split(" ")[0]}</span>
