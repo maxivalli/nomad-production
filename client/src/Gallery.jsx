@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useTransform, useScroll, AnimatePresence } from "framer-motion";
-import { Loader2, Filter, ChevronUp, ChevronDown } from "lucide-react";
+import { Loader2, Filter } from "lucide-react";
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
@@ -10,7 +10,7 @@ const Gallery = ({ items, setSelectedItem }) => {
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [filteredItems, setFilteredItems] = useState([]);
   
-  // NUEVO: Estado para detectar gesto horizontal incorrecto
+  // Estado para detectar gesto horizontal incorrecto
   const [showVerticalGuidance, setShowVerticalGuidance] = useState(false);
 
   const optimizeCloudinaryUrl = (url) => {
@@ -20,7 +20,7 @@ const Gallery = ({ items, setSelectedItem }) => {
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
 
-  // NUEVA FUNCIÓN: Detector de dirección de scroll en móvil
+  // Detector de dirección de scroll en móvil
   useEffect(() => {
     let touchStartX = 0;
     let touchStartY = 0;
@@ -37,17 +37,14 @@ const Gallery = ({ items, setSelectedItem }) => {
       const deltaX = Math.abs(touchX - touchStartX);
       const deltaY = Math.abs(touchY - touchStartY);
 
-      // Si el usuario arrastra más de 30px hacia los lados y poco hacia arriba/abajo
       if (deltaX > deltaY && deltaX > 30) {
         setShowVerticalGuidance(true);
       } else if (deltaY > 10) {
-        // Si empieza a scrollear bien (vertical), ocultamos la guía
         setShowVerticalGuidance(false);
       }
     };
 
     const handleTouchEnd = () => {
-      // Opcional: ocultar con delay al soltar
       setTimeout(() => setShowVerticalGuidance(false), 1500);
     };
 
@@ -62,7 +59,7 @@ const Gallery = ({ items, setSelectedItem }) => {
     };
   }, []);
 
-  // 1. Extraer colecciones únicas y ordenar (Tu lógica original)
+  // 1. Lógica de colecciones original
   useEffect(() => {
     if (items && items.length > 0) {
       const collections = items
@@ -92,7 +89,7 @@ const Gallery = ({ items, setSelectedItem }) => {
     }
   }, [items]);
 
-  // 2. Actualizar collectionName basado en la selección (Tu lógica original)
+  // 2. Lógica de nombre y filtrado original
   useEffect(() => {
     if (selectedCollection && items) {
       const [season, year] = selectedCollection.split("-");
@@ -140,38 +137,59 @@ const Gallery = ({ items, setSelectedItem }) => {
     <section id="colecciones" ref={targetRef} className="relative h-[600vh] bg-neutral-900/20">
       <div className="sticky top-5 h-screen flex flex-col justify-center overflow-hidden">
         
-        {/* OVERLAY DE CORRECCIÓN VERTICAL - Solo aparece si el usuario intenta scroll lateral */}
+        {/* OVERLAY DE CORRECCIÓN CON TU ICONO SVG PERSONALIZADO */}
         <AnimatePresence>
           {showVerticalGuidance && (
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none"
+              className="md:hidden fixed inset-0 z-[100] bg-black/85 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
             >
-              <motion.div 
-                animate={{ y: [-30, 30, -30] }}
-                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                className="flex flex-col items-center"
-              >
-                <ChevronUp size={100} className="text-red-600 mb-[-20px]" strokeWidth={1.5} />
-                <div className="flex flex-col items-center py-10">
-                  <span className="text-white font-black italic text-4xl tracking-tighter uppercase leading-none">Scroll</span>
-                  <span className="text-red-600 font-black italic text-4xl tracking-tighter uppercase leading-none">Vertical</span>
+              <div className="flex flex-col items-center px-6">
+                <div className="relative h-56 w-40 flex items-center justify-center">
+                  {/* Animación de la mano */}
+                  <motion.div
+                    animate={{ 
+                      y: [40, -40, 40],
+                    }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 2, 
+                      ease: "easeInOut" 
+                    }}
+                  >
+                    <svg 
+                      width="110" 
+                      height="110" 
+                      viewBox="0 0 116.91 122.88" 
+                      className="fill-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.6)]"
+                    >
+                      <g>
+                        <path d="M40.75,67.62c-0.15-0.07-0.33-0.18-0.48-0.29c-1.95-1.55-4.09-3.28-5.93-4.79c-2.69-2.21-5.78-4.75-7.95-6.55 c-1.47-1.21-3.17-2.06-4.75-2.39c-1.03-0.18-1.95-0.18-2.69,0.11c-0.59,0.26-1.1,0.74-1.44,1.47c-0.44,0.99-0.66,2.39-0.55,4.31 c0.11,1.69,0.7,3.53,1.47,5.34c1.14,2.61,2.72,5.04,3.9,6.59c0.07,0.11,0.15,0.18,0.18,0.29l23.3,33.28 c0.29,0.44,0.48,0.92,0.52,1.4c0.48,3.83,1.29,6.74,2.47,8.54c0.88,1.33,1.99,1.99,3.42,1.95H88.9c2.28-0.04,4.34-0.7,6.26-2.02 c2.1-1.44,3.98-3.68,5.71-6.7c0.04-0.04,0.07-0.11,0.11-0.15c0.66-1.14,1.55-2.61,2.39-4.01c3.72-6.11,6.96-11.45,7.33-19.03 l-0.22-10.45c-0.04-0.15-0.04-0.29-0.04-0.44c0-0.15,0-1.14,0.04-2.47c0.07-6.92,0.18-15.46-6.15-16.53h-4.09 c-0.04,1.95-0.15,3.94-0.26,5.85c-0.11,1.73-0.22,3.35-0.22,4.93c0,1.69-1.36,3.06-3.06,3.06s-3.06-1.36-3.06-3.06 c0-1.58,0.11-3.42,0.22-5.34c0.41-6.52,0.88-13.99-4.31-14.91h-4.05c-0.22,0-0.44-0.04-0.66-0.07c0.04,2.36-0.11,4.79-0.26,7.14 c-0.11,1.73-0.22,3.35-0.22,4.93c0,1.69-1.36,3.06-3.06,3.06s-3.06-1.36-3.06-3.06c0-1.58,0.11-3.42,0.22-5.34 c0.4,6.52,0.88-13.99-4.31-14.91h-4.05c-0.29,0-0.55-0.04-0.81-0.11v11.89c0,1.69-1.36,3.06-3.06,3.06s-3.06-1.36-3.06-3.06V17.23 c0-5.34-2.17-8.72-4.97-10.12c-1.03-0.52-2.14-0.77-3.2-0.77c-1.07,0-2.17,0.26-3.2,0.77c-2.76,1.4-4.9,4.79-4.9,10.27v55.92 c0,1.69-1.36,3.06-3.06,3.06s-3.06-1.36-3.06-3.06v-5.67H40.75L40.75,67.62z M0.81,12.28c-1.04,0.99-1.08,2.64-0.09,3.68 C1.71,17,3.35,17.04,4.4,16.05l7.69-7.35v22.08c0,1.44,1.17,2.61,2.61,2.61s2.61-1.17,2.61-2.61V8.68l7.73,7.37 c1.04,0.99,2.69,0.95,3.68-0.09c0.99-1.04,0.95-2.69-0.09-3.68L16.49,0.72c-1-0.95-2.58-0.96-3.59,0L0.81,12.28L0.81,12.28z M69.32,31.33c0.26-0.07,0.52-0.11,0.81-0.11h4.23c0.22,0,0.48,0.04,0.7,0.07c5.63,0.88,8.17,4.16,9.2,8.43 c0.4-0.18,0.85-0.29,1.29-0.29h4.23c0.22,0,0.48,0.04,0.7,0.07c6.07,0.96,8.5,4.67,9.39,9.39c0.15-0.04,0.29-0.04,0.48-0.04h4.23 c0.22,0,0.48,0.04,0.7,0.07c11.63,1.8,11.49,13.36,11.37,22.68v2.43l0.26,10.75v0.33c-0.44,9.17-4.05,15.09-8.21,21.94 c-0.7,1.14-1.4,2.32-2.36,3.94c-0.04,0.04-0.04,0.07-0.07,0.11c-2.17,3.79-4.67,6.7-7.55,8.69c-2.91,2.02-6.15,3.06-9.68,3.09 H52.42c-3.64,0.07-6.48-1.51-8.58-4.64c-1.69-2.5-2.8-6.04-3.39-10.45L17.63,75.17l-0.11-0.11c-1.36-1.8-3.2-4.64-4.6-7.77 c-1.03-2.36-1.8-4.9-1.99-7.4c-0.18-2.98,0.22-5.34,1.07-7.22c1.03-2.32,2.72-3.83,4.75-4.64c1.88-0.77,4.01-0.88,6.15-0.44 c2.58,0.52,5.23,1.8,7.47,3.68c1.84,1.55,4.93,4.05,7.95,6.52l2.5,2.06V17.41c0-8.14,3.61-13.36,8.28-15.72 c1.88-0.96,3.9-1.44,5.96-1.44c2.06,0,4.09,0.48,5.96,1.44c4.68,2.36,8.36,7.62,8.36,15.61v14.06L69.32,31.33L69.32,31.33z"/>
+                      </g>
+                    </svg>
+                  </motion.div>
                 </div>
-                <ChevronDown size={100} className="text-red-600 mt-[-20px]" strokeWidth={1.5} />
-              </motion.div>
-              <p className="text-white/40 text-[8px] font-bold tracking-[0.5em] uppercase mt-8">VERTICAL_SWIPE_NAVIGATION_V2.0</p>
+
+                <div className="mt-4 text-center">
+                  <p className="text-red-600 font-black italic text-4xl tracking-tighter uppercase leading-none">SCROLL</p>
+                  <p className="text-white font-black italic text-4xl tracking-tighter uppercase leading-none">VERTICAL</p>
+                  <div className="h-[2px] w-12 bg-red-600 mx-auto my-4" />
+                  <p className="text-white/40 text-[9px] font-bold tracking-[0.5em] uppercase">Mueve el dedo arriba o abajo</p>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Título y Filtros Originales */}
         <motion.div style={{ x: titleX, opacity }} className="relative z-10 px-6 md:px-12 mb-4 md:mb-6 pointer-events-auto">
           <motion.span className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0 pl-1">
             EL CATÁLOGO
           </motion.span>
           
-          <h2 className="text-white text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
+          <h2 className="text-white text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
             {collectionName ? (
               <>
                 <span className="block text-red-600">{collectionName.split(" ")[0]}</span>
@@ -212,6 +230,7 @@ const Gallery = ({ items, setSelectedItem }) => {
           )}
         </motion.div>
 
+        {/* Galería Horizontal */}
         <div className="relative">
           <motion.div style={{ x: xPx }} className="flex gap-6 md:gap-12 px-6 md:px-12">
             {filteredItems.map((item) => {
@@ -253,6 +272,7 @@ const Gallery = ({ items, setSelectedItem }) => {
           </motion.div>
         </div>
 
+        {/* Barra de Progreso */}
         <div className="absolute bottom-5 left-0 w-full h-[5px] bg-white/10 z-20">
           <motion.div style={{ scaleX: scrollYProgress }} className="h-full bg-red-600 origin-left" />
         </div>
