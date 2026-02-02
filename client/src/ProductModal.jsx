@@ -47,7 +47,7 @@ const ProductModal = ({ item, onClose }) => {
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
     const splitUrl = url.split("/upload/");
-    const optimizationParams = "f_auto,q_auto,w_1600";
+    const optimizationParams = "f_auto,q_auto,w_1200";
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
 
