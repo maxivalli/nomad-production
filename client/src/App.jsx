@@ -90,6 +90,7 @@ useEffect(() => {
         <Navbar />
 
         <main>
+          <PreLoader />
           <Hero />
 
           {error && (

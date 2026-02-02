@@ -91,7 +91,7 @@ const Root = () => {
         try {
           sessionStorage.setItem("app_loaded", "true");
         } catch (e) {}
-      }, 2500); // Ajusta el tiempo del loader aquí
+      }, 1500); // 
       return () => clearTimeout(timer);
     }
   }, []);

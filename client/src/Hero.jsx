@@ -23,14 +23,23 @@ const Hero = () => {
         // 2. Obtener Colecciones para sacar el nombre de la última
         const resCol = await fetch("/api/settings/collection");
         const dataCol = await resCol.json();
-        console.log(dataCol)
 
         // Lógica de Fecha
         if (dataDate.date) {
           const [y, m, d] = dataDate.date.split("-");
           const meses = [
-            "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
-            "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE",
+            "ENERO",
+            "FEBRERO",
+            "MARZO",
+            "ABRIL",
+            "MAYO",
+            "JUNIO",
+            "JULIO",
+            "AGOSTO",
+            "SEPTIEMBRE",
+            "OCTUBRE",
+            "NOVIEMBRE",
+            "DICIEMBRE",
           ];
           setTargetDateLabel(`${d}_${meses[parseInt(m) - 1]}_${y}`);
           const targetTime = new Date(`${dataDate.date}T00:00:00`).getTime();
@@ -41,11 +50,10 @@ const Hero = () => {
         // Asumiendo que dataCol es un array y el primero es el más reciente
         if (dataCol && dataCol.value) {
           // Reemplazamos espacios por guiones bajos para mantener el look técnico (opcional)
-          setCollectionName(dataCol.value.toUpperCase().replace(/\s+/g, '_'));
+          setCollectionName(dataCol.value.toUpperCase().replace(/\s+/g, "_"));
         } else {
           setCollectionName("NOMAD_CORE");
         }
-
       } catch (err) {
         console.error("Error en sincronización:", err);
         setTargetDateLabel("ERROR_SYNC_FAILED");
@@ -60,10 +68,17 @@ const Hero = () => {
 
         if (diferencia < 0) {
           clearInterval(intervalo);
-          setTimeLeft({ dias: "00", horas: "00", minutos: "00", segundos: "00" });
+          setTimeLeft({
+            dias: "00",
+            horas: "00",
+            minutos: "00",
+            segundos: "00",
+          });
         } else {
           const d = Math.floor(diferencia / (1000 * 60 * 60 * 24));
-          const h = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const h = Math.floor(
+            (diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          );
           const m = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
           const s = Math.floor((diferencia % (1000 * 60)) / 1000);
 
@@ -94,8 +109,14 @@ const Hero = () => {
               className="absolute inset-0 z-20 flex items-center justify-center bg-black"
             >
               <div className="flex flex-col items-center gap-4">
-                <Loader2 className="text-red-600 animate-spin opacity-40" size={48} strokeWidth={1} />
-                <span className="text-white/20 text-[8px] tracking-[0.5em] font-mono">BUFFERING_NOMAD_STREAM</span>
+                <Loader2
+                  className="text-red-600 animate-spin opacity-40"
+                  size={48}
+                  strokeWidth={1}
+                />
+                <span className="text-white/20 text-[8px] tracking-[0.5em] font-mono">
+                  BUFFERING_NOMAD_STREAM
+                </span>
               </div>
             </motion.div>
           )}
@@ -120,18 +141,31 @@ const Hero = () => {
       </div>
 
       {/* MARCA */}
-      <div className="relative z-10 flex-1 flex flex-col justify-center items-center text-center">
+      <div className="relative z-10 flex-1 flex flex-col justify-center items-center text-cente mt-[-8vw] md:mt-[-9vw]r">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={videoLoaded ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1.5, ease: "easeOut" }}
+          className="flex flex-col items-center w-full"
         >
-          <h2 className="text-[18vw] md:text-[11vw] leading-none font-black italic uppercase tracking-tighter text-white">
-            Nomad<span className="text-red-600">.</span>
+          <h2
+            className="text-[30vw] md:text-[20vw] leading-[0.7] uppercase text-white flex items-baseline justify-center ml-[4vw] md:ml-[5vw]"
+            style={{ fontFamily: "Hyperwave, sans-serif" }}
+          >
+            Nomad
+            <span
+              className="text-[60vw] md:text-[40vw] text-red-600 leading-none inline-block translate-y-[0.08em] ml-[-0.07em]"
+              style={{ fontFamily: "Hyperwave, sans-serif" }}
+            >
+              .
+            </span>
           </h2>
-          <p className="text-white tracking-[0.6em] md:tracking-[1em] uppercase text-[8px] md:text-[12px] mt-2 opacity-70">
-            UNBOUND BY TERRITORY
-          </p>
+
+          <div className="mt-[-13vw] md:mt-[-9vw] mb-[8vh]">
+            <p className="text-white tracking-[0.6em] md:tracking-[1em] uppercase text-[8px] md:text-[12px] opacity-70">
+              UNBOUND BY TERRITORY
+            </p>
+          </div>
         </motion.div>
       </div>
 

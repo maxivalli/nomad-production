@@ -1,5 +1,12 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;900&display=swap');
+@font-face {
+  font-family: 'Hyperwave';
+  src: url('/hyperwave-one.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   html {

@@ -2,27 +2,6 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const PreLoader = () => {
-  const symbols = ["⚡︎", "♒︎", "✈︎", "⚽︎", "⛅︎", "⛺︎", "."];
-  const [currentSymbol, setCurrentSymbol] = useState(symbols[0]);
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex((prev) => {
-        if (prev < symbols.length - 1) {
-          return prev + 1;
-        }
-        clearInterval(interval);
-        return prev;
-      });
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    setCurrentSymbol(symbols[index]);
-  }, [index]);
 
   return (
     <motion.div
@@ -41,24 +20,18 @@ const PreLoader = () => {
           initial={{ y: 120 }}
           animate={{
             y: 0,
-            opacity: [1, 0.5, 1, 0.8, 1], 
+            opacity: [1, 0.5, 1, 0.8, 1],
           }}
           transition={{
             y: { duration: 0.8, ease: "easeOut" },
             opacity: { duration: 2, repeat: Infinity, ease: "linear" },
           }}
-          className="text-[10vw] md:text-[7vw] leading-none font-black italic uppercase tracking-tighter flex items-baseline"
+          className="text-[10vw] md:text-[10vw] leading-none tracking-tighter flex items-baseline"
+          style={{ fontFamily: "Hyperwave, sans-serif" }}
         >
           Nomad
-          <span 
-            className="text-red-600 inline-block text-left" 
-            style={{ 
-              // Si es el punto, que no tenga ancho fijo. Si es otro, le damos espacio.
-              width: currentSymbol === "." ? "auto" : "1ch",
-              paddingLeft: "0.1ch" // Un pequeño respiro para que no toque la 'd'
-            }}
-          >
-            {currentSymbol}
+          <span className="text-red-600 inline-block text-left text-[20vw] md:text-[20vw] translate-y-[0.08em] ml-[-0.05em]">
+            .
           </span>
         </motion.h1>
       </div>
