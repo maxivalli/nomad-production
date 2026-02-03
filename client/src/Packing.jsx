@@ -52,7 +52,7 @@ const Packaging = () => {
 
   const images = [
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770128762/BOX_NEW_LOGO_l5qjox.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770142506/p-1_xnc9ti.jpg",
       speed: -40,
       rotation: 3,
     },
@@ -62,12 +62,12 @@ const Packaging = () => {
       rotation: -3,
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770005786/nomad_etiqueta_rk9y3l.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770141858/PACKING-1_gc8sxz.jpg",
       speed: -70,
       rotation: -2,
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769611238/p5_begtlw.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770142005/PACKING-2_yg2lfn.jpg",
       speed: -100,
       rotation: 3,
     },

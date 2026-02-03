@@ -47,8 +47,8 @@ const Retailers = () => {
 
   const packagingImages = [
     "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770128762/BOX_NEW_LOGO_l5qjox.jpg",
-    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769696292/sbvoik8lyhocv9rvkrnf.jpg",
-    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769970095/Gemini_Generated_Image_6zmp3p6zmp3p6zmp_de_taman%CC%83o_grande_djl4fm.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770141858/PACKING-1_gc8sxz.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770143304/calco_xn9cav.jpg",
   ];
 
   return (
@@ -151,7 +151,7 @@ const Retailers = () => {
                     >
                       <img
                         src={img}
-                        className="w-full h-full object-cover md:grayscale group-hover:grayscale-0 transition-all duration-700"
+                        className="w-full h-full object-cover transition-all duration-700"
                         alt="Packaging NOMAD"
                       />
                     </div>
