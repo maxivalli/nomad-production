@@ -52,7 +52,7 @@ const Packaging = () => {
 
   const images = [
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770142506/p-1_xnc9ti.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770147943/b1_iwl1sn.jpg",
       speed: -40,
       rotation: 3,
     },
