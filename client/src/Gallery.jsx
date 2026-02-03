@@ -146,7 +146,7 @@ const Gallery = ({ items, setSelectedItem }) => {
               exit={{ opacity: 0 }}
               className="md:hidden fixed inset-0 z-[100] bg-black/85 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
             >
-              <div className="flex flex-col items-center px-6">
+              <div className="flex flex-col items-center px-6 -translate-y-[15vh] scale-90">
                 <div className="relative h-56 w-40 flex items-center justify-center">
                   {/* Animación de la mano */}
                   <motion.div
