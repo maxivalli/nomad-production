@@ -14,8 +14,6 @@ const Gallery = ({ items, setSelectedItem }) => {
   const [availableCollections, setAvailableCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [filteredItems, setFilteredItems] = useState([]);
-
-  // Estado para detectar gesto horizontal incorrecto
   const [showVerticalGuidance, setShowVerticalGuidance] = useState(false);
 
   const optimizeCloudinaryUrl = (url) => {
@@ -25,7 +23,6 @@ const Gallery = ({ items, setSelectedItem }) => {
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
 
-  // Detector de dirección de scroll en móvil
   useEffect(() => {
     let touchStartX = 0;
     let touchStartY = 0;
@@ -38,7 +35,6 @@ const Gallery = ({ items, setSelectedItem }) => {
     const handleTouchMove = (e) => {
       const touchX = e.touches[0].clientX;
       const touchY = e.touches[0].clientY;
-
       const deltaX = Math.abs(touchX - touchStartX);
       const deltaY = Math.abs(touchY - touchStartY);
 
@@ -64,7 +60,6 @@ const Gallery = ({ items, setSelectedItem }) => {
     };
   }, []);
 
-  // 1. Lógica de colecciones original
   useEffect(() => {
     if (items && items.length > 0) {
       const collections = items
@@ -94,7 +89,6 @@ const Gallery = ({ items, setSelectedItem }) => {
     }
   }, [items]);
 
-  // 2. Lógica de nombre y filtrado original
   useEffect(() => {
     if (selectedCollection && items) {
       const [season, year] = selectedCollection.split("-");
@@ -168,7 +162,7 @@ const Gallery = ({ items, setSelectedItem }) => {
               EL CATÁLOGO
             </motion.span>
 
-            <h2 className="text-white text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
+            <h2 className="text-white text-3xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
               {collectionName ? (
                 <>
                   <span className="block text-red-600">
@@ -185,7 +179,6 @@ const Gallery = ({ items, setSelectedItem }) => {
 
             {availableCollections.length > 0 && (
               <div className="mt-6 flex items-center gap-3">
-                {/* Etiqueta Filtro */}
                 <div className="flex items-center gap-2 px-3 py-2.5 bg-neutral-900/50 border border-white/10">
                   <Filter size={14} className="text-red-600" />
                   <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400">
@@ -193,7 +186,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                   </span>
                 </div>
 
-                {/* Selector de Colección */}
                 <select
                   value={selectedCollection || ""}
                   onChange={(e) => setSelectedCollection(e.target.value)}
@@ -211,7 +203,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                   ))}
                 </select>
 
-                {/* Contador de Items */}
                 <div className="flex items-center border-l border-white/20 pl-3 h-9 ml-1">
                   <span className="text-red-600 text-[10px] md:text-xs font-black italic uppercase tracking-tighter flex items-center gap-1.5">
                     {filteredItems.length.toString().padStart(2, "0")} - ITEMS
@@ -221,61 +212,74 @@ const Gallery = ({ items, setSelectedItem }) => {
             )}
           </motion.div>
 
-          {/* Galería Horizontal */}
+          {/* Galería Horizontal Estilo Polaroid */}
           <div className="relative">
             <motion.div
               style={{ x: xPx }}
-              className="flex gap-6 md:gap-12 px-6 md:px-12"
+              className="flex gap-10 md:gap-16 px-6 md:px-12 items-center"
             >
-              {filteredItems.map((item) => {
+              {filteredItems.map((item, index) => {
                 const rawImage = Array.isArray(item.img)
                   ? item.img[0]
                   : item.img;
                 const isImgLoaded = loaded[item.id];
+                
+                // Generar una rotación aleatoria leve para el efecto Polaroid
+                const randomRotate = (index % 2 === 0 ? 1 : -1) * (index % 3 + 1);
 
                 return (
-                  <div
+                  <motion.div
                     key={item.id}
                     onClick={() => handleOpenProduct(item)}
-                    className="group relative h-[442px] w-[340px] md:h-[550px] md:w-[450px] flex-none overflow-hidden bg-neutral-800 shrink-0 cursor-pointer shadow-2xl transition-transform duration-500"
+                    initial={{ rotate: randomRotate }}
+                    whileHover={{ rotate: 0, scale: 1.05, y: -10, zIndex: 50 }}
+                    className="group relative p-3 pb-16 md:p-4 md:pb-20 flex-none overflow-hidden bg-[#fdfdfd] shrink-0 cursor-pointer shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 border border-neutral-200"
+                    style={{
+                      height: "auto",
+                      width: window.innerWidth < 768 ? "300px" : "400px",
+                    }}
                   >
-                    {!isImgLoaded && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-neutral-900 z-0">
-                        <Loader2
-                          className="text-red-600 animate-spin"
-                          size={48}
-                          strokeWidth={1}
-                        />
-                      </div>
-                    )}
+                    {/* Contenedor de la imagen (el área cuadrada de la polaroid) */}
+                    <div className="relative aspect-square overflow-hidden bg-neutral-200">
+                      {!isImgLoaded && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900 z-0">
+                          <Loader2
+                            className="text-red-600 animate-spin"
+                            size={32}
+                            strokeWidth={1}
+                          />
+                        </div>
+                      )}
 
-                    <img
-                      src={optimizeCloudinaryUrl(rawImage)}
-                      alt={item.title}
-                      loading="lazy"
-                      onLoad={() =>
-                        setLoaded((prev) => ({ ...prev, [item.id]: true }))
-                      }
-                      className={`h-full w-full object-cover transition-all duration-1000 group-hover:scale-110 ${isImgLoaded ? "opacity-100" : "opacity-0"}`}
-                    />
-                    <div className="absolute inset-0 group-hover:bg-black/10 transition-colors duration-500" />
+                      <img
+                        src={optimizeCloudinaryUrl(rawImage)}
+                        alt={item.title}
+                        loading="lazy"
+                        onLoad={() =>
+                          setLoaded((prev) => ({ ...prev, [item.id]: true }))
+                        }
+                        className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${isImgLoaded ? "opacity-100" : "opacity-0"}`}
+                      />
+                    </div>
 
-                    <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full bg-gradient-to-t from-black via-transparent to-transparent">
-                      <p className="text-xl md:text-2xl font-black uppercase italic tracking-tighter group-hover:text-red-600 transition-colors text-white">
+                    {/* Texto en el marco inferior (Estilo pie de foto) */}
+                    <div className="absolute bottom-0 left-0 w-full p-4 md:p-6 flex flex-col items-center">
+                      <p className="text-neutral-800 text-lg md:text-xl font-medium tracking-tight font-serif italic text-center leading-tight">
                         {item.title}
                       </p>
-                      <p className="text-[9px] uppercase tracking-[0.3em] text-white/50 mt-1 font-bold">
-                        DETALLES +
-                      </p>
+                      <div className="mt-2 w-8 h-[1px] bg-red-600/30" />
                     </div>
-                  </div>
+                    
+                    {/* Brillo sutil sobre la foto */}
+                    <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent opacity-50" />
+                  </motion.div>
                 );
               })}
             </motion.div>
           </div>
         </div>
 
-        {/* BARRA DE PROGRESO: Pegada al borde inferior real de la pantalla */}
+        {/* BARRA DE PROGRESO */}
         <div className="absolute bottom-0 left-0 w-full h-[5px] bg-white/10 z-[60]">
           <motion.div
             style={{ scaleX: scrollYProgress }}
@@ -283,7 +287,7 @@ const Gallery = ({ items, setSelectedItem }) => {
           />
         </div>
 
-        {/* OVERLAY DE GUÍA (Z-index alto para cubrir todo) */}
+        {/* OVERLAY DE GUÍA */}
         <AnimatePresence>
           {showVerticalGuidance && (
             <motion.div
