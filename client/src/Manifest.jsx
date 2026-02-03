@@ -221,7 +221,7 @@ const ManifiestoSection = () => {
             style={{ y: imageY, rotate: rotateImg }}
             className="w-full md:w-1/3 mt-10 md:mt-32"
           >
-            <div className="relative aspect-[3/4] overflow-hidden grayscale hover:grayscale-0 transition-all duration-1000 group shadow-2xl ring-1 ring-white/10">
+            <div className="relative aspect-[3/4] overflow-hidden transition-all duration-1000 group shadow-2xl ring-1 ring-white/10">
               <motion.img
                 whileHover={{ scale: 1.2 }}
                 transition={{ duration: 1.5 }}
