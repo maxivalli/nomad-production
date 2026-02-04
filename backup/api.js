@@ -201,64 +201,6 @@ class ApiService {
       return [];
     }
   }
-
-  // ==========================================
-  // BANNERS PUBLICITARIOS
-  // ==========================================
-
-  // Subir media (imagen o video) para banner
-  async uploadBannerMedia(formData) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/banners/upload-media`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || 'Error al subir archivo');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error en uploadBannerMedia:', error);
-      throw error;
-    }
-  }
-
-  // Crear un nuevo banner
-  async createBanner(bannerData) {
-    return this.request('/api/banners', {
-      method: 'POST',
-      body: JSON.stringify(bannerData),
-    });
-  }
-
-  // Obtener todos los banners (admin)
-  async getAllBanners() {
-    return this.request('/api/banners/all');
-  }
-
-  // Obtener banner activo (público)
-  async getActiveBanner() {
-    return this.request('/api/banners/active');
-  }
-
-  // Actualizar banner
-  async updateBanner(id, bannerData) {
-    return this.request(`/api/banners/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(bannerData),
-    });
-  }
-
-  // Eliminar banner
-  async deleteBanner(id) {
-    return this.request(`/api/banners/${id}`, {
-      method: 'DELETE',
-    });
-  }
 }
 
 export default new ApiService();

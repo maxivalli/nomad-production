@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import PushNotificationPanel from "../components/PushNotificationPanel";
-import AdminBannersPanel from "../components/AdminBannersPanel";
 import { useToast } from "../components/Toast";
 import {
   motion as framerMotion,
@@ -18,7 +17,6 @@ import {
   UploadCloud,
   Zap,
   Bell, // Icono para notificaciones
-  Monitor, // Icono para banners
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -87,9 +85,6 @@ const AdminPanel = () => {
   
   // NUEVO: Estado para el modal de notificaciones
   const [isPushModalOpen, setIsPushModalOpen] = useState(false);
-  
-  // NUEVO: Estado para el modal de banners
-  const [isBannersModalOpen, setIsBannersModalOpen] = useState(false);
 
   // ==========================================================================
   // EFFECTS - Carga inicial de datos
@@ -515,23 +510,6 @@ const AdminPanel = () => {
                 <span className="h-[1px] w-0 bg-red-600 group-hover:w-full transition-all duration-500 mt-1"></span>
               </div>
             </button>
-
-            {/* NUEVO: Botón de banners publicitarios */}
-            <button
-              onClick={() => setIsBannersModalOpen(true)}
-              className="group relative flex items-center gap-2 py-2 overflow-hidden shrink-0"
-            >
-              <Monitor
-                size={24}
-                className="text-neutral-500 group-hover:text-red-500 transition-colors"
-              />
-              <div className="flex flex-col hidden xs:flex">
-                <span className="text-[8px] md:text-[10px] tracking-[0.3em] uppercase font-[900] text-neutral-500 group-hover:text-white transition-colors leading-none">
-                  Ads
-                </span>
-                <span className="h-[1px] w-0 bg-red-600 group-hover:w-full transition-all duration-500 mt-1"></span>
-              </div>
-            </button>
           </div>
 
           {/* Logo - Centro */}
@@ -616,58 +594,6 @@ const AdminPanel = () => {
               {/* Contenido del modal */}
               <div className="p-4 md:p-8">
                 <PushNotificationPanel />
-              </div>
-            </framerMotion.div>
-          </framerMotion.div>
-        )}
-      </FramerAnimatePresence>
-
-      {/* ====================================================================
-          MODAL DE BANNERS PUBLICITARIOS
-          ==================================================================== */}
-      <FramerAnimatePresence>
-        {isBannersModalOpen && (
-          <framerMotion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
-            onClick={() => setIsBannersModalOpen(false)}
-          >
-            <framerMotion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.3 }}
-              className="bg-black border-2 border-red-600/30 w-full max-w-6xl max-h-[90vh] overflow-y-auto custom-scrollbar relative shadow-2xl shadow-red-600/20"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header del modal */}
-              <div className="sticky top-0 bg-black/95 backdrop-blur-xl border-b border-red-600/30 p-4 md:p-6 flex items-center justify-between z-10">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-red-600/10 border border-red-600/30">
-                    <Monitor size={20} className="text-red-500" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-[900] uppercase italic tracking-tight text-white">
-                      Banners Publicitarios
-                    </h2>
-                    <p className="text-[8px] md:text-[10px] text-neutral-400 uppercase tracking-widest font-bold mt-1">
-                      Advertising Management Panel
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsBannersModalOpen(false)}
-                  className="group p-3 hover:bg-red-600 transition-colors border border-white/10"
-                >
-                  <X size={20} className="text-white group-hover:rotate-90 transition-transform" />
-                </button>
-              </div>
-
-              {/* Contenido del modal */}
-              <div className="p-4 md:p-8">
-                <AdminBannersPanel />
               </div>
             </framerMotion.div>
           </framerMotion.div>

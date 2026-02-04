@@ -18,7 +18,6 @@ import Footer from "./components/Footer";
 import ProductModal from "./components/ProductModal";
 import InstallPrompt from "./components/InstallPrompt";
 import PushNotificationPrompt from "./components/PushNotificationPrompt";
-import BannerModal from "./components/BannerModal";
 
 // Hooks
 import { useProducts } from "./hooks/useProducts";
@@ -116,7 +115,6 @@ function App() {
         onClose={handleCloseInstallPrompt}
       />
       <PushNotificationPrompt />
-      <BannerModal />
       <div className="bg-black text-white selection:bg-white selection:text-black">
         <Navbar onContactClick={handleShowInstallPrompt} />
 
