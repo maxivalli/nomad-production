@@ -51,7 +51,7 @@ const AdminBannersPanel = () => {
           const width = video.videoWidth;
           const height = video.videoHeight;
           
-          if (width === 1080 && height === 720) {
+          if (width === 720 && height === 1080) {
             resolve({ width, height, valid: true });
           } else {
             reject(new Error(`El video debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`));
@@ -70,7 +70,7 @@ const AdminBannersPanel = () => {
           const width = img.width;
           const height = img.height;
           
-          if (width === 1080 && height === 720) {
+          if (width === 720 && height === 1080) {
             resolve({ width, height, valid: true });
           } else {
             reject(new Error(`La imagen debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`));
