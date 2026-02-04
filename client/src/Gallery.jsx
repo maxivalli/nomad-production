@@ -17,10 +17,11 @@ const Tape = ({ position = "top" }) => {
   };
 
   return (
-    <div 
+    <div
       className={`absolute ${styles[position]} z-30 w-28 h-9 bg-white/25 backdrop-blur-[1px] pointer-events-none shadow-sm`}
       style={{
-        clipPath: "polygon(5% 0%, 10% 2%, 90% 0%, 95% 4%, 100% 30%, 98% 70%, 95% 100%, 5% 98%, 2% 70%, 0% 30%)",
+        clipPath:
+          "polygon(5% 0%, 10% 2%, 90% 0%, 95% 4%, 100% 30%, 98% 70%, 95% 100%, 5% 98%, 2% 70%, 0% 30%)",
         borderLeft: "1px solid rgba(255,255,255,0.2)",
         borderRight: "1px solid rgba(255,255,255,0.2)",
       }}
@@ -141,19 +142,40 @@ const Gallery = ({ items, setSelectedItem }) => {
 
   useEffect(() => {
     const calculateScroll = () => {
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && targetRef.current) {
         const isMobile = window.innerWidth < 768;
-        const cardWidth = isMobile ? 340 : 450;
-        const gap = isMobile ? 24 : 48;
-        const padding = isMobile ? 48 : 96;
-        const contentWidth =
+        const containerWidth = window.innerWidth;
+
+        // 1. Coincidir exactamente con las clases px-6 (24px) y px-12 (48px)
+        const paddingSide = isMobile ? 24 : 48;
+        const gap = isMobile ? 40 : 64; // Aumentamos un poco el gap para dar aire entre Polaroids
+
+        // 2. Ancho de la tarjeta (debe ser igual al del render)
+        const cardWidth = isMobile ? 300 : 400;
+
+        // 3. Cálculo del contenido total
+        const totalContentWidth =
           filteredItems.length * cardWidth + (filteredItems.length - 1) * gap;
-        setTotalScroll(-(contentWidth - window.innerWidth + padding));
+
+        // 4. EL TRUCO: Añadimos un "Extra Offset" (60px-100px)
+        // para compensar la rotación y que no se corte la esquina.
+        const rotationBuffer = isMobile ? 60 : 100;
+
+        const maxScroll =
+          totalContentWidth + paddingSide * 2 + rotationBuffer - containerWidth;
+
+        setTotalScroll(maxScroll > 0 ? -maxScroll : 0);
       }
     };
-    calculateScroll();
+
+    // Ejecutamos después de un breve delay para que el layout esté listo
+    const timeoutId = setTimeout(calculateScroll, 150);
+
     window.addEventListener("resize", calculateScroll);
-    return () => window.removeEventListener("resize", calculateScroll);
+    return () => {
+      window.removeEventListener("resize", calculateScroll);
+      clearTimeout(timeoutId);
+    };
   }, [filteredItems.length]);
 
   const xPx = useTransform(
@@ -246,8 +268,9 @@ const Gallery = ({ items, setSelectedItem }) => {
                   ? item.img[0]
                   : item.img;
                 const isImgLoaded = loaded[item.id];
-                
-                const randomRotate = (index % 2 === 0 ? 1 : -1) * (index % 3 + 1);
+
+                const randomRotate =
+                  (index % 2 === 0 ? 1 : -1) * ((index % 3) + 1);
 
                 // Alternancia de cintas
                 const tapeOptions = ["top", "topLeft", "topRight", "bottom"];
@@ -258,16 +281,34 @@ const Gallery = ({ items, setSelectedItem }) => {
                     key={item.id}
                     onClick={() => handleOpenProduct(item)}
                     initial={{ rotate: randomRotate }}
-                    whileHover={{ rotate: 0, scale: 1.05, y: -10, zIndex: 50 }}
-                    className="group relative p-3 pb-16 md:p-4 md:pb-20 flex-none overflow-visible bg-[#fbfbfb] shrink-0 cursor-pointer shadow-[0_15px_35px_rgba(0,0,0,0.5)] transition-all duration-300 border border-neutral-200"
+                    // Configuración de Hover optimizada
+                    whileHover={{
+                      rotate: 0,
+                      scale: 1.08, // Un poco más de escala para resaltar
+                      y: -15, // Elevación más pronunciada
+                      zIndex: 50,
+                    }}
+                    // Transición ultra rápida y elástica
+                    transition={{
+                      type: "spring",
+                      stiffness: 400, // Rigidez alta = movimiento rápido
+                      damping: 25, // Amortiguación media = evita rebote excesivo pero se siente suave
+                      mass: 0.8, // Menos masa = más agilidad
+                    }}
+                    className="group relative p-3 pb-16 md:p-4 md:pb-20 flex-none overflow-visible bg-[#fbfbfb] shrink-0 cursor-pointer shadow-[0_15px_35px_rgba(0,0,0,0.5)] border border-neutral-200"
                     style={{
                       height: "auto",
-                      width: typeof window !== "undefined" && window.innerWidth < 768 ? "300px" : "400px",
+                      width:
+                        typeof window !== "undefined" && window.innerWidth < 768
+                          ? "300px"
+                          : "400px",
                     }}
                   >
                     {/* Cintas Adhesivas */}
                     <Tape position={tapePos} />
-                    {index % 3 === 0 && <Tape position={index % 2 === 0 ? "bottom" : "top"} />}
+                    {index % 3 === 0 && (
+                      <Tape position={index % 2 === 0 ? "bottom" : "top"} />
+                    )}
 
                     <div className="relative aspect-square overflow-hidden bg-neutral-200">
                       {!isImgLoaded && (
@@ -297,7 +338,7 @@ const Gallery = ({ items, setSelectedItem }) => {
                       </p>
                       <div className="mt-2 w-8 h-[1px] bg-red-600/30" />
                     </div>
-                    
+
                     {/* Brillo y textura extra */}
                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent opacity-50" />
                     <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />

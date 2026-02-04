@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Bell, Send, Users, TrendingUp, Clock } from 'lucide-react';
+import { useToast } from './Toast'; // ✅ AGREGADO
 import api from '../services/api';
 
 const PushNotificationPanel = () => {
+  const toast = useToast(); // ✅ AGREGADO
   const [stats, setStats] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,6 +19,10 @@ const PushNotificationPanel = () => {
 
   useEffect(() => {
     loadData();
+    
+    // ✅ AGREGADO: Auto-refresh cada 30 segundos
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
@@ -27,11 +33,11 @@ const PushNotificationPanel = () => {
         api.getPushHistory()
       ]);
       
-      // FIX: Las respuestas ya vienen parseadas directamente
       setStats(statsRes);
       setHistory(historyRes);
     } catch (error) {
       console.error('Error cargando datos:', error);
+      toast.error('❌ Error al cargar datos'); // ✅ MEJORADO
     } finally {
       setLoading(false);
     }
@@ -40,8 +46,19 @@ const PushNotificationPanel = () => {
   const handleSend = async (e) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.body) {
-      alert('Por favor completa título y mensaje');
+    // ✅ MEJORADO: Validaciones más robustas
+    if (!formData.title?.trim() || !formData.body?.trim()) {
+      toast.warning('⚠️ Completa título y mensaje');
+      return;
+    }
+
+    if (formData.title.trim().length < 3) {
+      toast.warning('⚠️ El título debe tener al menos 3 caracteres');
+      return;
+    }
+
+    if (formData.body.trim().length < 10) {
+      toast.warning('⚠️ El mensaje debe tener al menos 10 caracteres');
       return;
     }
 
@@ -53,8 +70,19 @@ const PushNotificationPanel = () => {
     try {
       const response = await api.sendPushNotification(formData);
       
-      // FIX: response ya es el JSON parseado, no tiene .data
-      alert(`Notificación enviada: ${response.successful}/${response.total} exitosos`);
+      // ✅ MEJORADO: Manejo de casos edge
+      if (response.total === 0) {
+        toast.warning('⚠️ No hay suscriptores activos');
+        return;
+      }
+
+      if (response.successful === 0) {
+        toast.error(`❌ Todas las notificaciones fallaron (${response.failed}/${response.total})`);
+        return;
+      }
+
+      // ✅ MEJORADO: Usar toast en vez de alert
+      toast.success(`✅ ${response.successful}/${response.total} notificaciones enviadas`);
       
       // Reset form
       setFormData({
@@ -68,7 +96,7 @@ const PushNotificationPanel = () => {
       loadData();
     } catch (error) {
       console.error('Error enviando notificación:', error);
-      alert('Error al enviar la notificación');
+      toast.error('❌ Error al enviar la notificación'); // ✅ MEJORADO
     } finally {
       setSending(false);
     }
@@ -111,52 +139,59 @@ const PushNotificationPanel = () => {
     });
   };
 
+  // ✅ AGREGADO: Emojis rápidos
+  const quickEmojis = ['🔥', '💥', '✨', '🎉', '⚡', '🖤', '❤️', '🎁'];
+
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
-                Total Suscriptores
-              </p>
-              <p className="text-white text-2xl font-bold">
-                {stats?.total_subscriptions || 0}
-              </p>
+      {loading && !stats ? (
+        <div className="text-white/40 text-sm">Cargando estadísticas...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
+                  Total Suscriptores
+                </p>
+                <p className="text-white text-2xl font-bold">
+                  {stats?.total_subscriptions || 0}
+                </p>
+              </div>
+              <Users className="text-white/40" size={32} />
             </div>
-            <Users className="text-white/40" size={32} />
           </div>
-        </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
-                Activos
-              </p>
-              <p className="text-white text-2xl font-bold">
-                {stats?.active_subscriptions || 0}
-              </p>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
+                  Activos
+                </p>
+                <p className="text-white text-2xl font-bold">
+                  {stats?.active_subscriptions || 0}
+                </p>
+              </div>
+              <TrendingUp className="text-green-500" size={32} />
             </div>
-            <TrendingUp className="text-green-500" size={32} />
           </div>
-        </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
-                Inactivos
-              </p>
-              <p className="text-white text-2xl font-bold">
-                {stats?.inactive_subscriptions || 0}
-              </p>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
+                  Inactivos
+                </p>
+                <p className="text-white text-2xl font-bold">
+                  {stats?.inactive_subscriptions || 0}
+                </p>
+              </div>
+              <Bell className="text-white/40" size={32} />
             </div>
-            <Bell className="text-white/40" size={32} />
           </div>
         </div>
-      </div>
+      )}
 
       {/* Form */}
       <div className="bg-white/5 border border-white/10 rounded-lg p-6">
@@ -185,6 +220,25 @@ const PushNotificationPanel = () => {
             <label className="block text-white/80 text-sm mb-2">
               Título *
             </label>
+            
+            {/* ✅ AGREGADO: Emojis rápidos */}
+            <div className="flex gap-1 flex-wrap mb-2">
+              {quickEmojis.map(emoji => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => setFormData({ 
+                    ...formData, 
+                    title: formData.title + emoji 
+                  })}
+                  className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded text-lg transition-colors"
+                  title={`Agregar ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
             <input
               type="text"
               value={formData.title}
@@ -228,13 +282,43 @@ const PushNotificationPanel = () => {
             />
           </div>
 
+          {/* ✅ AGREGADO: Preview */}
+          {(formData.title || formData.body) && (
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+              <p className="text-white/60 text-xs mb-2 uppercase tracking-wider">
+                Vista Previa
+              </p>
+              <div className="bg-black/50 p-3 rounded border border-white/20">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center shrink-0">
+                    <Bell size={16} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-bold text-sm">
+                      {formData.title || 'Título de la notificación'}
+                    </p>
+                    <p className="text-white/70 text-xs mt-1">
+                      {formData.body || 'Mensaje de la notificación'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ✅ MEJORADO: Botón con contador */}
           <button
             type="submit"
-            disabled={sending || !formData.title || !formData.body}
+            disabled={sending || !formData.title || !formData.body || stats?.active_subscriptions === 0}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider"
           >
             <Send size={18} />
-            {sending ? 'Enviando...' : 'Enviar Notificación'}
+            {sending 
+              ? 'Enviando...' 
+              : stats?.active_subscriptions 
+                ? `Enviar a ${stats.active_subscriptions} suscriptores`
+                : 'Enviar Notificación'
+            }
           </button>
         </form>
       </div>
@@ -289,6 +373,7 @@ const PushNotificationPanel = () => {
           </div>
         )}
       </div>
+      <toast.ToastContainer />
     </div>
   );
 };
