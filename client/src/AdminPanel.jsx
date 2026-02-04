@@ -16,6 +16,7 @@ import {
   Database,
   UploadCloud,
   Zap,
+  Bell, // Icono para notificaciones
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -81,6 +82,9 @@ const AdminPanel = () => {
   const [isEditing, setIsEditing] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
+  
+  // NUEVO: Estado para el modal de notificaciones
+  const [isPushModalOpen, setIsPushModalOpen] = useState(false);
 
   // ==========================================================================
   // EFFECTS - Carga inicial de datos
@@ -473,13 +477,13 @@ const AdminPanel = () => {
       <nav className="fixed top-0 md:top-5 w-full md:container md:mx-auto md:left-1/2 md:-translate-x-1/2 z-[100] bg-black/95 md:bg-black/80 backdrop-blur-xl border-b border-white/10">
         <div className="px-4 py-4 md:px-12 md:h-24 flex items-center justify-between relative">
           {/* Botón EXIT - Izquierda */}
-          <div className="flex-1 flex justify-start">
+          <div className="flex-1 flex justify-start gap-3">
             <Link
               to="/"
               className="group relative flex items-center gap-2 py-2 overflow-hidden shrink-0"
             >
               <ArrowLeft
-                size={14}
+                size={24}
                 className="text-neutral-500 group-hover:text-red-500 transition-colors"
               />
               <div className="flex flex-col hidden xs:flex">
@@ -489,6 +493,23 @@ const AdminPanel = () => {
                 <span className="h-[1px] w-0 bg-red-600 group-hover:w-full transition-all duration-500 mt-1"></span>
               </div>
             </Link>
+
+            {/* NUEVO: Botón de notificaciones push */}
+            <button
+              onClick={() => setIsPushModalOpen(true)}
+              className="group relative flex items-center gap-2 py-2 overflow-hidden shrink-0"
+            >
+              <Bell
+                size={24}
+                className="text-neutral-500 group-hover:text-red-500 transition-colors animate-pulse"
+              />
+              <div className="flex flex-col hidden xs:flex">
+                <span className="text-[8px] md:text-[10px] tracking-[0.3em] uppercase font-[900] text-neutral-500 group-hover:text-white transition-colors leading-none">
+                  Push
+                </span>
+                <span className="h-[1px] w-0 bg-red-600 group-hover:w-full transition-all duration-500 mt-1"></span>
+              </div>
+            </button>
           </div>
 
           {/* Logo - Centro */}
@@ -526,6 +547,59 @@ const AdminPanel = () => {
           </div>
         </div>
       </nav>
+
+      {/* ====================================================================
+          MODAL DE NOTIFICACIONES PUSH
+          ==================================================================== */}
+      <FramerAnimatePresence>
+        {isPushModalOpen && (
+          <framerMotion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+            onClick={() => setIsPushModalOpen(false)}
+          >
+            <framerMotion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              className="bg-black border-2 border-red-600/30 w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar relative shadow-2xl shadow-red-600/20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header del modal */}
+              <div className="sticky top-0 bg-black/95 backdrop-blur-xl border-b border-red-600/30 p-4 md:p-6 flex items-center justify-between z-10">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-red-600/10 border border-red-600/30">
+                    <Bell size={20} className="text-red-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-[900] uppercase italic tracking-tight text-white">
+                      Push Notifications
+                    </h2>
+                    <p className="text-[8px] md:text-[10px] text-neutral-400 uppercase tracking-widest font-bold mt-1">
+                      Broadcast Control Panel
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsPushModalOpen(false)}
+                  className="group p-3 hover:bg-red-600 transition-colors border border-white/10"
+                >
+                  <X size={20} className="text-white group-hover:rotate-90 transition-transform" />
+                </button>
+              </div>
+
+              {/* Contenido del modal */}
+              <div className="p-4 md:p-8">
+                <PushNotificationPanel />
+              </div>
+            </framerMotion.div>
+          </framerMotion.div>
+        )}
+      </FramerAnimatePresence>
+
       {/* ====================================================================
           CONFIGURACIÓN GLOBAL - Título de colección y fecha de lanzamiento
           ==================================================================== */}
@@ -1013,7 +1087,6 @@ const AdminPanel = () => {
           </div>
         </section>
       </main>
-      <PushNotificationPanel />
 
       {/* ====================================================================
           FOOTER
