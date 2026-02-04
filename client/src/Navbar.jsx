@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Instagram, Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-const Navbar = () => {
+const Navbar = ({ onContactClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -18,6 +18,11 @@ const Navbar = () => {
   ];
 
   const handleLinkClick = (item) => {
+    // Disparar prompt si clickean "Contacto"
+    if (item === "Contacto" && onContactClick) {
+      onContactClick();
+    } 
+
     // 1. Caso especial: Si ya estás en Retailers y haces clic en Retailers, no hace nada
     if (item === "Retailers" && window.location.hash.includes("/retailers")) {
       setIsMenuOpen(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useParams } from "react-router-dom";
-import { useServiceWorker } from './hooks/useServiceWorker';
+import { useServiceWorker } from "./hooks/useServiceWorker";
 
 // Componentes
 import Navbar from "./Navbar";
@@ -17,7 +17,7 @@ import MeliSection from "./MeliSection";
 import Contacto from "./Contacto";
 import Footer from "./Footer";
 import ProductModal from "./ProductModal";
-import InstallPrompt from './InstallPrompt';
+import InstallPrompt from "./InstallPrompt";
 
 // Hooks
 import { useProducts } from "./hooks/useProducts";
@@ -26,6 +26,7 @@ import { useToast } from "./components/Toast";
 function App() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
   useServiceWorker();
@@ -56,6 +57,18 @@ function App() {
     setSelectedItem(null);
   };
 
+  const handleShowInstallPrompt = () => {
+    const hasSeenPrompt = localStorage.getItem("pwa-install-prompt-seen");
+    if (!hasSeenPrompt) {
+      setShowInstallPrompt(true);
+    }
+  };
+
+  const handleCloseInstallPrompt = () => {
+    setShowInstallPrompt(false);
+    localStorage.setItem("pwa-install-prompt-seen", "true");
+  };
+
   // Mostrar error si hay problemas cargando productos
   useEffect(() => {
     if (error) {
@@ -65,19 +78,19 @@ function App() {
 
   // Timer del Loader
   // Dentro de App.js
-useEffect(() => {
-  const hasLoaded = sessionStorage.getItem("app_loaded");
+  useEffect(() => {
+    const hasLoaded = sessionStorage.getItem("app_loaded");
 
-  if (hasLoaded) {
-    setLoading(false); // Si ya cargó antes, lo desactivamos instantáneamente
-  } else {
-    const timer = setTimeout(() => {
-      setLoading(false);
-      sessionStorage.setItem("app_loaded", "true");
-    }, 1500);
-    return () => clearTimeout(timer);
-  }
-}, []);
+    if (hasLoaded) {
+      setLoading(false); // Si ya cargó antes, lo desactivamos instantáneamente
+    } else {
+      const timer = setTimeout(() => {
+        setLoading(false);
+        sessionStorage.setItem("app_loaded", "true");
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Bloqueo de Scroll global
   useEffect(() => {
@@ -87,9 +100,12 @@ useEffect(() => {
   return (
     <>
       <toast.ToastContainer />
-      <InstallPrompt />
+      <InstallPrompt
+        show={showInstallPrompt}
+        onClose={handleCloseInstallPrompt}
+      />
       <div className="bg-black text-white selection:bg-white selection:text-black">
-        <Navbar />
+        <Navbar onContactClick={handleShowInstallPrompt} />
 
         <main>
           <Hero />
@@ -132,10 +148,7 @@ useEffect(() => {
 
         <AnimatePresence>
           {selectedItem && (
-            <ProductModal
-              item={selectedItem}
-              onClose={handleCloseModal}
-            />
+            <ProductModal item={selectedItem} onClose={handleCloseModal} />
           )}
         </AnimatePresence>
       </div>

@@ -1,47 +1,73 @@
 import { useState, useEffect } from 'react';
 
-export default function InstallPrompt() {
+export default function InstallPrompt({ show, onClose }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowPrompt(true);
-    });
+      console.log('Prompt de instalación capturado y listo');
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      console.log('No hay prompt disponible');
+      return;
+    }
     
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     
     console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
     setDeferredPrompt(null);
-    setShowPrompt(false);
+    onClose();
   };
 
-  if (!showPrompt) return null;
+  // No mostrar si no hay prompt disponible o si show es false
+  if (!show || !deferredPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 bg-black text-white p-4 rounded-lg shadow-lg z-50">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-bold">Instala NOMAD® Wear</h3>
-          <p className="text-sm">Acceso rápido desde tu pantalla de inicio</p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white text-black rounded-lg shadow-2xl max-w-md w-full p-6 animate-fade-in">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            <img 
+              src="/Nomad.svg" 
+              alt="NOMAD Logo" 
+              className="w-16 h-16"
+            />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold mb-2">Instala NOMAD® Wear</h3>
+            <p className="text-gray-600 text-sm mb-4">
+              Accede rápidamente desde tu pantalla de inicio. Sin publicidad, sin distracciones.
+            </p>
+            <ul className="text-sm text-gray-700 mb-4 space-y-1">
+              <li>✓ Acceso instantáneo</li>
+              <li>✓ Funciona sin conexión</li>
+              <li>✓ Experiencia como app nativa</li>
+            </ul>
+          </div>
         </div>
-        <div className="flex gap-2">
+        
+        <div className="flex gap-3 mt-4">
           <button 
-            onClick={() => setShowPrompt(false)}
-            className="px-3 py-1 text-gray-400"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Ahora no
           </button>
           <button 
             onClick={handleInstall}
-            className="px-4 py-2 bg-white text-black rounded font-bold"
+            className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold"
           >
             Instalar
           </button>
