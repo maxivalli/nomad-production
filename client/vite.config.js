@@ -11,18 +11,18 @@ export default defineConfig({
       manifest: {
         name: 'NOMAD® Wear - Streetwear Argentina',
         short_name: 'NOMAD®',
-        description: 'Ropa urbana diseñada para el movimiento',
-        theme_color: '#000000',
-        background_color: '#000000',
+        description: 'Ropa urbana diseñada para el movimiento. Streetwear e indumentaria urbana Argentina',
+        theme_color: '#1b1b1b',
+        background_color: '#1b1b1b',
         display: 'standalone',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           }
