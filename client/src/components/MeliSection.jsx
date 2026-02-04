@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ShoppingCart, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
-import MLlogo from "../src/assets/MLlogo.png";
+import MLlogo from "../../src/assets/MLlogo.png";
 
 const MeliSection = () => {
   const meliLink = "https://www.mercadolibre.com.ar";

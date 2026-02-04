@@ -3,15 +3,15 @@ import { useLocation } from "react-router-dom";
 import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import App from "./App.jsx";
-import Login from "./Login.jsx";
-import Retailers from "./Retailers.jsx";
-import PreLoader from "./PreLoader.jsx";
+import Login from "./views/Login.jsx";
+import Retailers from "./views/Retailers.jsx";
+import PreLoader from "./components/PreLoader.jsx";
 import api from "./services/api.js";
 import { Loader2 } from "lucide-react";
 import "./index.css";
 
 // Lazy Load del Panel
-const AdminPanel = lazy(() => import("./AdminPanel.jsx"));
+const AdminPanel = lazy(() => import("./views/AdminPanel.jsx"));
 
 // --- 1. COMPONENTE DE PROTECCIÓN DE RUTAS ---
 const PrivateRoute = ({ children }) => {

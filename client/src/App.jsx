@@ -3,20 +3,20 @@ import { AnimatePresence } from "framer-motion";
 import { useParams } from "react-router-dom";
 
 // Componentes
-import Navbar from "./Navbar";
-import Hero from "./Hero";
-import IntroMarque from "./IntroMarque";
-import Gallery from "./Gallery";
-import Manifest from "./Manifest";
-import Packing from "./Packing";
-import StudioMarque from "./StudioMarque";
-import TheStudio from "./TheStudio";
-import Stockists from "./Stockists";
-import MeliSection from "./MeliSection";
-import Contacto from "./Contacto";
-import Footer from "./Footer";
-import ProductModal from "./ProductModal";
-import InstallPrompt from "./InstallPrompt";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import IntroMarque from "./components/IntroMarque";
+import Gallery from "./components/Gallery";
+import Manifest from "./components/Manifest";
+import Packing from "./components/Packing";
+import StudioMarque from "./components/StudioMarque";
+import TheStudio from "./components/TheStudio";
+import Stockists from "./components/Stockists";
+import MeliSection from "./components/MeliSection";
+import Contacto from "./components/Contacto";
+import Footer from "./components/Footer";
+import ProductModal from "./components/ProductModal";
+import InstallPrompt from "./components/InstallPrompt";
 import PushNotificationPrompt from "./components/PushNotificationPrompt";
 
 // Hooks

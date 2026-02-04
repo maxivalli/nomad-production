@@ -188,315 +188,248 @@ const PushNotificationPanel = () => {
   const quickEmojis = ['🔥', '💥', '✨', '🎉', '⚡', '🖤', '❤️', '🎁'];
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      {loading && !stats ? (
-        <div className="text-white/40 text-sm">Cargando estadísticas...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
-                  Total Suscriptores
-                </p>
-                <p className="text-white text-2xl font-bold">
-                  {stats?.total_subscriptions || 0}
-                </p>
-              </div>
-              <Users className="text-white/40" size={32} />
-            </div>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
-                  Activos
-                </p>
-                <p className="text-white text-2xl font-bold">
-                  {stats?.active_subscriptions || 0}
-                </p>
-              </div>
-              <TrendingUp className="text-green-500" size={32} />
-            </div>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/60 text-xs uppercase tracking-wider mb-1">
-                  Inactivos
-                </p>
-                <p className="text-white text-2xl font-bold">
-                  {stats?.inactive_subscriptions || 0}
-                </p>
-              </div>
-              <Bell className="text-white/40" size={32} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Form */}
-      <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-        <h3 className="text-white font-bold text-lg mb-4 uppercase tracking-wider">
-          Enviar Notificación
-        </h3>
-
-        {/* Templates */}
-        <div className="mb-4">
-          <p className="text-white/60 text-sm mb-2">Plantillas rápidas:</p>
-          <div className="flex flex-wrap gap-2">
-            {templates.map((template) => (
-              <button
-                key={template.name}
-                onClick={() => applyTemplate(template)}
-                className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded transition-colors"
-              >
-                {template.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <form onSubmit={handleSend} className="space-y-4">
-          <div>
-            <label className="block text-white/80 text-sm mb-2">
-              Título *
-            </label>
-            
-            <div className="flex gap-1 flex-wrap mb-2">
-              {quickEmojis.map(emoji => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setFormData({ 
-                    ...formData, 
-                    title: formData.title + emoji 
-                  })}
-                  className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded text-lg transition-colors"
-                  title={`Agregar ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
-              placeholder="Ej: 🔥 NUEVO DROP DISPONIBLE"
-              maxLength={65}
-            />
-            <p className="text-white/40 text-xs mt-1">
-              {formData.title.length}/65 caracteres
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-white/80 text-sm mb-2">
-              Mensaje *
-            </label>
-            <textarea
-              value={formData.body}
-              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-              className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
-              placeholder="Ej: Descubrí la nueva colección NOMAD®"
-              rows={3}
-              maxLength={200}
-            />
-            <p className="text-white/40 text-xs mt-1">
-              {formData.body.length}/200 caracteres
-            </p>
-          </div>
-
-          {/* ✅ NUEVO: Upload de imagen */}
-          <div>
-            <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
-              <ImageIcon size={16} />
-              Imagen (opcional - mejora el engagement en 3x)
-            </label>
-            
-            {formData.image ? (
-              <div className="relative">
-                <img 
-                  src={formData.image} 
-                  alt="Preview" 
-                  className="w-full h-40 object-cover rounded border border-white/20"
-                />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition-colors"
-                  title="Remover imagen"
-                >
-                  <X size={16} />
-                </button>
-                <p className="text-white/60 text-xs mt-2">
-                  👆 Click en la X para remover la imagen
-                </p>
-              </div>
-            ) : (
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="image-upload"
-                  disabled={uploadingImage}
-                />
-                <label
-                  htmlFor="image-upload"
-                  className="flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/15 border border-white/20 rounded px-4 py-8 text-white cursor-pointer transition-colors"
-                >
-                  {uploadingImage ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Subiendo...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon size={20} />
-                      <span>Subir imagen</span>
-                    </>
-                  )}
-                </label>
-                <p className="text-white/40 text-xs mt-2">
-                  Sube una imagen JPG, PNG o WebP (máx. 2MB)
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-white/80 text-sm mb-2">
-              URL al hacer click (opcional)
-            </label>
-            <input
-              type="text"
-              value={formData.url}
-              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
-              placeholder="/"
-            />
-            <p className="text-white/40 text-xs mt-1">
-              Ej: / para home, /gallery para galería
-            </p>
-          </div>
-
-          {/* Preview mejorado con imagen */}
-          {(formData.title || formData.body) && (
-            <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-              <p className="text-white/60 text-xs mb-2 uppercase tracking-wider">
-                Vista Previa
+  <div className="max-w-7xl mx-auto space-y-8 pb-20">
+    {/* 1. Header & Stats - Grid de 3 columnas */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {[
+        { label: 'Total Suscriptores', value: stats?.total_subscriptions, icon: Users, color: 'text-white/40' },
+        { label: 'Activos', value: stats?.active_subscriptions, icon: TrendingUp, color: 'text-green-500' },
+        { label: 'Inactivos', value: stats?.inactive_subscriptions, icon: Bell, color: 'text-white/40' }
+      ].map((stat, i) => (
+        <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-5 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] mb-1 font-bold">
+                {stat.label}
               </p>
-              <div className="bg-black/50 p-3 rounded border border-white/20">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center shrink-0">
-                    <Bell size={16} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-sm">
-                      {formData.title || 'Título de la notificación'}
-                    </p>
-                    <p className="text-white/70 text-xs mt-1">
-                      {formData.body || 'Mensaje de la notificación'}
-                    </p>
-                    {formData.image && (
-                      <img 
-                        src={formData.image} 
-                        alt="Preview" 
-                        className="w-full h-32 object-cover rounded mt-2 border border-white/20"
-                      />
-                    )}
-                  </div>
-                </div>
+              <p className="text-white text-3xl font-black italic">
+                {loading && !stats ? '...' : (stat.value || 0)}
+              </p>
+            </div>
+            <stat.icon className={stat.color} size={28} />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* 2. Main Content Grid: Form vs Preview */}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      {/* COLUMNA IZQUIERDA: Formulario (7/12) */}
+      <div className="lg:col-span-7 space-y-6">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 shadow-xl">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-8 w-1 bg-red-600" />
+            <h3 className="text-white font-black text-xl uppercase italic tracking-tighter">
+              Nueva Notificación
+            </h3>
+          </div>
+
+          <form onSubmit={handleSend} className="space-y-6">
+            {/* Plantillas */}
+            <div>
+              <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-3">Plantillas Rápidas</p>
+              <div className="flex flex-wrap gap-2">
+                {templates.map((t) => (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    className="bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[10px] font-bold uppercase px-3 py-2 rounded-lg transition-all"
+                  >
+                    {t.name}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={sending || !formData.title || !formData.body || stats?.active_subscriptions === 0}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider"
-          >
-            <Send size={18} />
-            {sending 
-              ? 'Enviando...' 
-              : stats?.active_subscriptions 
-                ? `Enviar a ${stats.active_subscriptions} suscriptores`
-                : 'Enviar Notificación'
-            }
-          </button>
-        </form>
+            {/* Título */}
+            <div className="space-y-2">
+              <label className="text-white/80 text-xs font-bold uppercase">Título del Mensaje</label>
+              <div className="flex gap-1 overflow-x-auto pb-2 no-scrollbar">
+                {quickEmojis.map(emoji => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, title: formData.title + emoji })}
+                    className="shrink-0 w-9 h-9 bg-white/5 hover:bg-white/10 rounded-lg text-lg transition-colors border border-white/5"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full bg-black/40 border border-white/10 focus:border-red-600 rounded-xl px-4 py-3 text-white outline-none transition-all"
+                placeholder="Ej: 🔥 NUEVO DROP DISPONIBLE"
+                maxLength={65}
+              />
+            </div>
+
+            {/* Cuerpo */}
+            <div className="space-y-2">
+              <label className="text-white/80 text-xs font-bold uppercase">Cuerpo del Mensaje</label>
+              <textarea
+                value={formData.body}
+                onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+                className="w-full bg-black/40 border border-white/10 focus:border-red-600 rounded-xl px-4 py-3 text-white outline-none transition-all resize-none"
+                placeholder="Escribe el contenido de la notificación..."
+                rows={3}
+                maxLength={200}
+              />
+            </div>
+
+            {/* Imagen Upload */}
+            <div className="space-y-2">
+              <label className="text-white/80 text-xs font-bold uppercase flex items-center gap-2">
+                Multimedia <span className="text-white/20 font-normal">(Opcional)</span>
+              </label>
+              
+              <div className="group relative border-2 border-dashed border-white/10 hover:border-red-600/40 rounded-2xl transition-all bg-white/[0.02] overflow-hidden">
+                {formData.image ? (
+                  <div className="relative aspect-video">
+                    <img src={formData.image} className="w-full h-full object-cover" alt="Upload" />
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        type="button"
+                        onClick={removeImage}
+                        className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-xl transform transition hover:scale-110"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center py-10 cursor-pointer">
+                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3 group-hover:bg-red-600/10 transition-colors">
+                      <ImageIcon size={24} className="text-white/40 group-hover:text-red-600" />
+                    </div>
+                    <span className="text-xs text-white/60 font-medium">Click para subir imagen</span>
+                    <span className="text-[10px] text-white/20 mt-1 uppercase tracking-tighter">JPG, PNG o WEBP hasta 2MB</span>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* URL */}
+            <div className="space-y-2">
+              <label className="text-white/80 text-xs font-bold uppercase">URL de Destino</label>
+              <input
+                type="text"
+                value={formData.url}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                className="w-full bg-black/40 border border-white/10 focus:border-red-600 rounded-xl px-4 py-3 text-white outline-none"
+                placeholder="/gallery"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={sending || !formData.title || !formData.body || stats?.active_subscriptions === 0}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-neutral-800 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center gap-3 uppercase tracking-[0.1em] text-sm shadow-lg shadow-red-600/10"
+            >
+              {sending ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+              {sending ? 'Procesando...' : `Enviar a ${stats?.active_subscriptions || 0} dispositivos`}
+            </button>
+          </form>
+        </div>
       </div>
 
-      {/* History */}
-      <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-        <h3 className="text-white font-bold text-lg mb-4 uppercase tracking-wider flex items-center gap-2">
-          <Clock size={20} />
-          Historial
-        </h3>
-
-        {(!history || history.length === 0) ? (
-          <p className="text-white/60 text-sm">No hay notificaciones enviadas</p>
-        ) : (
-          <div className="space-y-3">
-            {history.map((notif) => (
-              <div
-                key={notif.id}
-                className="bg-white/5 border border-white/10 rounded p-3"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <p className="text-white font-bold text-sm">
-                      {notif.title}
-                    </p>
-                    <p className="text-white/60 text-xs mt-1">
-                      {notif.body}
-                    </p>
-                    {notif.image && (
-                      <div className="mt-2">
-                        <img 
-                          src={notif.image} 
-                          alt="Notificación" 
-                          className="w-24 h-16 object-cover rounded border border-white/20"
-                        />
-                      </div>
-                    )}
+      {/* COLUMNA DERECHA: Preview Sticky (5/12) */}
+      <div className="lg:col-span-5 space-y-6">
+        <div className="lg:sticky lg:top-8">
+          <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-4 ml-2">Vista Previa en Dispositivo</p>
+          
+          <div className="bg-[#1a1a1a] rounded-[2.5rem] p-4 border border-white/10 shadow-2xl overflow-hidden relative">
+            {/* Simulación Notch / Dynamic Island */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-20" />
+            
+            <div className="mt-8 bg-black/80 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-4 shadow-2xl">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-red-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-red-600/20">
+                  <Bell size={20} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-0.5">
+                    <span className="text-white font-bold text-[13px] tracking-tight">NOMAD®</span>
+                    <span className="text-white/40 text-[10px]">ahora</span>
                   </div>
-                  <p className="text-white/40 text-xs whitespace-nowrap ml-4">
-                    {new Date(notif.sent_at).toLocaleDateString('es-AR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                  <p className="text-white font-bold text-sm leading-tight mb-1 truncate">
+                    {formData.title || 'Título de la notificación'}
+                  </p>
+                  <p className="text-white/60 text-xs leading-snug line-clamp-2">
+                    {formData.body || 'Escribe un mensaje para previsualizar...'}
                   </p>
                 </div>
-                <div className="flex gap-4 text-xs">
-                  <span className="text-green-500">
-                    ✓ {notif.success_count} exitosos
-                  </span>
-                  <span className="text-red-500">
-                    ✗ {notif.failure_count} fallidos
-                  </span>
-                  <span className="text-white/40">
-                    Total: {notif.recipients_count}
+              </div>
+              
+              {formData.image && (
+                <div className="mt-3 rounded-xl overflow-hidden border border-white/10 aspect-[16/9]">
+                  <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+
+            {/* Decoración inferior smartphone */}
+            <div className="mt-64 mb-2 flex justify-center">
+              <div className="w-32 h-1 bg-white/20 rounded-full" />
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-red-600/5 border border-red-600/10 rounded-xl">
+            <p className="text-red-500 text-[10px] font-bold uppercase leading-relaxed text-center italic">
+              "Las notificaciones con imagen tienen un 30% más de click-through rate"
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* 3. Historial (Ancho completo abajo) */}
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Clock className="text-red-600" size={24} />
+          <h3 className="text-white font-black text-xl uppercase italic tracking-tighter">Historial de Envíos</h3>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(!history || history.length === 0) ? (
+          <p className="text-white/20 text-sm italic col-span-2">No se registran envíos previos...</p>
+        ) : (
+          history.map((notif) => (
+            <div key={notif.id} className="bg-black/40 border border-white/5 rounded-xl p-4 flex gap-4 items-center group hover:border-white/20 transition-all">
+              {notif.image && (
+                <img src={notif.image} className="w-16 h-16 rounded-lg object-cover shrink-0 border border-white/10" alt="History" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start">
+                  <p className="text-white font-bold text-sm truncate uppercase tracking-tight">{notif.title}</p>
+                  <span className="text-[9px] text-white/30 font-mono">
+                    {new Date(notif.sent_at).toLocaleDateString()}
                   </span>
                 </div>
+                <p className="text-white/40 text-[11px] line-clamp-1 mb-2">{notif.body}</p>
+                <div className="flex gap-3 text-[9px] font-black uppercase italic">
+                  <span className="text-green-500">S: {notif.success_count}</span>
+                  <span className="text-red-500">F: {notif.failure_count}</span>
+                  <span className="text-white/20">T: {notif.recipients_count}</span>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
       </div>
-      <toast.ToastContainer />
     </div>
-  );
+
+    {/* Contenedor de Toasts Global */}
+    <toast.ToastContainer />
+  </div>
+);
 };
 
 export default PushNotificationPanel;

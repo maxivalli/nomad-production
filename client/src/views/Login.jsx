@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, User } from "lucide-react";
-import api from "./services/api";
-import { useToast } from "./components/Toast";
-import Navbar from "./Navbar";
+import api from "../services/api";
+import { useToast } from "../components/Toast";
+import Navbar from "../components/Navbar";
 
 const Login = () => {
   const [username, setUsername] = useState("");
