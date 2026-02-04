@@ -27,8 +27,9 @@ const PushNotificationPanel = () => {
         api.getPushHistory()
       ]);
       
-      setStats(statsRes.data);
-      setHistory(historyRes.data);
+      // FIX: Las respuestas ya vienen parseadas directamente
+      setStats(statsRes);
+      setHistory(historyRes);
     } catch (error) {
       console.error('Error cargando datos:', error);
     } finally {
@@ -52,7 +53,8 @@ const PushNotificationPanel = () => {
     try {
       const response = await api.sendPushNotification(formData);
       
-      alert(`Notificación enviada: ${response.data.successful}/${response.data.total} exitosos`);
+      // FIX: response ya es el JSON parseado, no tiene .data
+      alert(`Notificación enviada: ${response.successful}/${response.total} exitosos`);
       
       // Reset form
       setFormData({
