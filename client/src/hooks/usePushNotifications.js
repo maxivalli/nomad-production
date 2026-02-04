@@ -83,7 +83,13 @@ const usePushNotifications = () => {
 
       // Obtener la clave pública del servidor
       const response = await api.getVapidPublicKey();
-      const vapidPublicKey = response.data.publicKey;
+      // FIX: response ya es el JSON parseado, no tiene .data
+      const vapidPublicKey = response.publicKey;
+
+      // Validar que tenemos la clave pública
+      if (!vapidPublicKey) {
+        throw new Error('No se pudo obtener la clave pública VAPID del servidor');
+      }
 
       // Convertir la clave a formato Uint8Array
       const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
