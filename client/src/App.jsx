@@ -17,7 +17,7 @@ import MeliSection from "./MeliSection";
 import Contacto from "./Contacto";
 import Footer from "./Footer";
 import ProductModal from "./ProductModal";
-import InstallPrompt from './components/InstallPrompt';
+import InstallPrompt from './InstallPrompt';
 
 // Hooks
 import { useProducts } from "./hooks/useProducts";
