@@ -9,6 +9,29 @@ import {
   Share2,
 } from "lucide-react";
 
+// --- COMPONENTE INTERNO PARA EL EFECTO DE CINTA ---
+const Tape = ({ position = "top" }) => {
+  const styles = {
+    top: "top-[-15px] left-1/2 -translate-x-1/2 rotate-[-1deg]",
+    bottom: "bottom-[-15px] left-1/2 -translate-x-1/2 rotate-[1deg]",
+    topLeft: "top-[-10px] left-[-25px] rotate-[-40deg]",
+    topRight: "top-[-10px] right-[-25px] rotate-[40deg]",
+  };
+
+  return (
+    <div 
+      className={`absolute ${styles[position]} z-[35] w-32 h-10 bg-white/25 backdrop-blur-[1.5px] pointer-events-none shadow-sm`}
+      style={{
+        clipPath: "polygon(4% 0%, 12% 3%, 88% 1%, 96% 4%, 100% 35%, 97% 75%, 94% 100%, 6% 97%, 3% 72%, 0% 32%)",
+        borderLeft: "1px solid rgba(255,255,255,0.15)",
+        borderRight: "1px solid rgba(255,255,255,0.15)",
+      }}
+    >
+      <div className="w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+    </div>
+  );
+};
+
 const ProductModal = ({ item, onClose }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -19,12 +42,10 @@ const ProductModal = ({ item, onClose }) => {
 
   const images = Array.isArray(item.img) ? item.img : [item.img];
 
-  // Efecto para resetear el loader cada vez que cambia la imagen activa
   useEffect(() => {
     setIsImageLoading(true);
   }, [activeIdx]);
 
-  // Listener para el botón "atrás" del navegador (móvil y desktop)
   useEffect(() => {
     const handlePopState = () => {
       onClose();
@@ -33,7 +54,6 @@ const ProductModal = ({ item, onClose }) => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [onClose]);
 
-  // Listener para tecla Escape
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") {
@@ -60,7 +80,6 @@ const ProductModal = ({ item, onClose }) => {
     azul: "#2563eb",
   };
 
-  // NAVEGACIÓN CON LÍMITES BLOQUEADOS (No infinito)
   const nextImg = (e) => {
     if (e) e.stopPropagation();
     if (activeIdx < images.length - 1) {
@@ -76,7 +95,6 @@ const ProductModal = ({ item, onClose }) => {
   };
 
   const onDragEnd = (e, { offset }) => {
-    // Solo permite swipe si hay imágenes en esa dirección
     if (offset.x < -dragThreshold && activeIdx < images.length - 1) {
       nextImg();
     } else if (offset.x > dragThreshold && activeIdx > 0) {
@@ -137,7 +155,6 @@ const ProductModal = ({ item, onClose }) => {
       onClick={handleGlobalClick}
       className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none select-none"
     >
-      {/* CAPA DEL LOADER */}
       <AnimatePresence>
         {isImageLoading && (
           <motion.div
@@ -155,11 +172,14 @@ const ProductModal = ({ item, onClose }) => {
         )}
       </AnimatePresence>
 
-      {/* ÁREA DE CONTENIDO: CARRUSEL 3D LINEAL */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden touch-pan-y perspective-[1200px]">
         {images.map((img, index) => {
           const offset = index - activeIdx;
           const isActive = index === activeIdx;
+          
+          // Lógica de posición de cinta: diferente para cada imagen del carrusel
+          const tapes = ["top", "topRight", "topLeft"];
+          const currentTape = tapes[index % tapes.length];
 
           return (
             <motion.div
@@ -170,15 +190,16 @@ const ProductModal = ({ item, onClose }) => {
               initial={false}
               animate={{
                 x: `${offset * 85}%`,
-                scale: isActive ? 1 : 0.7,
-                opacity: isActive ? 1 : 0.7, // Mayor opacidad para fotos laterales
+                scale: isActive ? 1 : 0.75,
+                opacity: isActive ? 1 : 0.6,
                 zIndex: isActive ? 20 : 10,
-                rotateY: isActive ? 0 : offset > 0 ? -30 : 30,
+                rotateY: isActive ? 0 : offset > 0 ? -25 : 25,
+                rotateZ: isActive ? 0 : offset > 0 ? 2 : -2,
               }}
               transition={{
                 type: "spring",
-                stiffness: 200,
-                damping: 25,
+                stiffness: 180,
+                damping: 22,
               }}
               style={{ transformStyle: "preserve-3d" }}
               className="absolute h-[60dvh] md:h-[80dvh] aspect-[2/3] cursor-grab active:cursor-grabbing"
@@ -189,34 +210,49 @@ const ProductModal = ({ item, onClose }) => {
                 }
               }}
             >
-              <div className="relative w-full h-full shadow-[0_30px_60px_rgba(0,0,0,0.8)] border border-white/5 bg-neutral-900">
-                <img
-                  src={optimizeCloudinaryUrl(img)}
-                  className="w-full h-full object-cover"
-                  alt={`${item.title} - ${index}`}
-                  draggable="false"
-                  onLoad={() => {
-                    if (isActive) setIsImageLoading(false);
-                  }}
-                  ref={(el) => {
-                    // Fix infalible para imágenes cacheadas
-                    if (el && el.complete && isActive && isImageLoading) {
-                      setIsImageLoading(false);
-                    }
-                  }}
-                />
+              {/* CONTENEDOR ESTILO POLAROID */}
+              <div className="relative w-full h-full p-3 pb-12 md:p-4 md:pb-16 bg-[#f9f9f9] shadow-[0_40px_80px_rgba(0,0,0,0.9)] border border-neutral-200 overflow-visible">
                 
-                {/* VELO DE OSCURIDAD SUTIL PARA LATERALES */}
-                {!isActive && (
-                  <div className="absolute inset-0 bg-black/20 transition-opacity duration-500" />
-                )}
+                {/* CINTA ADHESIVA (Solo en la activa para no saturar, o en todas) */}
+                <Tape position={currentTape} />
+
+                <div className="relative w-full h-full bg-neutral-900 overflow-hidden">
+                  <img
+                    src={optimizeCloudinaryUrl(img)}
+                    className="w-full h-full object-cover"
+                    alt={`${item.title} - ${index}`}
+                    draggable="false"
+                    onLoad={() => {
+                      if (isActive) setIsImageLoading(false);
+                    }}
+                    ref={(el) => {
+                      if (el && el.complete && isActive && isImageLoading) {
+                        setIsImageLoading(false);
+                      }
+                    }}
+                  />
+                  
+                  {/* TEXTURA DE PAPEL Y BRILLO SUTIL SOBRE LA FOTO */}
+                  <div className="absolute inset-0 pointer-events-none opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-black/20 via-transparent to-white/10" />
+
+                  {!isActive && (
+                    <div className="absolute inset-0 bg-black/40 transition-opacity duration-500" />
+                  )}
+                </div>
+
+                {/* MARCA DE AGUA O PIE DE FOTO ESTILO POLAROID (Opcional) */}
+                <div className="absolute bottom-4 md:bottom-6 left-0 w-full flex justify-center opacity-50 pointer-events-none">
+                   <span className="text-[10px] font-serif italic text-black uppercase tracking-widest">
+                     RAW 1/125 f2.8 ISO 100 
+                   </span>
+                </div>
               </div>
             </motion.div>
           );
         })}
       </div>
 
-      {/* CAPA DE DEGRADADOS DINÁMICOS */}
       <div className="absolute inset-0 pointer-events-none z-[105]">
         <motion.div
           animate={{
@@ -238,7 +274,6 @@ const ProductModal = ({ item, onClose }) => {
         />
       </div>
 
-      {/* BOTONES DE NAVEGACIÓN CON LÓGICA DE VISIBILIDAD */}
       {images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between px-2 md:px-10 z-[115] pointer-events-none">
           <button
@@ -266,7 +301,6 @@ const ProductModal = ({ item, onClose }) => {
         </div>
       )}
 
-      {/* INDICADORES DE POSICIÓN */}
       <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-[120]">
         {images.map((_, i) => (
           <div
@@ -280,7 +314,6 @@ const ProductModal = ({ item, onClose }) => {
         ))}
       </div>
 
-      {/* BOTÓN CERRAR */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -291,7 +324,6 @@ const ProductModal = ({ item, onClose }) => {
         <X size={42} strokeWidth={1} />
       </button>
 
-      {/* TÍTULO EN MÓVIL (posición absoluta independiente) */}
       <motion.h2
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -307,7 +339,6 @@ const ProductModal = ({ item, onClose }) => {
         ))}
       </motion.h2>
 
-      {/* INFORMACIÓN DEL PRODUCTO */}
       <div className="relative z-[110] w-full h-full flex flex-col justify-end p-6 pb-24 md:p-20 pointer-events-none">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -315,7 +346,6 @@ const ProductModal = ({ item, onClose }) => {
           className="w-full flex flex-row items-end justify-between gap-4 pointer-events-auto"
         >
           <div className="flex-1">
-            {/* Título en desktop (posición relativa) */}
             <h2 className="hidden md:flex text-8xl font-black uppercase italic leading-[0.8] mb-4 tracking-tighter text-white flex-col">
               {item.title.split(" ").map((word, index) => (
                 <span
