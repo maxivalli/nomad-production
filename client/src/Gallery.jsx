@@ -197,11 +197,11 @@ const Gallery = ({ items, setSelectedItem }) => {
       className="relative h-[600vh] bg-neutral-900/20"
     >
       <div className="sticky top-0 h-screen w-full flex flex-col overflow-hidden">
-        <div className="flex-1 flex flex-col justify-center translate-y-0 md:translate-y-0">
+        <div className="flex-1 flex flex-col justify-center overflow-hidden">
           {/* Título y Filtros */}
           <motion.div
             style={{ x: titleX, opacity }}
-            className="relative z-10 px-6 md:px-12 mb-4 md:mb-6 pointer-events-auto"
+            className="relative z-10 px-6 md:px-12 mb-6 md:mb-8 pointer-events-auto"
           >
             <motion.span className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0 pl-1">
               EL CATÁLOGO
@@ -257,7 +257,7 @@ const Gallery = ({ items, setSelectedItem }) => {
             )}
           </motion.div>
 
-          {/* Galería Horizontal Estilo Polaroid */}
+          {/* Galería - Sin mt exagerado y con items-center para equilibrio visual */}
           <div className="relative">
             <motion.div
               style={{ x: xPx }}
@@ -271,8 +271,6 @@ const Gallery = ({ items, setSelectedItem }) => {
 
                 const randomRotate =
                   (index % 2 === 0 ? 1 : -1) * ((index % 3) + 1);
-
-                // Alternancia de cintas
                 const tapeOptions = ["top", "topLeft", "topRight", "bottom"];
                 const tapePos = tapeOptions[index % tapeOptions.length];
 
@@ -281,19 +279,17 @@ const Gallery = ({ items, setSelectedItem }) => {
                     key={item.id}
                     onClick={() => handleOpenProduct(item)}
                     initial={{ rotate: randomRotate }}
-                    // Configuración de Hover optimizada
                     whileHover={{
                       rotate: 0,
-                      scale: 1.08, // Un poco más de escala para resaltar
-                      y: -15, // Elevación más pronunciada
+                      scale: 1.08,
+                      y: -15,
                       zIndex: 50,
                     }}
-                    // Transición ultra rápida y elástica
                     transition={{
                       type: "spring",
-                      stiffness: 400, // Rigidez alta = movimiento rápido
-                      damping: 25, // Amortiguación media = evita rebote excesivo pero se siente suave
-                      mass: 0.8, // Menos masa = más agilidad
+                      stiffness: 400,
+                      damping: 25,
+                      mass: 0.8,
                     }}
                     className="group relative p-3 pb-16 md:p-4 md:pb-20 flex-none overflow-visible bg-[#fbfbfb] shrink-0 cursor-pointer shadow-[0_15px_35px_rgba(0,0,0,0.5)] border border-neutral-200"
                     style={{
@@ -304,7 +300,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                           : "400px",
                     }}
                   >
-                    {/* Cintas Adhesivas */}
                     <Tape position={tapePos} />
                     {index % 3 === 0 && (
                       <Tape position={index % 2 === 0 ? "bottom" : "top"} />
@@ -328,7 +323,9 @@ const Gallery = ({ items, setSelectedItem }) => {
                         onLoad={() =>
                           setLoaded((prev) => ({ ...prev, [item.id]: true }))
                         }
-                        className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${isImgLoaded ? "opacity-100" : "opacity-0"}`}
+                        className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${
+                          isImgLoaded ? "opacity-100" : "opacity-0"
+                        }`}
                       />
                     </div>
 
@@ -339,7 +336,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                       <div className="mt-2 w-8 h-[1px] bg-red-600/30" />
                     </div>
 
-                    {/* Brillo y textura extra */}
                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent opacity-50" />
                     <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
                   </motion.div>
