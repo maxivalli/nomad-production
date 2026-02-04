@@ -903,9 +903,15 @@ app.get('/api/push/stats', authenticateAdmin, async (req, res) => {
 });
 
 // Enviar notificación a todos (solo admin)
+// Reemplazar el endpoint /api/push/send en server/index.js (línea 906)
+
 app.post('/api/push/send', authenticateAdmin, async (req, res) => {
   try {
     const { title, body, url, icon, tag } = req.body;
+
+    console.log('📧 [PUSH] Iniciando envío de notificación');
+    console.log('📧 [PUSH] Título:', title);
+    console.log('📧 [PUSH] Mensaje:', body);
 
     if (!title || !body) {
       return res.status(400).json({ 
@@ -913,12 +919,24 @@ app.post('/api/push/send', authenticateAdmin, async (req, res) => {
       });
     }
 
+    // Verificar configuración VAPID
+    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+      console.error('❌ [PUSH] Claves VAPID no configuradas');
+      return res.status(500).json({ 
+        error: 'Configuración de VAPID incompleta' 
+      });
+    }
+
+    console.log('✅ [PUSH] Claves VAPID configuradas');
+    console.log('📧 [PUSH] VAPID Public Key:', process.env.VAPID_PUBLIC_KEY?.substring(0, 20) + '...');
+
     // Obtener todas las suscripciones activas
     const result = await pool.query(
       'SELECT * FROM push_subscriptions WHERE active = true'
     );
 
     const subscriptions = result.rows;
+    console.log(`📧 [PUSH] Suscripciones activas encontradas: ${subscriptions.length}`);
     
     if (subscriptions.length === 0) {
       return res.json({ 
@@ -926,6 +944,15 @@ app.post('/api/push/send', authenticateAdmin, async (req, res) => {
         sent: 0 
       });
     }
+
+    // Log de cada suscripción
+    subscriptions.forEach((sub, index) => {
+      console.log(`📧 [PUSH] Suscripción ${index + 1}:`, {
+        endpoint: sub.endpoint.substring(0, 50) + '...',
+        created: sub.created_at,
+        user_agent: sub.user_agent?.substring(0, 50)
+      });
+    });
 
     // Payload de la notificación
     const payload = JSON.stringify({
@@ -942,8 +969,10 @@ app.post('/api/push/send', authenticateAdmin, async (req, res) => {
       ]
     });
 
+    console.log('📧 [PUSH] Payload creado:', payload.substring(0, 100) + '...');
+
     // Enviar notificaciones
-    const promises = subscriptions.map(async (sub) => {
+    const promises = subscriptions.map(async (sub, index) => {
       const pushSubscription = {
         endpoint: sub.endpoint,
         keys: {
@@ -953,20 +982,28 @@ app.post('/api/push/send', authenticateAdmin, async (req, res) => {
       };
 
       try {
-        await webpush.sendNotification(pushSubscription, payload);
-        return { success: true, endpoint: sub.endpoint };
+        console.log(`📧 [PUSH] Enviando a suscripción ${index + 1}...`);
+        const response = await webpush.sendNotification(pushSubscription, payload);
+        console.log(`✅ [PUSH] Suscripción ${index + 1} exitosa:`, response.statusCode);
+        return { success: true, endpoint: sub.endpoint, statusCode: response.statusCode };
       } catch (error) {
-        console.error('Error enviando a:', sub.endpoint, error);
+        console.error(`❌ [PUSH] Error en suscripción ${index + 1}:`, {
+          endpoint: sub.endpoint.substring(0, 50) + '...',
+          statusCode: error.statusCode,
+          message: error.message,
+          body: error.body
+        });
         
         // Si el endpoint ya no es válido, desactivarlo
         if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`🗑️ [PUSH] Desactivando suscripción ${index + 1} (endpoint inválido)`);
           await pool.query(
             'UPDATE push_subscriptions SET active = false WHERE endpoint = $1',
             [sub.endpoint]
           );
         }
         
-        return { success: false, endpoint: sub.endpoint, error };
+        return { success: false, endpoint: sub.endpoint, error: error.message, statusCode: error.statusCode };
       }
     });
 
@@ -974,6 +1011,19 @@ app.post('/api/push/send', authenticateAdmin, async (req, res) => {
     
     const successCount = results.filter(r => r.success).length;
     const failureCount = results.filter(r => !r.success).length;
+
+    console.log(`📊 [PUSH] Resultados finales: ${successCount} exitosos, ${failureCount} fallidos`);
+    
+    // Log de errores específicos
+    results.forEach((result, index) => {
+      if (!result.success) {
+        console.error(`❌ [PUSH] Detalle error ${index + 1}:`, {
+          endpoint: result.endpoint?.substring(0, 50) + '...',
+          error: result.error,
+          statusCode: result.statusCode
+        });
+      }
+    });
 
     // Guardar registro
     await pool.query(
@@ -983,18 +1033,56 @@ app.post('/api/push/send', authenticateAdmin, async (req, res) => {
       [title, body, url, icon, tag, subscriptions.length, successCount, failureCount]
     );
 
-    console.log(`✅ Notificación enviada: ${successCount}/${subscriptions.length} exitosos`);
+    console.log(`✅ [PUSH] Notificación guardada en historial`);
 
     res.json({
       success: true,
       message: 'Notificación enviada',
       total: subscriptions.length,
       successful: successCount,
-      failed: failureCount
+      failed: failureCount,
+      details: results.map(r => ({
+        success: r.success,
+        statusCode: r.statusCode,
+        error: r.error
+      }))
     });
   } catch (error) {
-    console.error('Error enviando notificación:', error);
-    res.status(500).json({ error: 'Error al enviar notificación' });
+    console.error('💥 [PUSH] Error crítico:', error);
+    res.status(500).json({ 
+      error: 'Error al enviar notificación',
+      message: error.message 
+    });
+  }
+});
+
+// Nuevo endpoint para debug - agregar antes del endpoint /api/push/send
+app.get('/api/push/debug', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM push_subscriptions ORDER BY created_at DESC');
+    
+    const subscriptions = result.rows.map(sub => ({
+      id: sub.id,
+      endpoint_preview: sub.endpoint.substring(0, 50) + '...',
+      endpoint_domain: new URL(sub.endpoint).hostname,
+      created_at: sub.created_at,
+      last_used: sub.last_used,
+      active: sub.active,
+      user_agent: sub.user_agent
+    }));
+
+    res.json({
+      vapid_configured: !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
+      vapid_public_preview: process.env.VAPID_PUBLIC_KEY?.substring(0, 20) + '...',
+      vapid_email: process.env.VAPID_EMAIL || 'mailto:info@nomadwear.com',
+      total_subscriptions: subscriptions.length,
+      active_count: subscriptions.filter(s => s.active).length,
+      inactive_count: subscriptions.filter(s => !s.active).length,
+      subscriptions
+    });
+  } catch (error) {
+    console.error('Error en debug:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
