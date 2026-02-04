@@ -18,18 +18,24 @@ export default function InstallPrompt({ show, onClose }) {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) {
-      console.log('No hay prompt disponible');
-      return;
-    }
-    
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
-    setDeferredPrompt(null);
-    onClose();
-  };
+  if (!deferredPrompt) {
+    console.log('No hay prompt disponible');
+    return;
+  }
+  
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  
+  console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
+  
+  // ← AGREGAR: Solo guardar si instaló
+  if (outcome === 'accepted') {
+    localStorage.setItem('pwa-install-prompt-seen', 'true');
+  }
+  
+  setDeferredPrompt(null);
+  onClose();
+};
 
   // No mostrar si no hay prompt disponible o si show es false
   if (!show || !deferredPrompt) return null;

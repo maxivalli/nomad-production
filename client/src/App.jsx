@@ -65,9 +65,8 @@ function App() {
   };
 
   const handleCloseInstallPrompt = () => {
-    setShowInstallPrompt(false);
-    localStorage.setItem("pwa-install-prompt-seen", "true");
-  };
+  setShowInstallPrompt(false);
+};
 
   // Mostrar error si hay problemas cargando productos
   useEffect(() => {
