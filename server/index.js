@@ -11,52 +11,55 @@ const path = require("path");
 const fs = require("fs");
 const webpush = require("web-push");
 const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
 
 const app = express();
 
 // ==========================================
-// CONFIGURACIÓN DE MULTER PARA IMÁGENES
+// CONFIGURACIÓN DE CLOUDINARY
 // ==========================================
 
-const pushImagesDir = path.join(__dirname, "public", "push-images");
-if (!fs.existsSync(pushImagesDir)) {
-  fs.mkdirSync(pushImagesDir, { recursive: true });
-  console.log("✅ Carpeta push-images creada");
-}
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, pushImagesDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, "push-" + uniqueSuffix + ext);
+// Storage de Cloudinary para imágenes push
+const pushImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "push-images",
+    allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
+    transformation: [{ width: 1200, height: 630, crop: "limit" }],
+    public_id: (req, file) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      return "push-" + uniqueSuffix;
+    },
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-  ];
-
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Solo se permiten imágenes (JPG, PNG, WebP, GIF)"), false);
-  }
-};
-
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
+  storage: pushImageStorage,
   limits: {
-    fileSize: 2 * 1024 * 1024,
+    fileSize: 2 * 1024 * 1024, // 2MB máximo
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo se permiten imágenes (JPG, PNG, WebP, GIF)"), false);
+    }
   },
 });
 
@@ -85,8 +88,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
-
-app.use("/push-images", express.static(pushImagesDir));
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -196,7 +197,7 @@ const initDB = async () => {
       );
     `);
 
-    // Tabla de configuración - CORREGIDO: permitir NULL en value
+    // Tabla de configuración
     await pool.query(`
       CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
@@ -205,13 +206,12 @@ const initDB = async () => {
       );
     `);
 
-    // Insertar valores iniciales por separado para manejar launch_date correctamente
+    // Insertar valores iniciales
     await pool.query(`
       INSERT INTO settings (key, value) VALUES ('current_collection', 'AUTUMN COLLECTION 2026')
       ON CONFLICT (key) DO NOTHING;
     `);
 
-    // Para launch_date, solo insertar si no existe, sin valor inicial (o con string vacío)
     await pool.query(`
       INSERT INTO settings (key, value) VALUES ('launch_date', '')
       ON CONFLICT (key) DO NOTHING;
@@ -416,11 +416,10 @@ app.get("/share/:slug", async (req, res) => {
 
     console.log("📤 Solicitud de compartir:", slug);
 
-    // Buscar producto por slug generado desde título
     const result = await pool.query(
       `SELECT * FROM products 
        WHERE LOWER(REGEXP_REPLACE(title, '[^a-zA-Z0-9]', '-', 'g')) = LOWER($1)`,
-      [slug]
+      [slug],
     );
 
     if (result.rows.length === 0) {
@@ -1116,6 +1115,10 @@ app.get("/api/push/history", authenticateAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
+// RUTAS DE IMÁGENES PUSH (CLOUDINARY)
+// ==========================================
+
 app.post(
   "/api/push/upload-image",
   authenticateAdmin,
@@ -1128,19 +1131,16 @@ app.post(
         });
       }
 
-      const protocol = req.get("x-forwarded-proto") || req.protocol;
-      const host = req.get("host");
-      const imageUrl = `${protocol}://${host}/push-images/${req.file.filename}`;
-
-      console.log("✅ Imagen subida:", {
+      // req.file contiene la respuesta de Cloudinary
+      console.log("✅ Imagen subida a Cloudinary:", {
+        url: req.file.path,
         filename: req.file.filename,
         size: req.file.size,
-        url: imageUrl,
       });
 
       res.json({
         success: true,
-        url: imageUrl,
+        url: req.file.path, // URL completa de Cloudinary
         filename: req.file.filename,
         size: req.file.size,
       });
@@ -1154,22 +1154,26 @@ app.post(
 );
 
 app.delete(
-  "/api/push/delete-image/:filename",
+  "/api/push/delete-image/:public_id",
   authenticateAdmin,
-  (req, res) => {
+  async (req, res) => {
     try {
-      const { filename } = req.params;
-      const filePath = path.join(pushImagesDir, filename);
+      const { public_id } = req.params;
+      
+      // Decodificar el public_id si viene codificado
+      const decodedPublicId = decodeURIComponent(public_id);
 
-      if (!fs.existsSync(filePath)) {
+      // Eliminar de Cloudinary
+      const result = await cloudinary.uploader.destroy(decodedPublicId);
+
+      if (result.result !== "ok") {
         return res.status(404).json({
-          error: "Imagen no encontrada",
+          error: "Imagen no encontrada en Cloudinary",
+          details: result,
         });
       }
 
-      fs.unlinkSync(filePath);
-
-      console.log("✅ Imagen eliminada:", filename);
+      console.log("✅ Imagen eliminada de Cloudinary:", decodedPublicId);
 
       res.json({
         success: true,
@@ -1184,31 +1188,23 @@ app.delete(
   },
 );
 
-app.get("/api/push/images", authenticateAdmin, (req, res) => {
+app.get("/api/push/images", authenticateAdmin, async (req, res) => {
   try {
-    const files = fs.readdirSync(pushImagesDir);
+    // Obtener imágenes de la carpeta push-images en Cloudinary
+    const result = await cloudinary.api.resources({
+      type: "upload",
+      prefix: "push-images/",
+      max_results: 100,
+    });
 
-    const protocol = req.get("x-forwarded-proto") || req.protocol;
-    const host = req.get("host");
-    const baseUrl = `${protocol}://${host}`;
-
-    const images = files
-      .filter((file) => {
-        const ext = path.extname(file).toLowerCase();
-        return [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext);
-      })
-      .map((file) => {
-        const filePath = path.join(pushImagesDir, file);
-        const stats = fs.statSync(filePath);
-
-        return {
-          filename: file,
-          url: `${baseUrl}/push-images/${file}`,
-          size: stats.size,
-          uploadedAt: stats.mtime,
-        };
-      })
-      .sort((a, b) => b.uploadedAt - a.uploadedAt);
+    const images = result.resources.map((resource) => ({
+      filename: resource.public_id,
+      url: resource.secure_url,
+      size: resource.bytes,
+      uploadedAt: resource.created_at,
+      width: resource.width,
+      height: resource.height,
+    }));
 
     res.json({
       success: true,
