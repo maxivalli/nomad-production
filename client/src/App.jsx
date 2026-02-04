@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useParams } from "react-router-dom";
-import { useServiceWorker } from "./hooks/useServiceWorker";
 
 // Componentes
 import Navbar from "./Navbar";
@@ -30,7 +29,6 @@ function App() {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
-  useServiceWorker();
 
   const { slug } = useParams();
 

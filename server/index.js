@@ -902,7 +902,6 @@ app.get('/api/push/stats', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Enviar notificación a todos (solo admin)
 // Reemplazar el endpoint /api/push/send en server/index.js (línea 906)
 
 app.post('/api/push/send', authenticateAdmin, async (req, res) => {

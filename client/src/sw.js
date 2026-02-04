@@ -1,8 +1,16 @@
+import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+import { clientsClaim } from 'workbox-core';
+
+// Precachear archivos generados automáticamente por Vite
+precacheAndRoute(self.__WB_MANIFEST);
+
+// Limpiar cachés antiguos
+cleanupOutdatedCaches();
+
 const CACHE_NAME = 'nomad-wear-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/src/main.jsx',
   '/Nomad.svg',
   '/Nomad.png',
   '/hyperwave-one.ttf'
@@ -35,7 +43,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && !cacheName.startsWith('workbox-')) {
             console.log('[SW] Eliminando cache antiguo:', cacheName);
             return caches.delete(cacheName);
           }
@@ -55,7 +63,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (event.request.url.includes('/api/')) {
-    return fetch(event.request);
+    event.respondWith(fetch(event.request));
+    return;
   }
 
   event.respondWith(
@@ -75,7 +84,7 @@ self.addEventListener('fetch', (event) => {
             return response;
           }
           if (event.request.destination === 'document') {
-            return caches.match('/');
+            return caches.match('/index.html');
           }
         });
       })
@@ -156,7 +165,7 @@ self.addEventListener('notificationclick', (event) => {
   const urlToOpen = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
         // Si hay una ventana abierta, enfocarla
         for (let client of clientList) {
@@ -165,8 +174,8 @@ self.addEventListener('notificationclick', (event) => {
           }
         }
         // Si no, abrir una nueva
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(urlToOpen);
         }
       })
   );

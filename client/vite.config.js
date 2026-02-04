@@ -8,6 +8,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['Nomad.svg', 'Nomad.png', 'hyperwave-one.ttf'],
+      
+      // Usar estrategia de inyección de manifest
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      
       manifest: {
         name: 'NOMAD® Wear - Streetwear Argentina',
         short_name: 'NOMAD®',
@@ -28,24 +34,15 @@ export default defineConfig({
           }
         ]
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 año
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
+      
+      // IMPORTANTE: No usar workbox, usar injectManifest
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf}']
+      },
+      
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],
