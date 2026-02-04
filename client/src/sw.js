@@ -155,28 +155,55 @@ self.addEventListener('push', (event) => {
 // Click en la notificación
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Click en notificación:', event);
+  console.log('[SW] Acción:', event.action);
+  console.log('[SW] Datos:', event.notification.data);
   
   event.notification.close();
 
+  // Si hizo click en "cerrar", no hacer nada
   if (event.action === 'close') {
+    console.log('[SW] Acción cerrar - no abrir ventana');
     return;
   }
 
-  const urlToOpen = event.notification.data?.url || '/';
+  // Obtener la URL (del click general o de la acción "open")
+  const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  console.log('[SW] Abriendo URL:', urlToOpen);
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    self.clients.matchAll({ 
+      type: 'window', 
+      includeUncontrolled: true 
+    })
       .then((clientList) => {
-        // Si hay una ventana abierta, enfocarla
-        for (let client of clientList) {
-          if (client.url.includes(urlToOpen) && 'focus' in client) {
+        console.log('[SW] Ventanas encontradas:', clientList.length);
+        
+        // Buscar si ya hay una ventana del sitio abierta
+        for (const client of clientList) {
+          console.log('[SW] Checkeando ventana:', client.url);
+          if (client.url === urlToOpen && 'focus' in client) {
+            console.log('[SW] Enfocando ventana existente');
             return client.focus();
           }
         }
-        // Si no, abrir una nueva
+        
+        // Si no hay ventana específica, buscar cualquier ventana del sitio
+        for (const client of clientList) {
+          if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+            console.log('[SW] Navegando ventana existente a:', urlToOpen);
+            client.focus();
+            return client.navigate(urlToOpen);
+          }
+        }
+        
+        // Si no hay ninguna ventana abierta, abrir una nueva
         if (self.clients.openWindow) {
+          console.log('[SW] Abriendo nueva ventana');
           return self.clients.openWindow(urlToOpen);
         }
+      })
+      .catch((error) => {
+        console.error('[SW] Error en notificationclick:', error);
       })
   );
 });
