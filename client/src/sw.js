@@ -233,70 +233,85 @@ self.addEventListener("push", (event) => {
 });
 
 // Click en la notificación
-self.addEventListener("notificationclick", (event) => {
-  console.log("[SW] 👆 Click en notificación");
-  console.log("[SW] 👆 Acción:", event.action);
-  console.log("[SW] 👆 Datos raw:", event.notification.data);
+// Recibir una notificación push
+self.addEventListener("push", (event) => {
+  console.log("[SW] 📬 Push recibido:", event);
 
-  event.notification.close();
+  let data = {
+    title: "NOMAD® Wear",
+    body: "Nueva actualización disponible",
+    icon: "/icon-192-192.png",
+    badge: "/icon-96-96.png",
+    image: null,
+    tag: "nomad-notification",
+    requireInteraction: false,
+    url: "/", // ✅ Default URL aquí también
+    data: {
+      url: "/",
+    },
+  };
 
-  // Si hizo click en "cerrar", no hacer nada
-  if (event.action === "close") {
-    console.log("[SW] 👆 Acción cerrar - no abrir ventana");
-    return;
+  // Parsear los datos si vienen en el push
+  if (event.data) {
+    try {
+      const parsedData = event.data.json();
+      data = { ...data, ...parsedData };
+      console.log("[SW] 📬 Datos parseados completos:", data);
+      console.log("[SW] 📬 URL en nivel superior:", data.url);
+      console.log("[SW] 📬 URL en data.data:", data.data?.url);
+    } catch (e) {
+      console.error("[SW] ❌ Error parseando datos push:", e);
+    }
   }
 
-  // ✅ OBTENER Y CONVERTIR LA URL
-  const rawURL = event.notification.data?.url || "/";
-  console.log("[SW] 🔗 URL raw recibida:", rawURL);
+  // ✅ FIX CRÍTICO: Preservar la URL del nivel superior
+  const urlToUse = data.url || data.data?.url || "/";
+  console.log("[SW] 🔗 URL que se usará:", urlToUse);
 
-  // Convertir la URL al formato HashRouter
-  const hashRouterPath = convertToHashRouterURL(rawURL);
-  console.log("[SW] 🔗 Path HashRouter:", hashRouterPath);
+  const options = {
+    body: data.body,
+    icon: data.icon || "/icon-192-192.png",
+    badge: data.badge || "/icon-96-96.png",
+    tag: data.tag || "nomad-notification",
+    requireInteraction: data.requireInteraction || false,
+    vibrate: [200, 100, 200],
+    data: {
+      // ✅ FIX: Primero el spread, DESPUÉS la URL correcta
+      ...data.data,
+      url: urlToUse, // ✅ Ahora prevalece la URL correcta
+      dateOfArrival: Date.now(),
+    },
+    actions: [
+      {
+        action: "open",
+        title: "Ver más",
+        icon: "/icon-96-96.png",
+      },
+      {
+        action: "close",
+        title: "Cerrar",
+        icon: "/icon-96-96.png",
+      },
+    ],
+  };
 
-  // Construir la URL completa
-  const urlToOpen = new URL(hashRouterPath, self.location.origin).href;
-  console.log("[SW] 🔗 URL completa a abrir:", urlToOpen);
+  // Agregar imagen si está presente
+  if (data.image) {
+    options.image = data.image;
+    console.log("[SW] 🖼️ Notificación con imagen:", data.image);
+  }
+
+  console.log("[SW] 📦 Options finales:", options);
+  console.log("[SW] 📦 URL final en options.data:", options.data.url);
 
   event.waitUntil(
-    self.clients
-      .matchAll({
-        type: "window",
-        includeUncontrolled: true,
-      })
-      .then((clientList) => {
-        console.log("[SW] 👆 Ventanas encontradas:", clientList.length);
-
-        // Si hay alguna ventana del sitio abierta
-        for (const client of clientList) {
-          if (
-            client.url.startsWith(self.location.origin) &&
-            "focus" in client
-          ) {
-            console.log(
-              "[SW] ✅ Enfocando y navegando ventana existente a:",
-              urlToOpen,
-            );
-            client.focus();
-
-            // Navegar solo si la URL es diferente
-            if (client.url !== urlToOpen) {
-              console.log("[SW] 🚀 Navegando a nueva URL");
-              return client.navigate(urlToOpen);
-            }
-            console.log("[SW] ℹ️ Ya está en la URL correcta");
-            return client;
-          }
-        }
-
-        // Si no hay ninguna ventana abierta, abrir una nueva
-        if (self.clients.openWindow) {
-          console.log("[SW] 🆕 Abriendo nueva ventana");
-          return self.clients.openWindow(urlToOpen);
-        }
+    self.registration
+      .showNotification(data.title, options)
+      .then(() => {
+        console.log("[SW] ✅ Notificación mostrada correctamente");
       })
       .catch((error) => {
-        console.error("[SW] ❌ Error en notificationclick:", error);
+        console.error("[SW] ❌ Error mostrando notificación:", error);
       }),
   );
 });
