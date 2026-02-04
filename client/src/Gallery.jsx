@@ -7,6 +7,29 @@ import {
 } from "framer-motion";
 import { Loader2, Filter } from "lucide-react";
 
+// --- COMPONENTE DE CINTA ADHESIVA ---
+const Tape = ({ position = "top" }) => {
+  const styles = {
+    top: "top-[-12px] left-1/2 -translate-x-1/2 rotate-[-1deg]",
+    bottom: "bottom-[-12px] left-1/2 -translate-x-1/2 rotate-[1deg]",
+    topLeft: "top-[-8px] left-[-20px] rotate-[-40deg]",
+    topRight: "top-[-8px] right-[-20px] rotate-[40deg]",
+  };
+
+  return (
+    <div 
+      className={`absolute ${styles[position]} z-30 w-28 h-9 bg-white/25 backdrop-blur-[1px] pointer-events-none shadow-sm`}
+      style={{
+        clipPath: "polygon(5% 0%, 10% 2%, 90% 0%, 95% 4%, 100% 30%, 98% 70%, 95% 100%, 5% 98%, 2% 70%, 0% 30%)",
+        borderLeft: "1px solid rgba(255,255,255,0.2)",
+        borderRight: "1px solid rgba(255,255,255,0.2)",
+      }}
+    >
+      <div className="w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+    </div>
+  );
+};
+
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
   const [collectionName, setCollectionName] = useState("");
@@ -87,7 +110,7 @@ const Gallery = ({ items, setSelectedItem }) => {
         setSelectedCollection(uniqueCollections[0].id);
       }
     }
-  }, [items]);
+  }, [items, selectedCollection]);
 
   useEffect(() => {
     if (selectedCollection && items) {
@@ -224,8 +247,11 @@ const Gallery = ({ items, setSelectedItem }) => {
                   : item.img;
                 const isImgLoaded = loaded[item.id];
                 
-                // Generar una rotación aleatoria leve para el efecto Polaroid
                 const randomRotate = (index % 2 === 0 ? 1 : -1) * (index % 3 + 1);
+
+                // Alternancia de cintas
+                const tapeOptions = ["top", "topLeft", "topRight", "bottom"];
+                const tapePos = tapeOptions[index % tapeOptions.length];
 
                 return (
                   <motion.div
@@ -233,13 +259,16 @@ const Gallery = ({ items, setSelectedItem }) => {
                     onClick={() => handleOpenProduct(item)}
                     initial={{ rotate: randomRotate }}
                     whileHover={{ rotate: 0, scale: 1.05, y: -10, zIndex: 50 }}
-                    className="group relative p-3 pb-16 md:p-4 md:pb-20 flex-none overflow-hidden bg-[#fdfdfd] shrink-0 cursor-pointer shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 border border-neutral-200"
+                    className="group relative p-3 pb-16 md:p-4 md:pb-20 flex-none overflow-visible bg-[#fbfbfb] shrink-0 cursor-pointer shadow-[0_15px_35px_rgba(0,0,0,0.5)] transition-all duration-300 border border-neutral-200"
                     style={{
                       height: "auto",
-                      width: window.innerWidth < 768 ? "300px" : "400px",
+                      width: typeof window !== "undefined" && window.innerWidth < 768 ? "300px" : "400px",
                     }}
                   >
-                    {/* Contenedor de la imagen (el área cuadrada de la polaroid) */}
+                    {/* Cintas Adhesivas */}
+                    <Tape position={tapePos} />
+                    {index % 3 === 0 && <Tape position={index % 2 === 0 ? "bottom" : "top"} />}
+
                     <div className="relative aspect-square overflow-hidden bg-neutral-200">
                       {!isImgLoaded && (
                         <div className="absolute inset-0 flex items-center justify-center bg-neutral-900 z-0">
@@ -262,7 +291,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                       />
                     </div>
 
-                    {/* Texto en el marco inferior (Estilo pie de foto) */}
                     <div className="absolute bottom-0 left-0 w-full p-4 md:p-6 flex flex-col items-center">
                       <p className="text-neutral-800 text-lg md:text-xl font-medium tracking-tight font-serif italic text-center leading-tight">
                         {item.title}
@@ -270,8 +298,9 @@ const Gallery = ({ items, setSelectedItem }) => {
                       <div className="mt-2 w-8 h-[1px] bg-red-600/30" />
                     </div>
                     
-                    {/* Brillo sutil sobre la foto */}
+                    {/* Brillo y textura extra */}
                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent opacity-50" />
+                    <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
                   </motion.div>
                 );
               })}
