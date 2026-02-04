@@ -33,9 +33,21 @@ function App() {
 
   const { slug } = useParams();
 
-  // Detectar links compartidos (cuando entran con #/producto/slug)
+  // Detectar links compartidos (cuando entran con /share/slug)
   useEffect(() => {
-    if (slug && products.length > 0) {
+    // Obtener el slug desde useParams (para react-router) o desde window.location
+    let productSlug = slug;
+    
+    // Si no hay slug en params, buscar en la URL actual
+    if (!productSlug) {
+      const path = window.location.pathname;
+      const shareMatch = path.match(/\/share\/([^\/]+)/);
+      if (shareMatch) {
+        productSlug = shareMatch[1];
+      }
+    }
+
+    if (productSlug && products.length > 0) {
       const product = products.find((p) => {
         const cleanTitle = p.title
           .toLowerCase()
@@ -43,7 +55,7 @@ function App() {
           .replace(/[^a-z0-9\s-]/g, "")
           .replace(/\s+/g, "-");
 
-        return cleanTitle === slug;
+        return cleanTitle === productSlug;
       });
 
       if (product) {
