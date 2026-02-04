@@ -44,7 +44,10 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && !cacheName.startsWith("workbox-")) {
+          if (
+            cacheName !== CACHE_NAME &&
+            !cacheName.startsWith("workbox-")
+          ) {
             console.log("[SW] Eliminando cache antiguo:", cacheName);
             return caches.delete(cacheName);
           }
@@ -59,28 +62,18 @@ self.addEventListener("activate", (event) => {
 // FETCH (Cache Strategy)
 // ==========================================
 self.addEventListener("fetch", (event) => {
-  // Ignorar requests que no sean HTTP/HTTPS
   if (!event.request.url.startsWith("http")) {
     return;
   }
 
-  // ✅ NUEVO: No cachear ni interceptar requests a /push-images
-  if (event.request.url.includes("/push-images/")) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // No cachear requests a la API
   if (event.request.url.includes("/api/")) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Estrategia Network First con Cache Fallback para el resto
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Solo cachear respuestas exitosas
         if (response && response.status === 200) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -90,27 +83,13 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(() => {
-        // Si falla el fetch, intentar obtener desde caché
         return caches.match(event.request).then((response) => {
           if (response) {
-            console.log("[SW] ✅ Sirviendo desde caché:", event.request.url);
             return response;
           }
-
-          // Si es un documento HTML, devolver index.html cacheado
           if (event.request.destination === "document") {
             return caches.match("/index.html");
           }
-
-          // ✅ CORREGIDO: Si no hay nada en caché, devolver un Response de error
-          console.warn("[SW] ❌ Recurso no encontrado:", event.request.url);
-          return new Response("Recurso no disponible", {
-            status: 404,
-            statusText: "Not Found",
-            headers: new Headers({
-              "Content-Type": "text/plain",
-            }),
-          });
         });
       }),
   );
@@ -119,6 +98,67 @@ self.addEventListener("fetch", (event) => {
 // ==========================================
 // PUSH NOTIFICATIONS
 // ==========================================
+
+// ✅ FUNCIÓN AUXILIAR: Convertir URL a formato HashRouter
+function convertToHashRouterURL(url) {
+  console.log("[SW] 🔄 Convirtiendo URL:", url);
+
+  // Si ya es una URL completa con hash, devolverla tal cual
+  if (url.includes("#/")) {
+    console.log("[SW] ✅ URL ya tiene hash, sin cambios:", url);
+    return url;
+  }
+
+  // Si es solo "/" devolver el home
+  if (url === "/" || url === "") {
+    console.log("[SW] 🏠 URL es home");
+    return "/";
+  }
+
+  // Extraer el slug de diferentes formatos:
+  // 1. https://www.nomadwear.com.ar/share/remera-santas-delivery
+  // 2. /share/remera-santas-delivery
+  // 3. /producto/remera-santas-delivery
+  // 4. remera-santas-delivery
+  
+  let slug = url;
+
+  // Caso 1: URL completa con /share/
+  if (url.includes("/share/")) {
+    slug = url.split("/share/")[1].split("?")[0].split("#")[0];
+    console.log("[SW] 📦 Slug extraído de /share/:", slug);
+  }
+  // Caso 2: URL con /producto/
+  else if (url.includes("/producto/")) {
+    slug = url.split("/producto/")[1].split("?")[0].split("#")[0];
+    console.log("[SW] 📦 Slug extraído de /producto/:", slug);
+  }
+  // Caso 3: Ya es solo el slug
+  else if (!url.startsWith("http") && !url.startsWith("/")) {
+    slug = url.split("?")[0].split("#")[0];
+    console.log("[SW] 📦 Usando como slug directo:", slug);
+  }
+  // Caso 4: Empieza con / pero no tiene /share/ ni /producto/
+  else if (url.startsWith("/") && !url.includes("/share/") && !url.includes("/producto/")) {
+    // Quitar el / inicial
+    slug = url.substring(1).split("?")[0].split("#")[0];
+    console.log("[SW] 📦 Slug limpiado de /:", slug);
+  }
+
+  // Limpiar cualquier / al final
+  slug = slug.replace(/\/$/, "");
+
+  // Si después de limpiar queda vacío, ir al home
+  if (!slug || slug === "") {
+    console.log("[SW] 🏠 Slug vacío, ir al home");
+    return "/";
+  }
+
+  // Construir la URL con HashRouter
+  const hashURL = `/#/producto/${slug}`;
+  console.log("[SW] ✅ URL final en formato HashRouter:", hashURL);
+  return hashURL;
+}
 
 // Recibir una notificación push
 self.addEventListener("push", (event) => {
@@ -129,7 +169,7 @@ self.addEventListener("push", (event) => {
     body: "Nueva actualización disponible",
     icon: "/icon-192-192.png",
     badge: "/icon-96-96.png",
-    image: null, // ✅ NUEVO: Soporte para imagen grande
+    image: null,
     tag: "nomad-notification",
     requireInteraction: false,
     data: {
@@ -156,7 +196,7 @@ self.addEventListener("push", (event) => {
     requireInteraction: data.requireInteraction || false,
     vibrate: [200, 100, 200],
     data: {
-      url: data.url || "/",
+      url: data.url || "/", // ✅ Guardar la URL RAW tal como viene
       dateOfArrival: Date.now(),
       ...data.data,
     },
@@ -174,7 +214,7 @@ self.addEventListener("push", (event) => {
     ],
   };
 
-  // ✅ NUEVO: Agregar imagen si está presente
+  // Agregar imagen si está presente
   if (data.image) {
     options.image = data.image;
     console.log("[SW] 🖼️ Notificación con imagen:", data.image);
@@ -196,7 +236,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   console.log("[SW] 👆 Click en notificación");
   console.log("[SW] 👆 Acción:", event.action);
-  console.log("[SW] 👆 Datos:", event.notification.data);
+  console.log("[SW] 👆 Datos raw:", event.notification.data);
 
   event.notification.close();
 
@@ -206,29 +246,17 @@ self.addEventListener("notificationclick", (event) => {
     return;
   }
 
-  // Obtener la URL (del click general o de la acción "open")
-  let urlToOpen = event.notification.data?.url || "/";
+  // ✅ OBTENER Y CONVERTIR LA URL
+  const rawURL = event.notification.data?.url || "/";
+  console.log("[SW] 🔗 URL raw recibida:", rawURL);
 
-  // ✅ Convertir /share/ a formato HashRouter
-  if (typeof urlToOpen === "string" && urlToOpen.includes("/share/")) {
-    const slug = urlToOpen.split("/share/")[1].split("?")[0]; // Limpiar query params
-    urlToOpen = `/#/producto/${slug}`;
-    console.log("[SW] 🔄 URL convertida a HashRouter:", urlToOpen);
-  }
+  // Convertir la URL al formato HashRouter
+  const hashRouterPath = convertToHashRouterURL(rawURL);
+  console.log("[SW] 🔗 Path HashRouter:", hashRouterPath);
 
-  // ✅ También soportar /producto/ directo
-  if (
-    typeof urlToOpen === "string" &&
-    urlToOpen.includes("/producto/") &&
-    !urlToOpen.includes("#")
-  ) {
-    const slug = urlToOpen.split("/producto/")[1].split("?")[0];
-    urlToOpen = `/#/producto/${slug}`;
-    console.log("[SW] 🔄 URL convertida a HashRouter:", urlToOpen);
-  }
-
-  urlToOpen = new URL(urlToOpen, self.location.origin).href;
-  console.log("[SW] 👆 Abriendo URL final:", urlToOpen);
+  // Construir la URL completa
+  const urlToOpen = new URL(hashRouterPath, self.location.origin).href;
+  console.log("[SW] 🔗 URL completa a abrir:", urlToOpen);
 
   event.waitUntil(
     self.clients
@@ -239,7 +267,7 @@ self.addEventListener("notificationclick", (event) => {
       .then((clientList) => {
         console.log("[SW] 👆 Ventanas encontradas:", clientList.length);
 
-        // Buscar si ya hay una ventana del sitio abierta
+        // Si hay alguna ventana del sitio abierta
         for (const client of clientList) {
           if (
             client.url.startsWith(self.location.origin) &&
@@ -251,17 +279,19 @@ self.addEventListener("notificationclick", (event) => {
             );
             client.focus();
 
-            // Solo navegar si la URL es diferente
+            // Navegar solo si la URL es diferente
             if (client.url !== urlToOpen) {
+              console.log("[SW] 🚀 Navegando a nueva URL");
               return client.navigate(urlToOpen);
             }
+            console.log("[SW] ℹ️ Ya está en la URL correcta");
             return client;
           }
         }
 
         // Si no hay ninguna ventana abierta, abrir una nueva
         if (self.clients.openWindow) {
-          console.log("[SW] ✅ Abriendo nueva ventana");
+          console.log("[SW] 🆕 Abriendo nueva ventana");
           return self.clients.openWindow(urlToOpen);
         }
       })
@@ -273,7 +303,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Cierre de la notificación
 self.addEventListener("notificationclose", (event) => {
-  console.log("[SW] 🔔 Notificación cerrada:", event.notification.tag);
+  console.log("[SW] ❌ Notificación cerrada:", event);
 });
 
 // ==========================================
@@ -281,9 +311,6 @@ self.addEventListener("notificationclose", (event) => {
 // ==========================================
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
-    console.log("[SW] ⏭️ Saltando espera...");
     self.skipWaiting();
   }
 });
-
-console.log("[SW] 🚀 Service Worker cargado correctamente");
