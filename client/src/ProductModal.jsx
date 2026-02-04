@@ -332,7 +332,7 @@ const ProductModal = ({ item, onClose }) => {
         {item.title.split(" ").map((word, index) => (
           <span
             key={index}
-            className={`block ${index === 0 ? "text-red-600" : "text-white"}`}
+            className={`block ${index === 0 ? "text-white" : "text-red-600"}`}
           >
             {word}
           </span>
@@ -350,7 +350,7 @@ const ProductModal = ({ item, onClose }) => {
               {item.title.split(" ").map((word, index) => (
                 <span
                   key={index}
-                  className={`block ${index === 0 ? "text-red-600" : "text-white"}`}
+                  className={`block ${index === 0 ? "text-white" : "text-red-600"}`}
                 >
                   {word}
                 </span>
