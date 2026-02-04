@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "./services/api";
+import PushNotificationPanel from "./components/PushNotificationPanel";
 import { useToast } from "./components/Toast";
 import {
   motion as framerMotion,
@@ -298,80 +299,82 @@ const AdminPanel = () => {
    * Permite hasta 3 imágenes por producto
    */
   const handleOpenWidget = () => {
-  if (!cloudinaryConfig) {
-    toast.error("Configuración de Cloudinary no disponible");
-    return;
-  }
+    if (!cloudinaryConfig) {
+      toast.error("Configuración de Cloudinary no disponible");
+      return;
+    }
 
-  // Validación: Exigir título para poder renombrar
-  if (!formData.title.trim()) {
-    toast.warning("Escribe un título primero para optimizar el nombre de la imagen");
-    return;
-  }
+    // Validación: Exigir título para poder renombrar
+    if (!formData.title.trim()) {
+      toast.warning(
+        "Escribe un título primero para optimizar el nombre de la imagen",
+      );
+      return;
+    }
 
-  const slotsAvailable = MAX_IMAGES - formData.img.length;
-  if (slotsAvailable <= 0) {
-    toast.warning(`Límite de ${MAX_IMAGES} imágenes alcanzado`);
-    return;
-  }
+    const slotsAvailable = MAX_IMAGES - formData.img.length;
+    if (slotsAvailable <= 0) {
+      toast.warning(`Límite de ${MAX_IMAGES} imágenes alcanzado`);
+      return;
+    }
 
-  // Generar un nombre base limpio (SEO Friendly)
-  // Ejemplo: "Remera Oversize" -> "nomad-remera-oversize"
-  const cleanTitle = formData.title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '') // Quita caracteres especiales
-    .replace(/[\s_-]+/g, '-') // Cambia espacios por guiones
-    .replace(/^-+|-+$/g, ''); // Quita guiones al inicio o final
+    // Generar un nombre base limpio (SEO Friendly)
+    // Ejemplo: "Remera Oversize" -> "nomad-remera-oversize"
+    const cleanTitle = formData.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "") // Quita caracteres especiales
+      .replace(/[\s_-]+/g, "-") // Cambia espacios por guiones
+      .replace(/^-+|-+$/g, ""); // Quita guiones al inicio o final
 
-  const publicIdBase = `nomad-${cleanTitle}-${Date.now()}`;
+    const publicIdBase = `nomad-${cleanTitle}-${Date.now()}`;
 
-  const myWidget = window.cloudinary.createUploadWidget(
-    {
-      cloudName: cloudinaryConfig.cloudName,
-      uploadPreset: cloudinaryConfig.uploadPreset,
-      sources: ["local", "url", "camera"],
-      multiple: true,
-      maxFiles: slotsAvailable,
-      // CONFIGURACIÓN DE RENOMBRADO:
-      publicId: publicIdBase, // Cloudinary agregará un sufijo automático si hay múltiples
-      clientAllowedFormats: ["webp", "jpg", "png"], // Optimización de formato
-      
-      styles: {
-        palette: {
-          window: "#000000",
-          windowBorder: "#dc2626",
-          tabIcon: "#FFFFFF",
-          textLight: "#FFFFFF",
-          textDark: "#000000",
-          inactiveTabIcon: "#555555",
-          menuIcons: "#FFFFFF",
-          link: "#dc2626",
-          action: "#dc2626",
-          inProgress: "#dc2626",
-          complete: "#16a34a",
-          error: "#ea3323",
-          sourceBg: "#000000",
+    const myWidget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: cloudinaryConfig.cloudName,
+        uploadPreset: cloudinaryConfig.uploadPreset,
+        sources: ["local", "url", "camera"],
+        multiple: true,
+        maxFiles: slotsAvailable,
+        // CONFIGURACIÓN DE RENOMBRADO:
+        publicId: publicIdBase, // Cloudinary agregará un sufijo automático si hay múltiples
+        clientAllowedFormats: ["webp", "jpg", "png"], // Optimización de formato
+
+        styles: {
+          palette: {
+            window: "#000000",
+            windowBorder: "#dc2626",
+            tabIcon: "#FFFFFF",
+            textLight: "#FFFFFF",
+            textDark: "#000000",
+            inactiveTabIcon: "#555555",
+            menuIcons: "#FFFFFF",
+            link: "#dc2626",
+            action: "#dc2626",
+            inProgress: "#dc2626",
+            complete: "#16a34a",
+            error: "#ea3323",
+            sourceBg: "#000000",
+          },
         },
       },
-    },
-    (error, result) => {
-      if (!error && result && result.event === "queues-end") {
-        const uploadedFiles = result.info.files;
-        const newUrls = uploadedFiles.map(
-          (file) => file.uploadInfo.secure_url,
-        );
+      (error, result) => {
+        if (!error && result && result.event === "queues-end") {
+          const uploadedFiles = result.info.files;
+          const newUrls = uploadedFiles.map(
+            (file) => file.uploadInfo.secure_url,
+          );
 
-        setFormData((prev) => ({
-          ...prev,
-          img: [...prev.img, ...newUrls].slice(0, MAX_IMAGES),
-        }));
-        toast.success("Imágenes optimizadas y subidas");
-      }
-    },
-  );
-  myWidget.open();
-};
+          setFormData((prev) => ({
+            ...prev,
+            img: [...prev.img, ...newUrls].slice(0, MAX_IMAGES),
+          }));
+          toast.success("Imágenes optimizadas y subidas");
+        }
+      },
+    );
+    myWidget.open();
+  };
 
   /**
    * Elimina una imagen del producto
@@ -523,7 +526,6 @@ const AdminPanel = () => {
           </div>
         </div>
       </nav>
-
       {/* ====================================================================
           CONFIGURACIÓN GLOBAL - Título de colección y fecha de lanzamiento
           ==================================================================== */}
@@ -1011,6 +1013,7 @@ const AdminPanel = () => {
           </div>
         </section>
       </main>
+      <PushNotificationPanel />
 
       {/* ====================================================================
           FOOTER

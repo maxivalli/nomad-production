@@ -115,6 +115,43 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // ==========================================
+  // PUSH NOTIFICATIONS
+  // ==========================================
+
+  async getVapidPublicKey() {
+    return this.request('/api/push/vapid-public-key');
+  }
+
+  async subscribeToPush(subscription) {
+    return this.request('/api/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+    });
+  }
+
+  async unsubscribeFromPush(endpoint) {
+    return this.request('/api/push/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    });
+  }
+
+  async getPushStats() {
+    return this.request('/api/push/stats');
+  }
+
+  async sendPushNotification(notificationData) {
+    return this.request('/api/push/send', {
+      method: 'POST',
+      body: JSON.stringify(notificationData),
+    });
+  }
+
+  async getPushHistory() {
+    return this.request('/api/push/history');
+  }
 }
 
 export default new ApiService();

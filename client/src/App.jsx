@@ -18,6 +18,7 @@ import Contacto from "./Contacto";
 import Footer from "./Footer";
 import ProductModal from "./ProductModal";
 import InstallPrompt from "./InstallPrompt";
+import PushNotificationPrompt from "./components/PushNotificationPrompt";
 
 // Hooks
 import { useProducts } from "./hooks/useProducts";
@@ -37,7 +38,7 @@ function App() {
   useEffect(() => {
     // Obtener el slug desde useParams (para react-router) o desde window.location
     let productSlug = slug;
-    
+
     // Si no hay slug en params, buscar en la URL actual
     if (!productSlug) {
       const path = window.location.pathname;
@@ -77,8 +78,8 @@ function App() {
   };
 
   const handleCloseInstallPrompt = () => {
-  setShowInstallPrompt(false);
-};
+    setShowInstallPrompt(false);
+  };
 
   // Mostrar error si hay problemas cargando productos
   useEffect(() => {
@@ -115,6 +116,7 @@ function App() {
         show={showInstallPrompt}
         onClose={handleCloseInstallPrompt}
       />
+      <PushNotificationPrompt />
       <div className="bg-black text-white selection:bg-white selection:text-black">
         <Navbar onContactClick={handleShowInstallPrompt} />
 
