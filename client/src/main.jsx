@@ -18,6 +18,15 @@ const PrivateRoute = ({ children }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => console.log("SW registrado:", registration))
+        .catch((error) => console.log("Error SW:", error));
+    });
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -91,7 +100,7 @@ const Root = () => {
         try {
           sessionStorage.setItem("app_loaded", "true");
         } catch (e) {}
-      }, 1500); // 
+      }, 1500); //
       return () => clearTimeout(timer);
     }
   }, []);
