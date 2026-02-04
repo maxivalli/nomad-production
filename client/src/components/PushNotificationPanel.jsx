@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Bell, Send, Users, TrendingUp, Clock } from 'lucide-react';
-import { useToast } from './Toast'; // ✅ AGREGADO
+import { Bell, Send, Users, TrendingUp, Clock, Image as ImageIcon, X } from 'lucide-react';
+import { useToast } from './Toast';
 import api from '../services/api';
 
 const PushNotificationPanel = () => {
-  const toast = useToast(); // ✅ AGREGADO
+  const toast = useToast();
   const [stats, setStats] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
     body: '',
     url: '/',
+    image: '', // ✅ NUEVO: URL de la imagen
     tag: 'nomad-offer'
   });
 
   useEffect(() => {
     loadData();
     
-    // ✅ AGREGADO: Auto-refresh cada 30 segundos
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -37,16 +38,58 @@ const PushNotificationPanel = () => {
       setHistory(historyRes);
     } catch (error) {
       console.error('Error cargando datos:', error);
-      toast.error('❌ Error al cargar datos'); // ✅ MEJORADO
+      toast.error('❌ Error al cargar datos');
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ NUEVO: Manejar subida de imagen
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      toast.error('❌ El archivo debe ser una imagen');
+      return;
+    }
+
+    // Validar tamaño (máximo 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('❌ La imagen debe pesar menos de 2MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      // Crear FormData para enviar la imagen
+      const formDataImg = new FormData();
+      formDataImg.append('image', file);
+
+      // Enviar al servidor (debes crear este endpoint)
+      const response = await api.uploadPushImage(formDataImg);
+      
+      // Actualizar formData con la URL de la imagen
+      setFormData({ ...formData, image: response.url });
+      console.log('🖼️ URL de imagen subida:', response.url);
+      toast.success('✅ Imagen subida correctamente');
+    } catch (error) {
+      console.error('Error subiendo imagen:', error);
+      toast.error('❌ Error al subir la imagen');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // ✅ NUEVO: Remover imagen
+  const removeImage = () => {
+    setFormData({ ...formData, image: '' });
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     
-    // ✅ MEJORADO: Validaciones más robustas
     if (!formData.title?.trim() || !formData.body?.trim()) {
       toast.warning('⚠️ Completa título y mensaje');
       return;
@@ -70,7 +113,6 @@ const PushNotificationPanel = () => {
     try {
       const response = await api.sendPushNotification(formData);
       
-      // ✅ MEJORADO: Manejo de casos edge
       if (response.total === 0) {
         toast.warning('⚠️ No hay suscriptores activos');
         return;
@@ -81,7 +123,6 @@ const PushNotificationPanel = () => {
         return;
       }
 
-      // ✅ MEJORADO: Usar toast en vez de alert
       toast.success(`✅ ${response.successful}/${response.total} notificaciones enviadas`);
       
       // Reset form
@@ -89,44 +130,48 @@ const PushNotificationPanel = () => {
         title: '',
         body: '',
         url: '/',
+        image: '',
         tag: 'nomad-offer'
       });
       
-      // Reload data
       loadData();
     } catch (error) {
       console.error('Error enviando notificación:', error);
-      toast.error('❌ Error al enviar la notificación'); // ✅ MEJORADO
+      toast.error('❌ Error al enviar la notificación');
     } finally {
       setSending(false);
     }
   };
 
-  // Plantillas predefinidas
+  // Plantillas predefinidas con imágenes
   const templates = [
     {
       name: 'Nuevo Drop',
       title: '🔥 NUEVO DROP DISPONIBLE',
       body: 'Descubrí la nueva colección NOMAD®. ¡Stock limitado!',
-      url: '/'
+      url: '/',
+      image: '' // Puedes poner URLs de imágenes por defecto
     },
     {
       name: 'Descuento',
       title: '💥 20% OFF en toda la tienda',
       body: 'Solo por 48hs. Aprovechá esta oportunidad única.',
-      url: '/'
+      url: '/',
+      image: ''
     },
     {
       name: 'Restock',
       title: '✨ RESTOCK ALERT',
       body: 'Volvieron tus productos favoritos. No te los pierdas.',
-      url: '/'
+      url: '/',
+      image: ''
     },
     {
       name: 'Black Friday',
       title: '🖤 BLACK FRIDAY - 30% OFF',
       body: 'El descuento más grande del año. ¡Solo por tiempo limitado!',
-      url: '/'
+      url: '/',
+      image: ''
     }
   ];
 
@@ -135,11 +180,11 @@ const PushNotificationPanel = () => {
       ...formData,
       title: template.title,
       body: template.body,
-      url: template.url
+      url: template.url,
+      image: template.image || ''
     });
   };
 
-  // ✅ AGREGADO: Emojis rápidos
   const quickEmojis = ['🔥', '💥', '✨', '🎉', '⚡', '🖤', '❤️', '🎁'];
 
   return (
@@ -221,7 +266,6 @@ const PushNotificationPanel = () => {
               Título *
             </label>
             
-            {/* ✅ AGREGADO: Emojis rápidos */}
             <div className="flex gap-1 flex-wrap mb-2">
               {quickEmojis.map(emoji => (
                 <button
@@ -269,9 +313,68 @@ const PushNotificationPanel = () => {
             </p>
           </div>
 
+          {/* ✅ NUEVO: Upload de imagen */}
+          <div>
+            <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
+              <ImageIcon size={16} />
+              Imagen (opcional - mejora el engagement en 3x)
+            </label>
+            
+            {formData.image ? (
+              <div className="relative">
+                <img 
+                  src={formData.image} 
+                  alt="Preview" 
+                  className="w-full h-40 object-cover rounded border border-white/20"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition-colors"
+                  title="Remover imagen"
+                >
+                  <X size={16} />
+                </button>
+                <p className="text-white/60 text-xs mt-2">
+                  👆 Click en la X para remover la imagen
+                </p>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload"
+                  disabled={uploadingImage}
+                />
+                <label
+                  htmlFor="image-upload"
+                  className="flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/15 border border-white/20 rounded px-4 py-8 text-white cursor-pointer transition-colors"
+                >
+                  {uploadingImage ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Subiendo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon size={20} />
+                      <span>Subir imagen</span>
+                    </>
+                  )}
+                </label>
+                <p className="text-white/40 text-xs mt-2">
+                  Sube una imagen JPG, PNG o WebP (máx. 2MB)
+                </p>
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-white/80 text-sm mb-2">
-              URL (opcional)
+              URL al hacer click (opcional)
             </label>
             <input
               type="text"
@@ -280,9 +383,12 @@ const PushNotificationPanel = () => {
               className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white"
               placeholder="/"
             />
+            <p className="text-white/40 text-xs mt-1">
+              Ej: / para home, /gallery para galería
+            </p>
           </div>
 
-          {/* ✅ AGREGADO: Preview */}
+          {/* Preview mejorado con imagen */}
           {(formData.title || formData.body) && (
             <div className="bg-white/5 border border-white/10 rounded-lg p-4">
               <p className="text-white/60 text-xs mb-2 uppercase tracking-wider">
@@ -300,13 +406,19 @@ const PushNotificationPanel = () => {
                     <p className="text-white/70 text-xs mt-1">
                       {formData.body || 'Mensaje de la notificación'}
                     </p>
+                    {formData.image && (
+                      <img 
+                        src={formData.image} 
+                        alt="Preview" 
+                        className="w-full h-32 object-cover rounded mt-2 border border-white/20"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ✅ MEJORADO: Botón con contador */}
           <button
             type="submit"
             disabled={sending || !formData.title || !formData.body || stats?.active_subscriptions === 0}
@@ -340,13 +452,22 @@ const PushNotificationPanel = () => {
                 className="bg-white/5 border border-white/10 rounded p-3"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <div>
+                  <div className="flex-1">
                     <p className="text-white font-bold text-sm">
                       {notif.title}
                     </p>
                     <p className="text-white/60 text-xs mt-1">
                       {notif.body}
                     </p>
+                    {notif.image && (
+                      <div className="mt-2">
+                        <img 
+                          src={notif.image} 
+                          alt="Notificación" 
+                          className="w-24 h-16 object-cover rounded border border-white/20"
+                        />
+                      </div>
+                    )}
                   </div>
                   <p className="text-white/40 text-xs whitespace-nowrap ml-4">
                     {new Date(notif.sent_at).toLocaleDateString('es-AR', {

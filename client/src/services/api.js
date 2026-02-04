@@ -1,5 +1,6 @@
 // services/api.js
 // Servicio centralizado para todas las llamadas a la API
+// ✅ ACTUALIZADO: Con soporte para upload de imágenes en notificaciones push
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -142,15 +143,63 @@ class ApiService {
     return this.request('/api/push/stats');
   }
 
+  // ✅ ACTUALIZADO: Enviar notificación push CON SOPORTE DE IMAGEN
   async sendPushNotification(notificationData) {
     return this.request('/api/push/send', {
       method: 'POST',
-      body: JSON.stringify(notificationData),
+      body: JSON.stringify({
+        title: notificationData.title,
+        body: notificationData.body,
+        url: notificationData.url || '/',
+        image: notificationData.image || null, // ✅ NUEVO: Incluir imagen
+        tag: notificationData.tag || 'nomad-notification'
+      }),
     });
   }
 
   async getPushHistory() {
     return this.request('/api/push/history');
+  }
+
+  // ✅ NUEVO: Subir imagen para notificación push
+  async uploadPushImage(formData) {
+    try {
+      // Para upload de archivos, NO incluir Content-Type en headers
+      // El browser lo maneja automáticamente con el boundary correcto
+      const response = await fetch(`${API_BASE_URL}/api/push/upload-image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData // FormData se envía directamente
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Error al subir imagen');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error en uploadPushImage:', error);
+      throw error;
+    }
+  }
+
+  // ✅ NUEVO: Eliminar imagen de notificación
+  async deletePushImage(filename) {
+    return this.request(`/api/push/delete-image/${filename}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ✅ NUEVO: Listar imágenes subidas
+  async getPushImages() {
+    try {
+      const data = await this.request('/api/push/images');
+      return data.images || [];
+    } catch (error) {
+      console.error('Error en getPushImages:', error);
+      return [];
+    }
   }
 }
 

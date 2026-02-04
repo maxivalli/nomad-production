@@ -9,10 +9,56 @@ const jwt = require("jsonwebtoken");
 const Joi = require("joi");
 const path = require("path");
 const fs = require("fs");
-const webpush = require('web-push');
+const webpush = require("web-push");
+const multer = require("multer");
 require("dotenv").config();
 
 const app = express();
+
+// ==========================================
+// CONFIGURACIÓN DE MULTER PARA IMÁGENES
+// ==========================================
+
+const pushImagesDir = path.join(__dirname, "public", "push-images");
+if (!fs.existsSync(pushImagesDir)) {
+  fs.mkdirSync(pushImagesDir, { recursive: true });
+  console.log("✅ Carpeta push-images creada");
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, pushImagesDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, "push-" + uniqueSuffix + ext);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+  ];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Solo se permiten imágenes (JPG, PNG, WebP, GIF)"), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024,
+  },
+});
 
 // ==========================================
 // CONFIGURACIÓN DE SEGURIDAD
@@ -20,26 +66,28 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-// Helmet para headers de seguridad
 app.use(
   helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
 
-// CORS configurado correctamente
 const corsOptions = {
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true,
   optionsSuccessStatus: 200,
+  exposedHeaders: ["Content-Type", "Content-Length"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
-app.use(cors(corsOptions));
 
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
-// Rate limiting para prevenir ataques
+app.use("/push-images", express.static(pushImagesDir));
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -80,7 +128,44 @@ pool.on("error", (err, client) => {
 
 const initDB = async () => {
   try {
-    // Tabla de notificaciones
+    // Función para actualizar updated_at
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION update_updated_at_column()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        NEW.updated_at = CURRENT_TIMESTAMP;
+        RETURN NEW;
+      END;
+      $$ language 'plpgsql';
+    `);
+
+    // Tabla de productos
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        season VARCHAR(50) CHECK (season IN ('spring', 'summer', 'autumn', 'winter')),
+        year INTEGER CHECK (year >= 2026 AND year <= 2050),
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        img TEXT[] NOT NULL,
+        sizes VARCHAR(10)[] NOT NULL,
+        purchase_link TEXT DEFAULT '',
+        color TEXT[] NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Trigger para products
+    await pool.query(`
+      DROP TRIGGER IF EXISTS update_products_updated_at ON products;
+      CREATE TRIGGER update_products_updated_at
+        BEFORE UPDATE ON products
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    `);
+
+    // Tabla de notificaciones push
     await pool.query(`
       CREATE TABLE IF NOT EXISTS push_subscriptions (
         id SERIAL PRIMARY KEY,
@@ -102,6 +187,7 @@ const initDB = async () => {
         body TEXT NOT NULL,
         url TEXT,
         icon TEXT,
+        image TEXT,
         tag VARCHAR(100),
         sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         recipients_count INTEGER DEFAULT 0,
@@ -110,17 +196,25 @@ const initDB = async () => {
       );
     `);
 
-    console.log('✅ Tablas de notificaciones push creadas');
-
-    // Tabla de configuración
+    // Tabla de configuración - CORREGIDO: permitir NULL en value
     await pool.query(`
       CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Insertar valores iniciales por separado para manejar launch_date correctamente
+    await pool.query(`
       INSERT INTO settings (key, value) VALUES ('current_collection', 'AUTUMN COLLECTION 2026')
-      ON CONFLICT DO NOTHING;
+      ON CONFLICT (key) DO NOTHING;
+    `);
+
+    // Para launch_date, solo insertar si no existe, sin valor inicial (o con string vacío)
+    await pool.query(`
+      INSERT INTO settings (key, value) VALUES ('launch_date', '')
+      ON CONFLICT (key) DO NOTHING;
     `);
 
     // Tabla de administradores
@@ -133,17 +227,7 @@ const initDB = async () => {
       );
     `);
 
-    // Agrega esta línea para convertir la columna si ya existe y es de tipo texto:
-    await pool.query(`
-      DO $$ 
-      BEGIN 
-      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='color' AND data_type='text') THEN
-      ALTER TABLE products ALTER COLUMN color TYPE TEXT[] USING array[color];
-    END IF;
-  END $$;
-`);
-
-    // Crear usuario admin por defecto si no existe
+    // Crear usuario admin por defecto
     const adminExists = await pool.query(
       "SELECT * FROM admins WHERE username = 'admin'",
     );
@@ -168,9 +252,9 @@ const initDB = async () => {
 initDB();
 
 webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || 'mailto:info@nomadwear.com',
+  process.env.VAPID_EMAIL || "mailto:info@nomadwear.com",
   process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
+  process.env.VAPID_PRIVATE_KEY,
 );
 
 // ==========================================
@@ -185,17 +269,12 @@ const productSchema = Joi.object({
       "any.only": "La temporada debe ser spring, summer, autumn o winter",
       "any.required": "La temporada es obligatoria",
     }),
-  year: Joi.number()
-    .integer()
-    .min(2026)
-    .max(2050)
-    .required()
-    .messages({
-      "number.base": "El año debe ser un número",
-      "number.min": "El año debe ser al menos 2026",
-      "number.max": "El año no puede ser mayor a 2050",
-      "any.required": "El año es obligatorio",
-    }),
+  year: Joi.number().integer().min(2026).max(2050).required().messages({
+    "number.base": "El año debe ser un número",
+    "number.min": "El año debe ser al menos 2026",
+    "number.max": "El año no puede ser mayor a 2050",
+    "any.required": "El año es obligatorio",
+  }),
   title: Joi.string().min(3).max(255).required().messages({
     "string.min": "El título debe tener al menos 3 caracteres",
     "string.max": "El título no puede exceder 255 caracteres",
@@ -219,15 +298,11 @@ const productSchema = Joi.object({
       "any.required": "Las tallas son obligatorias",
     }),
   purchase_link: Joi.string().uri().allow("").default(""),
-  color: Joi.array()
-    .items(Joi.string().max(50))
-    .min(1)
-    .required()
-    .messages({
-      "array.base": "El campo color debe ser una lista de colores",
-      "array.min": "Debes seleccionar al menos un color",
-      "any.required": "Los colores son obligatorios",
-    }),
+  color: Joi.array().items(Joi.string().max(50)).min(1).required().messages({
+    "array.base": "El campo color debe ser una lista de colores",
+    "array.min": "Debes seleccionar al menos un color",
+    "any.required": "Los colores son obligatorios",
+  }),
 });
 
 const loginSchema = Joi.object({
@@ -280,15 +355,14 @@ const generateSlug = (title) => {
 const injectMetaTags = (html, product, baseUrl) => {
   const productUrl = `${baseUrl}/share/${generateSlug(product.title)}`;
   const imageUrl = Array.isArray(product.img) ? product.img[0] : product.img;
-  
-  // Escapar caracteres especiales para HTML
+
   const escapeHtml = (text) => {
     return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   };
 
   const tituloFormateado = escapeHtml(product.title.toUpperCase());
@@ -317,7 +391,6 @@ const injectMetaTags = (html, product, baseUrl) => {
     
     <!-- Script para redirigir a la ruta correcta del HashRouter -->
     <script>
-      // Redirigir al HashRouter con el slug correcto
       if (window.location.pathname.includes('/share/')) {
         const slug = window.location.pathname.split('/share/')[1];
         window.location.href = '/#/producto/' + slug;
@@ -325,87 +398,73 @@ const injectMetaTags = (html, product, baseUrl) => {
     </script>
   `;
 
-  // Reemplazar los meta tags existentes y el título
   return html
-    .replace(/<meta property="og:type"[^>]*>/i, '')
-    .replace(/<meta property="og:url"[^>]*>/i, '')
-    .replace(/<meta property="og:title"[^>]*>/i, '')
-    .replace(/<meta property="og:description"[^>]*>/i, '')
-    .replace(/<meta property="og:image"[^>]*>/i, '')
-    .replace(/<meta property="twitter:card"[^>]*>/i, '')
-    .replace(/<meta property="twitter:url"[^>]*>/i, '')
-    .replace(/<meta property="twitter:title"[^>]*>/i, '')
-    .replace(/<meta property="twitter:description"[^>]*>/i, '')
-    .replace(/<meta property="twitter:image"[^>]*>/i, '')
-    .replace(/<title>.*?<\/title>/i, '')
-    .replace('</head>', `${metaTags}\n  </head>`);
+    .replace(/<meta[^>]*property="og:[^"]*"[^>]*>/gi, "")
+    .replace(/<meta[^>]*name="twitter:[^"]*"[^>]*>/gi, "")
+    .replace(/<meta[^>]*name="description"[^>]*>/gi, "")
+    .replace(/<title>.*?<\/title>/i, "")
+    .replace("</head>", `${metaTags}\n  </head>`);
 };
 
 // ==========================================
 // RUTA PARA COMPARTIR PRODUCTOS (SSR)
 // ==========================================
 
-app.get('/share/:slug', async (req, res) => {
+app.get("/share/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
-    
-    console.log('📤 Solicitud de compartir:', slug);
-    
-    // Buscar el producto por título (generando el slug desde la base de datos)
-    const result = await pool.query('SELECT * FROM products');
-    const products = result.rows;
-    
-    // Encontrar el producto que coincida con el slug
-    const product = products.find(p => generateSlug(p.title) === slug);
-    
-    if (!product) {
-      console.log('❌ Producto no encontrado:', slug);
-      // Si no se encuentra el producto, redirigir a la página principal
-      return res.redirect('/');
+
+    console.log("📤 Solicitud de compartir:", slug);
+
+    // Buscar producto por slug generado desde título
+    const result = await pool.query(
+      `SELECT * FROM products 
+       WHERE LOWER(REGEXP_REPLACE(title, '[^a-zA-Z0-9]', '-', 'g')) = LOWER($1)`,
+      [slug]
+    );
+
+    if (result.rows.length === 0) {
+      console.log("❌ Producto no encontrado:", slug);
+      return res.redirect("/");
     }
 
-    console.log('✅ Producto encontrado:', product.title);
+    const product = result.rows[0];
+    console.log("✅ Producto encontrado:", product.title);
 
-    // Leer el archivo HTML base
     let html;
     const possiblePaths = [
-      path.join(__dirname, '../client/dist/index.html'),
-      path.join(__dirname, 'dist/index.html'),
-      path.join(process.cwd(), 'client/dist/index.html'),
-      path.join(process.cwd(), 'dist/index.html'),
+      path.join(__dirname, "../client/dist/index.html"),
+      path.join(__dirname, "dist/index.html"),
+      path.join(process.cwd(), "client/dist/index.html"),
+      path.join(process.cwd(), "dist/index.html"),
     ];
-    
+
     for (const htmlPath of possiblePaths) {
       try {
-        html = fs.readFileSync(htmlPath, 'utf8');
-        console.log('✅ HTML encontrado en:', htmlPath);
+        html = fs.readFileSync(htmlPath, "utf8");
+        console.log("✅ HTML encontrado en:", htmlPath);
         break;
       } catch (err) {
-        // Intentar siguiente path
+        continue;
       }
     }
-    
+
     if (!html) {
-      console.error('❌ No se pudo encontrar el archivo HTML');
-      return res.redirect('/');
+      console.error("❌ No se pudo encontrar el archivo HTML");
+      return res.redirect("/");
     }
-    
-    // Obtener la URL base
-    const protocol = req.get('x-forwarded-proto') || req.protocol;
-    const host = req.get('host');
+
+    const protocol = req.get("x-forwarded-proto") || req.protocol;
+    const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
-    
-    console.log('🔗 URL base:', baseUrl);
-    
-    // Inyectar meta tags dinámicos
+
+    console.log("🔗 URL base:", baseUrl);
+
     const modifiedHtml = injectMetaTags(html, product, baseUrl);
-    
-    // Enviar HTML modificado
     res.send(modifiedHtml);
-    
   } catch (err) {
-    console.error('❌ Error en ruta de compartir:', err);
-    res.redirect('/');
+    console.error("❌ Error en ruta de compartir:", err);
+    res.redirect("/");
   }
 });
 
@@ -415,7 +474,6 @@ app.get('/share/:slug', async (req, res) => {
 
 app.post("/api/auth/login", authLimiter, async (req, res) => {
   try {
-    // Validar entrada
     const { error } = loginSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -426,7 +484,6 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
 
     const { username, password } = req.body;
 
-    // Buscar admin en la base de datos
     const result = await pool.query(
       "SELECT * FROM admins WHERE username = $1",
       [username],
@@ -441,7 +498,6 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
 
     const admin = result.rows[0];
 
-    // Verificar contraseña
     const isValidPassword = await bcrypt.compare(password, admin.password_hash);
 
     if (!isValidPassword) {
@@ -451,7 +507,6 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
       });
     }
 
-    // Generar token JWT
     const token = jwt.sign(
       {
         id: admin.id,
@@ -462,12 +517,11 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
       { expiresIn: "24h" },
     );
 
-    // Enviar token como cookie HTTP-only
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 24 horas
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({
@@ -508,7 +562,6 @@ app.get("/api/auth/verify", authenticateAdmin, (req, res) => {
 // RUTAS DE PRODUCTOS
 // ==========================================
 
-// GET: Todos los productos (PÚBLICO)
 app.get("/api/products", async (req, res) => {
   try {
     const result = await pool.query(
@@ -524,7 +577,6 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// GET: Producto individual (PÚBLICO)
 app.get("/api/products/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -557,10 +609,8 @@ app.get("/api/products/:id", async (req, res) => {
   }
 });
 
-// POST: Crear nuevo producto (PROTEGIDA)
 app.post("/api/products", authenticateAdmin, async (req, res) => {
   try {
-    // Validar datos
     const { error, value } = productSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -569,7 +619,16 @@ app.post("/api/products", authenticateAdmin, async (req, res) => {
       });
     }
 
-    const { season, year, title, description, img, sizes, purchase_link, color } = value;
+    const {
+      season,
+      year,
+      title,
+      description,
+      img,
+      sizes,
+      purchase_link,
+      color,
+    } = value;
 
     const result = await pool.query(
       `INSERT INTO products (season, year, title, description, img, sizes, purchase_link, color) 
@@ -591,12 +650,10 @@ app.post("/api/products", authenticateAdmin, async (req, res) => {
   }
 });
 
-// PUT: Actualizar producto (PROTEGIDA)
 app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validar que el ID sea un número
     if (isNaN(id)) {
       return res.status(400).json({
         error: "ID inválido",
@@ -604,7 +661,6 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       });
     }
 
-    // Validar datos
     const { error, value } = productSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -613,12 +669,21 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       });
     }
 
-    const { season, year, title, description, img, sizes, purchase_link, color } = value;
+    const {
+      season,
+      year,
+      title,
+      description,
+      img,
+      sizes,
+      purchase_link,
+      color,
+    } = value;
 
     const result = await pool.query(
       `UPDATE products 
        SET season = $1, year = $2, title = $3, description = $4, img = $5, sizes = $6, 
-           purchase_link = $7, color = $8, updated_at = CURRENT_TIMESTAMP
+           purchase_link = $7, color = $8
        WHERE id = $9 RETURNING *`,
       [season, year, title, description, img, sizes, purchase_link, color, id],
     );
@@ -644,12 +709,10 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
   }
 });
 
-// DELETE: Eliminar producto (PROTEGIDA)
 app.delete("/api/products/:id", authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validar que el ID sea un número
     if (isNaN(id)) {
       return res.status(400).json({
         error: "ID inválido",
@@ -683,10 +746,9 @@ app.delete("/api/products/:id", authenticateAdmin, async (req, res) => {
 });
 
 // ==========================================
-// RUTAS DE CONFIGURACIÓN (PROTEGIDAS)
+// RUTAS DE CONFIGURACIÓN
 // ==========================================
 
-// GET: Fecha de lanzamiento
 app.get("/api/settings/launch-date", async (req, res) => {
   try {
     const result = await pool.query(
@@ -704,7 +766,6 @@ app.get("/api/settings/launch-date", async (req, res) => {
   }
 });
 
-// POST: Actualizar fecha de lanzamiento (PROTEGIDA)
 app.post("/api/settings/launch-date", authenticateAdmin, async (req, res) => {
   try {
     const { date } = req.body;
@@ -737,7 +798,6 @@ app.post("/api/settings/launch-date", authenticateAdmin, async (req, res) => {
   }
 });
 
-// GET: Nombre de colección
 app.get("/api/settings/collection", async (req, res) => {
   try {
     const result = await pool.query(
@@ -761,7 +821,6 @@ app.get("/api/settings/collection", async (req, res) => {
   }
 });
 
-// PUT: Actualizar colección (PROTEGIDA)
 app.put("/api/settings/collection", authenticateAdmin, async (req, res) => {
   try {
     const { value } = req.body;
@@ -774,9 +833,10 @@ app.put("/api/settings/collection", authenticateAdmin, async (req, res) => {
     }
 
     await pool.query(
-      `UPDATE settings 
-       SET value = $1, updated_at = CURRENT_TIMESTAMP 
-       WHERE key = 'current_collection'`,
+      `INSERT INTO settings (key, value, updated_at) 
+       VALUES ('current_collection', $1, CURRENT_TIMESTAMP)
+       ON CONFLICT (key) 
+       DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
       [value],
     );
 
@@ -794,7 +854,7 @@ app.put("/api/settings/collection", authenticateAdmin, async (req, res) => {
 });
 
 // ==========================================
-// RUTA PARA CLOUDINARY (PROTEGIDA)
+// RUTA PARA CLOUDINARY
 // ==========================================
 
 app.post("/api/cloudinary/signature", authenticateAdmin, async (req, res) => {
@@ -813,28 +873,26 @@ app.post("/api/cloudinary/signature", authenticateAdmin, async (req, res) => {
 });
 
 // ==========================================
-// RUTA PARA NOTIFICACIONES
+// RUTAS DE PUSH NOTIFICATIONS
 // ==========================================
 
-// Obtener la clave pública VAPID
-app.get('/api/push/vapid-public-key', (req, res) => {
+app.get("/api/push/vapid-public-key", (req, res) => {
   res.json({
-    publicKey: process.env.VAPID_PUBLIC_KEY
+    publicKey: process.env.VAPID_PUBLIC_KEY,
   });
 });
 
-// Suscribirse a notificaciones
-app.post('/api/push/subscribe', async (req, res) => {
+app.post("/api/push/subscribe", async (req, res) => {
   try {
     const { endpoint, keys } = req.body;
 
     if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
-      return res.status(400).json({ 
-        error: 'Datos de suscripción incompletos' 
+      return res.status(400).json({
+        error: "Datos de suscripción incompletos",
       });
     }
 
-    const userAgent = req.headers['user-agent'] || 'unknown';
+    const userAgent = req.headers["user-agent"] || "unknown";
 
     await pool.query(
       `INSERT INTO push_subscriptions (endpoint, keys_p256dh, keys_auth, user_agent)
@@ -843,49 +901,47 @@ app.post('/api/push/subscribe', async (req, res) => {
        DO UPDATE SET 
          last_used = CURRENT_TIMESTAMP,
          active = true`,
-      [endpoint, keys.p256dh, keys.auth, userAgent]
+      [endpoint, keys.p256dh, keys.auth, userAgent],
     );
 
-    console.log('✅ Nueva suscripción push registrada');
+    console.log("✅ Nueva suscripción push registrada");
 
-    res.status(201).json({ 
+    res.status(201).json({
       success: true,
-      message: 'Suscripción registrada correctamente' 
+      message: "Suscripción registrada correctamente",
     });
   } catch (error) {
-    console.error('Error guardando suscripción:', error);
-    res.status(500).json({ error: 'Error al registrar suscripción' });
+    console.error("Error guardando suscripción:", error);
+    res.status(500).json({ error: "Error al registrar suscripción" });
   }
 });
 
-// Desuscribirse
-app.post('/api/push/unsubscribe', async (req, res) => {
+app.post("/api/push/unsubscribe", async (req, res) => {
   try {
     const { endpoint } = req.body;
 
     if (!endpoint) {
-      return res.status(400).json({ error: 'Endpoint requerido' });
+      return res.status(400).json({ error: "Endpoint requerido" });
     }
 
     await pool.query(
-      'UPDATE push_subscriptions SET active = false WHERE endpoint = $1',
-      [endpoint]
+      "UPDATE push_subscriptions SET active = false WHERE endpoint = $1",
+      [endpoint],
     );
 
-    console.log('✅ Suscripción desactivada');
+    console.log("✅ Suscripción desactivada");
 
-    res.json({ 
+    res.json({
       success: true,
-      message: 'Suscripción cancelada' 
+      message: "Suscripción cancelada",
     });
   } catch (error) {
-    console.error('Error cancelando suscripción:', error);
-    res.status(500).json({ error: 'Error al cancelar suscripción' });
+    console.error("Error cancelando suscripción:", error);
+    res.status(500).json({ error: "Error al cancelar suscripción" });
   }
 });
 
-// Obtener estadísticas (solo admin)
-app.get('/api/push/stats', authenticateAdmin, async (req, res) => {
+app.get("/api/push/stats", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -897,207 +953,273 @@ app.get('/api/push/stats', authenticateAdmin, async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error obteniendo estadísticas:', error);
-    res.status(500).json({ error: 'Error al obtener estadísticas' });
+    console.error("Error obteniendo estadísticas:", error);
+    res.status(500).json({ error: "Error al obtener estadísticas" });
   }
 });
 
-// Reemplazar el endpoint /api/push/send en server/index.js (línea 906)
-
-app.post('/api/push/send', authenticateAdmin, async (req, res) => {
+app.post("/api/push/send", authenticateAdmin, async (req, res) => {
   try {
-    const { title, body, url, icon, tag } = req.body;
+    const { title, body, url, icon, image, tag } = req.body;
 
-    console.log('📧 [PUSH] Iniciando envío de notificación');
-    console.log('📧 [PUSH] Título:', title);
-    console.log('📧 [PUSH] Mensaje:', body);
+    console.log("📧 [PUSH] Iniciando envío de notificación");
+    console.log("📧 [PUSH] Título:", title);
+    console.log("📧 [PUSH] Imagen:", image || "Sin imagen");
 
     if (!title || !body) {
-      return res.status(400).json({ 
-        error: 'Título y mensaje son requeridos' 
+      return res.status(400).json({
+        error: "Título y mensaje son requeridos",
       });
     }
 
-    // Verificar configuración VAPID
     if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
-      console.error('❌ [PUSH] Claves VAPID no configuradas');
-      return res.status(500).json({ 
-        error: 'Configuración de VAPID incompleta' 
+      console.error("❌ [PUSH] Claves VAPID no configuradas");
+      return res.status(500).json({
+        error: "Configuración de VAPID incompleta",
       });
     }
 
-    console.log('✅ [PUSH] Claves VAPID configuradas');
-    console.log('📧 [PUSH] VAPID Public Key:', process.env.VAPID_PUBLIC_KEY?.substring(0, 20) + '...');
-
-    // Obtener todas las suscripciones activas
     const result = await pool.query(
-      'SELECT * FROM push_subscriptions WHERE active = true'
+      "SELECT * FROM push_subscriptions WHERE active = true",
     );
 
     const subscriptions = result.rows;
-    console.log(`📧 [PUSH] Suscripciones activas encontradas: ${subscriptions.length}`);
-    
+    console.log(
+      `📧 [PUSH] Suscripciones activas encontradas: ${subscriptions.length}`,
+    );
+
     if (subscriptions.length === 0) {
-      return res.json({ 
-        message: 'No hay suscriptores activos',
-        sent: 0 
+      return res.json({
+        message: "No hay suscriptores activos",
+        sent: 0,
       });
     }
 
-    // Log de cada suscripción
-    subscriptions.forEach((sub, index) => {
-      console.log(`📧 [PUSH] Suscripción ${index + 1}:`, {
-        endpoint: sub.endpoint.substring(0, 50) + '...',
-        created: sub.created_at,
-        user_agent: sub.user_agent?.substring(0, 50)
-      });
-    });
-
-    // Payload de la notificación
     const payload = JSON.stringify({
       title,
       body,
-      icon: icon || '/icon-192-192.png',
-      badge: '/icon-96-96.png',
-      url: url || '/',
-      tag: tag || 'nomad-notification',
+      icon: icon || "/icon-192-192.png",
+      badge: "/icon-96-96.png",
+      image: image || null,
+      url: url || "/",
+      tag: tag || "nomad-notification",
       requireInteraction: false,
       actions: [
-        { action: 'open', title: 'Ver más' },
-        { action: 'close', title: 'Cerrar' }
-      ]
+        { action: "open", title: "Ver más" },
+        { action: "close", title: "Cerrar" },
+      ],
     });
 
-    console.log('📧 [PUSH] Payload creado:', payload.substring(0, 100) + '...');
-
-    // Enviar notificaciones
     const promises = subscriptions.map(async (sub, index) => {
       const pushSubscription = {
         endpoint: sub.endpoint,
         keys: {
           p256dh: sub.keys_p256dh,
-          auth: sub.keys_auth
-        }
+          auth: sub.keys_auth,
+        },
       };
 
       try {
         console.log(`📧 [PUSH] Enviando a suscripción ${index + 1}...`);
-        const response = await webpush.sendNotification(pushSubscription, payload);
-        console.log(`✅ [PUSH] Suscripción ${index + 1} exitosa:`, response.statusCode);
-        return { success: true, endpoint: sub.endpoint, statusCode: response.statusCode };
+        const response = await webpush.sendNotification(
+          pushSubscription,
+          payload,
+        );
+        console.log(
+          `✅ [PUSH] Suscripción ${index + 1} exitosa:`,
+          response.statusCode,
+        );
+        return {
+          success: true,
+          endpoint: sub.endpoint,
+          statusCode: response.statusCode,
+        };
       } catch (error) {
         console.error(`❌ [PUSH] Error en suscripción ${index + 1}:`, {
-          endpoint: sub.endpoint.substring(0, 50) + '...',
+          endpoint: sub.endpoint.substring(0, 50) + "...",
           statusCode: error.statusCode,
           message: error.message,
-          body: error.body
         });
-        
-        // Si el endpoint ya no es válido, desactivarlo
+
         if (error.statusCode === 410 || error.statusCode === 404) {
-          console.log(`🗑️ [PUSH] Desactivando suscripción ${index + 1} (endpoint inválido)`);
+          console.log(
+            `🗑️ [PUSH] Desactivando suscripción ${index + 1} (endpoint inválido)`,
+          );
           await pool.query(
-            'UPDATE push_subscriptions SET active = false WHERE endpoint = $1',
-            [sub.endpoint]
+            "UPDATE push_subscriptions SET active = false WHERE endpoint = $1",
+            [sub.endpoint],
           );
         }
-        
-        return { success: false, endpoint: sub.endpoint, error: error.message, statusCode: error.statusCode };
+
+        return {
+          success: false,
+          endpoint: sub.endpoint,
+          error: error.message,
+          statusCode: error.statusCode,
+        };
       }
     });
 
     const results = await Promise.all(promises);
-    
-    const successCount = results.filter(r => r.success).length;
-    const failureCount = results.filter(r => !r.success).length;
 
-    console.log(`📊 [PUSH] Resultados finales: ${successCount} exitosos, ${failureCount} fallidos`);
-    
-    // Log de errores específicos
-    results.forEach((result, index) => {
-      if (!result.success) {
-        console.error(`❌ [PUSH] Detalle error ${index + 1}:`, {
-          endpoint: result.endpoint?.substring(0, 50) + '...',
-          error: result.error,
-          statusCode: result.statusCode
-        });
-      }
-    });
+    const successCount = results.filter((r) => r.success).length;
+    const failureCount = results.filter((r) => !r.success).length;
 
-    // Guardar registro
+    console.log(
+      `📊 [PUSH] Resultados finales: ${successCount} exitosos, ${failureCount} fallidos`,
+    );
+
     await pool.query(
       `INSERT INTO push_notifications 
-       (title, body, url, icon, tag, recipients_count, success_count, failure_count)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [title, body, url, icon, tag, subscriptions.length, successCount, failureCount]
+       (title, body, url, icon, image, tag, recipients_count, success_count, failure_count)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        title,
+        body,
+        url,
+        icon,
+        image,
+        tag,
+        subscriptions.length,
+        successCount,
+        failureCount,
+      ],
     );
 
     console.log(`✅ [PUSH] Notificación guardada en historial`);
 
     res.json({
       success: true,
-      message: 'Notificación enviada',
+      message: "Notificación enviada",
       total: subscriptions.length,
       successful: successCount,
       failed: failureCount,
-      details: results.map(r => ({
-        success: r.success,
-        statusCode: r.statusCode,
-        error: r.error
-      }))
     });
   } catch (error) {
-    console.error('💥 [PUSH] Error crítico:', error);
-    res.status(500).json({ 
-      error: 'Error al enviar notificación',
-      message: error.message 
-    });
+    console.error("❌ [PUSH] Error enviando notificación:", error);
+    res.status(500).json({ error: "Error al enviar notificación" });
   }
 });
 
-// Nuevo endpoint para debug - agregar antes del endpoint /api/push/send
-app.get('/api/push/debug', authenticateAdmin, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM push_subscriptions ORDER BY created_at DESC');
-    
-    const subscriptions = result.rows.map(sub => ({
-      id: sub.id,
-      endpoint_preview: sub.endpoint.substring(0, 50) + '...',
-      endpoint_domain: new URL(sub.endpoint).hostname,
-      created_at: sub.created_at,
-      last_used: sub.last_used,
-      active: sub.active,
-      user_agent: sub.user_agent
-    }));
-
-    res.json({
-      vapid_configured: !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
-      vapid_public_preview: process.env.VAPID_PUBLIC_KEY?.substring(0, 20) + '...',
-      vapid_email: process.env.VAPID_EMAIL || 'mailto:info@nomadwear.com',
-      total_subscriptions: subscriptions.length,
-      active_count: subscriptions.filter(s => s.active).length,
-      inactive_count: subscriptions.filter(s => !s.active).length,
-      subscriptions
-    });
-  } catch (error) {
-    console.error('Error en debug:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Obtener historial (solo admin)
-app.get('/api/push/history', authenticateAdmin, async (req, res) => {
+app.get("/api/push/history", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM push_notifications 
        ORDER BY sent_at DESC 
-       LIMIT 50`
+       LIMIT 50`,
     );
 
     res.json(result.rows);
   } catch (error) {
-    console.error('Error obteniendo historial:', error);
-    res.status(500).json({ error: 'Error al obtener historial' });
+    console.error("Error obteniendo historial:", error);
+    res.status(500).json({ error: "Error al obtener historial" });
+  }
+});
+
+app.post(
+  "/api/push/upload-image",
+  authenticateAdmin,
+  upload.single("image"),
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error: "No se proporcionó ninguna imagen",
+        });
+      }
+
+      const protocol = req.get("x-forwarded-proto") || req.protocol;
+      const host = req.get("host");
+      const imageUrl = `${protocol}://${host}/push-images/${req.file.filename}`;
+
+      console.log("✅ Imagen subida:", {
+        filename: req.file.filename,
+        size: req.file.size,
+        url: imageUrl,
+      });
+
+      res.json({
+        success: true,
+        url: imageUrl,
+        filename: req.file.filename,
+        size: req.file.size,
+      });
+    } catch (error) {
+      console.error("❌ Error subiendo imagen:", error);
+      res.status(500).json({
+        error: "Error al subir la imagen",
+      });
+    }
+  },
+);
+
+app.delete(
+  "/api/push/delete-image/:filename",
+  authenticateAdmin,
+  (req, res) => {
+    try {
+      const { filename } = req.params;
+      const filePath = path.join(pushImagesDir, filename);
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          error: "Imagen no encontrada",
+        });
+      }
+
+      fs.unlinkSync(filePath);
+
+      console.log("✅ Imagen eliminada:", filename);
+
+      res.json({
+        success: true,
+        message: "Imagen eliminada correctamente",
+      });
+    } catch (error) {
+      console.error("❌ Error eliminando imagen:", error);
+      res.status(500).json({
+        error: "Error al eliminar la imagen",
+      });
+    }
+  },
+);
+
+app.get("/api/push/images", authenticateAdmin, (req, res) => {
+  try {
+    const files = fs.readdirSync(pushImagesDir);
+
+    const protocol = req.get("x-forwarded-proto") || req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    const images = files
+      .filter((file) => {
+        const ext = path.extname(file).toLowerCase();
+        return [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext);
+      })
+      .map((file) => {
+        const filePath = path.join(pushImagesDir, file);
+        const stats = fs.statSync(filePath);
+
+        return {
+          filename: file,
+          url: `${baseUrl}/push-images/${file}`,
+          size: stats.size,
+          uploadedAt: stats.mtime,
+        };
+      })
+      .sort((a, b) => b.uploadedAt - a.uploadedAt);
+
+    res.json({
+      success: true,
+      images,
+      count: images.length,
+    });
+  } catch (error) {
+    console.error("❌ Error listando imágenes:", error);
+    res.status(500).json({
+      error: "Error al listar imágenes",
+    });
   }
 });
 
