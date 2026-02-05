@@ -96,8 +96,6 @@ self.addEventListener("push", (event) => {
     body: "Nueva actualización disponible",
     icon: "/icon-192-192.png",
     badge: "/badge-96.png",
-    color: "#EF4444",
-    vibrate: [200, 100, 200],
     tag: "nomad-notification",
     url: "/",
     data: { url: "/" },
@@ -119,6 +117,7 @@ self.addEventListener("push", (event) => {
     tag: data.tag,
     requireInteraction: true, // Cambiado a true para que el usuario deba cerrarla
     vibrate: [200, 100, 200],
+    color: "#e60000",
     data: {
       ...data.data,
       url: convertedURL,
