@@ -95,7 +95,9 @@ self.addEventListener("push", (event) => {
     title: "NOMAD® Wear",
     body: "Nueva actualización disponible",
     icon: "/icon-192-192.png",
-    badge: "/icon-96-96.png",
+    badge: "/badge-96.png",
+    color: "#EF4444",
+    vibrate: [200, 100, 200],
     tag: "nomad-notification",
     url: "/",
     data: { url: "/" },
@@ -113,7 +115,7 @@ self.addEventListener("push", (event) => {
   const options = {
     body: data.body,
     icon: data.icon || "/icon-192-192.png",
-    badge: data.badge || "/icon-96-96.png",
+    badge: data.badge || "/badge-96.png",
     tag: data.tag,
     requireInteraction: true, // Cambiado a true para que el usuario deba cerrarla
     vibrate: [200, 100, 200],
