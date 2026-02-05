@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Video, Upload, Trash2, Calendar, Play, X } from 'lucide-react';
-import { useToast } from './Toast';
-import api from '../services/api';
+import { useState, useEffect } from "react";
+import {
+  Image as ImageIcon,
+  Video,
+  Upload,
+  Trash2,
+  Calendar,
+  Play,
+  X,
+} from "lucide-react";
+import { useToast } from "./Toast";
+import api from "../services/api";
 
 const AdminBannersPanel = () => {
   const toast = useToast();
@@ -9,12 +17,12 @@ const AdminBannersPanel = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [creating, setCreating] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    media_url: '',
-    media_type: '',
-    start_date: '',
-    end_date: '',
+    media_url: "",
+    media_type: "",
+    start_date: "",
+    end_date: "",
   });
 
   const [previewFile, setPreviewFile] = useState(null);
@@ -30,8 +38,8 @@ const AdminBannersPanel = () => {
       const data = await api.getAllBanners();
       setBanners(data);
     } catch (error) {
-      console.error('Error cargando banners:', error);
-      toast.error('❌ Error al cargar banners');
+      console.error("Error cargando banners:", error);
+      toast.error("❌ Error al cargar banners");
     } finally {
       setLoading(false);
     }
@@ -40,47 +48,55 @@ const AdminBannersPanel = () => {
   // Validar dimensiones del archivo
   const validateDimensions = (file) => {
     return new Promise((resolve, reject) => {
-      const isVideo = file.type.startsWith('video/');
-      
+      const isVideo = file.type.startsWith("video/");
+
       if (isVideo) {
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        
+        const video = document.createElement("video");
+        video.preload = "metadata";
+
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
           const width = video.videoWidth;
           const height = video.videoHeight;
-          
+
           if (width === 720 && height === 1080) {
             resolve({ width, height, valid: true });
           } else {
-            reject(new Error(`El video debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`));
+            reject(
+              new Error(
+                `El video debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`,
+              ),
+            );
           }
         };
-        
+
         video.onerror = () => {
-          reject(new Error('Error al cargar el video'));
+          reject(new Error("Error al cargar el video"));
         };
-        
+
         video.src = URL.createObjectURL(file);
       } else {
         const img = new Image();
-        
+
         img.onload = () => {
           const width = img.width;
           const height = img.height;
-          
+
           if (width === 720 && height === 1080) {
             resolve({ width, height, valid: true });
           } else {
-            reject(new Error(`La imagen debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`));
+            reject(
+              new Error(
+                `La imagen debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`,
+              ),
+            );
           }
         };
-        
+
         img.onerror = () => {
-          reject(new Error('Error al cargar la imagen'));
+          reject(new Error("Error al cargar la imagen"));
         };
-        
+
         img.src = URL.createObjectURL(file);
       }
     });
@@ -91,17 +107,17 @@ const AdminBannersPanel = () => {
     if (!file) return;
 
     // Validar tipo de archivo
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
 
     if (!isImage && !isVideo) {
-      toast.error('❌ El archivo debe ser una imagen o video');
+      toast.error("❌ El archivo debe ser una imagen o video");
       return;
     }
 
     // Validar tamaño (máximo 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('❌ El archivo debe pesar menos de 10MB');
+      toast.error("❌ El archivo debe pesar menos de 10MB");
       return;
     }
 
@@ -110,30 +126,30 @@ const AdminBannersPanel = () => {
       // Validar dimensiones ANTES de subir
       const dimensions = await validateDimensions(file);
       setFileDimensions(dimensions);
-      
+
       // Crear FormData para enviar el archivo
       const formDataFile = new FormData();
-      formDataFile.append('media', file);
+      formDataFile.append("media", file);
 
       // Enviar al servidor
       const response = await api.uploadBannerMedia(formDataFile);
-      
+
       // Actualizar formData con la URL del archivo
-      setFormData({ 
-        ...formData, 
+      setFormData({
+        ...formData,
         media_url: response.url,
-        media_type: response.type 
+        media_type: response.type,
       });
 
       // Guardar preview
       setPreviewFile(URL.createObjectURL(file));
-      
-      toast.success('✅ Archivo subido correctamente');
+
+      toast.success("✅ Archivo subido correctamente");
     } catch (error) {
-      console.error('Error subiendo archivo:', error);
-      toast.error(error.message || '❌ Error al subir el archivo');
+      console.error("Error subiendo archivo:", error);
+      toast.error(error.message || "❌ Error al subir el archivo");
       // Limpiar el input
-      e.target.value = '';
+      e.target.value = "";
       setPreviewFile(null);
       setFileDimensions(null);
     } finally {
@@ -142,10 +158,10 @@ const AdminBannersPanel = () => {
   };
 
   const removeFile = () => {
-    setFormData({ 
-      ...formData, 
-      media_url: '', 
-      media_type: '' 
+    setFormData({
+      ...formData,
+      media_url: "",
+      media_type: "",
     });
     setPreviewFile(null);
     setFileDimensions(null);
@@ -153,9 +169,9 @@ const AdminBannersPanel = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.media_url || !formData.start_date || !formData.end_date) {
-      toast.warning('⚠️ Completa todos los campos');
+      toast.warning("⚠️ Completa todos los campos");
       return;
     }
 
@@ -163,70 +179,72 @@ const AdminBannersPanel = () => {
     const endDate = new Date(formData.end_date);
 
     if (endDate <= startDate) {
-      toast.warning('⚠️ La fecha de fin debe ser posterior a la fecha de inicio');
+      toast.warning(
+        "⚠️ La fecha de fin debe ser posterior a la fecha de inicio",
+      );
       return;
     }
 
     setCreating(true);
     try {
       await api.createBanner(formData);
-      
-      toast.success('✅ Banner creado correctamente');
-      
+
+      toast.success("✅ Banner creado correctamente");
+
       // Reset form
       setFormData({
-        media_url: '',
-        media_type: '',
-        start_date: '',
-        end_date: '',
+        media_url: "",
+        media_type: "",
+        start_date: "",
+        end_date: "",
       });
       setPreviewFile(null);
       setFileDimensions(null);
-      
+
       loadBanners();
     } catch (error) {
-      console.error('Error creando banner:', error);
-      toast.error('❌ Error al crear el banner');
+      console.error("Error creando banner:", error);
+      toast.error("❌ Error al crear el banner");
     } finally {
       setCreating(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar este banner?')) {
+    if (!window.confirm("¿Eliminar este banner?")) {
       return;
     }
 
     try {
       await api.deleteBanner(id);
-      toast.success('✅ Banner eliminado');
+      toast.success("✅ Banner eliminado");
       loadBanners();
     } catch (error) {
-      console.error('Error eliminando banner:', error);
-      toast.error('❌ Error al eliminar el banner');
+      console.error("Error eliminando banner:", error);
+      toast.error("❌ Error al eliminar el banner");
     }
   };
 
   const handleToggleActive = async (banner) => {
     try {
       await api.updateBanner(banner.id, {
-        active: !banner.active
+        active: !banner.active,
       });
-      toast.success(`✅ Banner ${banner.active ? 'desactivado' : 'activado'}`);
+      toast.success(`✅ Banner ${banner.active ? "desactivado" : "activado"}`);
       loadBanners();
     } catch (error) {
-      console.error('Error actualizando banner:', error);
-      toast.error('❌ Error al actualizar el banner');
+      console.error("Error actualizando banner:", error);
+      toast.error("❌ Error al actualizar el banner");
     }
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -264,16 +282,18 @@ const AdminBannersPanel = () => {
               <div className="space-y-2">
                 <label className="text-white/80 text-xs font-bold uppercase flex items-center gap-2">
                   Imagen o Video <span className="text-red-500">*</span>
-                  <span className="text-white/40 font-normal text-[10px]">(1080 x 720px)</span>
+                  <span className="text-white/40 font-normal text-[10px]">
+                    (1080 x 720px)
+                  </span>
                 </label>
-                
+
                 <div className="group relative border-2 border-dashed border-white/10 hover:border-red-600/40 rounded-2xl transition-all bg-white/[0.02] overflow-hidden">
                   {previewFile ? (
                     <div className="relative">
-                      {formData.media_type === 'video' ? (
+                      {formData.media_type === "video" ? (
                         <div className="relative aspect-[1080/720]">
-                          <video 
-                            src={previewFile} 
+                          <video
+                            src={previewFile}
                             className="w-full h-full object-cover"
                             controls
                           />
@@ -284,10 +304,10 @@ const AdminBannersPanel = () => {
                         </div>
                       ) : (
                         <div className="relative aspect-[1080/720]">
-                          <img 
-                            src={previewFile} 
-                            className="w-full h-full object-cover" 
-                            alt="Preview" 
+                          <img
+                            src={previewFile}
+                            className="w-full h-full object-cover"
+                            alt="Preview"
                           />
                           <div className="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-xs text-white flex items-center gap-1">
                             <ImageIcon size={12} />
@@ -301,7 +321,7 @@ const AdminBannersPanel = () => {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
                           type="button"
                           onClick={removeFile}
                           className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-xl transform transition hover:scale-110"
@@ -316,17 +336,22 @@ const AdminBannersPanel = () => {
                         {uploading ? (
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
                         ) : (
-                          <Upload size={32} className="text-white/40 group-hover:text-red-600" />
+                          <Upload
+                            size={32}
+                            className="text-white/40 group-hover:text-red-600"
+                          />
                         )}
                       </div>
                       <span className="text-sm text-white/60 font-medium mb-1">
-                        {uploading ? 'Subiendo...' : 'Click para subir archivo'}
+                        {uploading ? "Subiendo..." : "Click para subir archivo"}
                       </span>
-                      <span className="text-xs text-white/40">1080x720px - JPG, PNG, MP4 (max 10MB)</span>
-                      <input 
-                        type="file" 
-                        accept="image/*,video/*" 
-                        onChange={handleFileUpload} 
+                      <span className="text-xs text-white/40">
+                        1080x720px - JPG, PNG, MP4 (max 10MB)
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleFileUpload}
                         className="hidden"
                         disabled={uploading}
                       />
@@ -344,7 +369,9 @@ const AdminBannersPanel = () => {
                 <input
                   type="datetime-local"
                   value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, start_date: e.target.value })
+                  }
                   className="w-full bg-black/40 border border-white/10 focus:border-red-600 rounded-xl px-4 py-3 text-white outline-none transition-all"
                   required
                 />
@@ -359,7 +386,9 @@ const AdminBannersPanel = () => {
                 <input
                   type="datetime-local"
                   value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, end_date: e.target.value })
+                  }
                   className="w-full bg-black/40 border border-white/10 focus:border-red-600 rounded-xl px-4 py-3 text-white outline-none transition-all"
                   required
                 />
@@ -367,7 +396,12 @@ const AdminBannersPanel = () => {
 
               <button
                 type="submit"
-                disabled={creating || !formData.media_url || !formData.start_date || !formData.end_date}
+                disabled={
+                  creating ||
+                  !formData.media_url ||
+                  !formData.start_date ||
+                  !formData.end_date
+                }
                 className="w-full bg-red-600 hover:bg-red-700 disabled:bg-neutral-800 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center gap-3 uppercase tracking-[0.1em] text-sm shadow-lg"
               >
                 {creating ? (
@@ -392,18 +426,21 @@ const AdminBannersPanel = () => {
             <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-4 ml-2">
               Vista Previa del Modal
             </p>
-            
+
             <div className="bg-[#1a1a1a] rounded-[2.5rem] p-4 border border-white/10 shadow-2xl overflow-hidden relative max-w-sm mx-auto">
               {/* Simulación Notch */}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-20" />
-              
+
               <div className="mt-8 bg-black/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-4 shadow-2xl">
                 {previewFile ? (
                   <div className="space-y-3">
-                    {formData.media_type === 'video' ? (
-                      <div className="relative w-full rounded-xl overflow-hidden" style={{ aspectRatio: '720/1080' }}>
-                        <video 
-                          src={previewFile} 
+                    {formData.media_type === "video" ? (
+                      <div
+                        className="relative w-full rounded-xl overflow-hidden"
+                        style={{ aspectRatio: "720/1080" }}
+                      >
+                        <video
+                          src={previewFile}
                           className="w-full h-full object-cover"
                           autoPlay
                           muted
@@ -411,14 +448,19 @@ const AdminBannersPanel = () => {
                         />
                         <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded-lg flex items-center gap-1">
                           <Play size={12} className="text-white" />
-                          <span className="text-white text-[10px] font-bold">VIDEO</span>
+                          <span className="text-white text-[10px] font-bold">
+                            VIDEO
+                          </span>
                         </div>
                       </div>
                     ) : (
-                      <div className="relative w-full rounded-xl overflow-hidden" style={{ aspectRatio: '720/1080' }}>
-                        <img 
-                          src={previewFile} 
-                          alt="Preview" 
+                      <div
+                        className="relative w-full rounded-xl overflow-hidden"
+                        style={{ aspectRatio: "720/1080" }}
+                      >
+                        <img
+                          src={previewFile}
+                          alt="Preview"
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -428,11 +470,19 @@ const AdminBannersPanel = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="w-full border-2 border-dashed border-white/10 rounded-xl" style={{ aspectRatio: '720/1080' }}>
+                  <div
+                    className="w-full border-2 border-dashed border-white/10 rounded-xl"
+                    style={{ aspectRatio: "720/1080" }}
+                  >
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
-                        <ImageIcon size={40} className="text-white/20 mx-auto mb-2" />
-                        <p className="text-white/40 text-xs">Sube un archivo para previsualizar</p>
+                        <ImageIcon
+                          size={40}
+                          className="text-white/20 mx-auto mb-2"
+                        />
+                        <p className="text-white/40 text-xs">
+                          Sube un archivo para previsualizar
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -459,84 +509,132 @@ const AdminBannersPanel = () => {
         <div className="flex items-center gap-3 mb-8">
           <ImageIcon className="text-red-600" size={24} />
           <h3 className="text-white font-black text-xl uppercase italic tracking-tighter">
-            Banners Activos
+            Banners Registrados
           </h3>
         </div>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
           {loading ? (
-            <p className="text-white/40 text-sm italic text-center py-8">Cargando banners...</p>
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+              <p className="text-white/40 text-sm italic">
+                Sincronizando base de datos...
+              </p>
+            </div>
           ) : banners.length === 0 ? (
-            <p className="text-white/20 text-sm italic text-center py-8">No hay banners registrados</p>
+            <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-xl">
+              <p className="text-white/20 text-sm italic font-serif">
+                No se encontraron campañas publicitarias registradas
+              </p>
+            </div>
           ) : (
             banners.map((banner) => (
-              <div 
-                key={banner.id} 
-                className={`bg-black/40 border ${isActive(banner) ? 'border-green-500/30 bg-green-500/5' : 'border-white/5'} rounded-xl p-4 flex gap-4 items-center group hover:border-white/20 transition-all`}
+              <div
+                key={banner.id}
+                className={`group relative bg-black/40 border ${
+                  isActive(banner)
+                    ? "border-green-500/30 bg-green-500/5"
+                    : "border-white/5"
+                } rounded-xl p-4 flex flex-col sm:flex-row gap-5 items-start sm:items-center transition-all duration-300 hover:bg-white/[0.03]`}
               >
-                {/* Preview */}
-                <div className="w-24 h-16 rounded-lg overflow-hidden border border-white/10 shrink-0 relative">
-                  {banner.media_type === 'video' ? (
-                    <>
-                      <video 
-                        src={banner.media_url} 
+                {/* 1. Preview: Grande en móvil, miniatura en PC */}
+                <div className="w-full sm:w-32 h-48 sm:h-20 rounded-lg overflow-hidden border border-white/10 shrink-0 relative bg-neutral-900">
+                  {banner.media_type === "video" ? (
+                    <div className="relative h-full w-full">
+                      <video
+                        src={banner.media_url}
                         className="w-full h-full object-cover"
+                        muted
                       />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <Play size={20} className="text-white" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <Play size={24} className="text-white opacity-80" />
                       </div>
-                    </>
+                    </div>
                   ) : (
-                    <img 
-                      src={banner.media_url} 
-                      className="w-full h-full object-cover" 
-                      alt="Banner" 
+                    <img
+                      src={banner.media_url}
+                      className="w-full h-full object-cover"
+                      alt="Banner"
                     />
                   )}
+                  {/* Badge de tipo de archivo siempre visible en el preview */}
+                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-black text-white uppercase tracking-tighter border border-white/10">
+                    {banner.media_type}
+                  </div>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[9px] px-2 py-0.5 rounded uppercase font-bold ${
-                      banner.media_type === 'video' 
-                        ? 'bg-purple-600/20 text-purple-400 border border-purple-600/30'
-                        : 'bg-blue-600/20 text-blue-400 border border-blue-600/30'
-                    }`}>
-                      {banner.media_type}
-                    </span>
-                    {isActive(banner) && (
-                      <span className="text-[9px] px-2 py-0.5 rounded uppercase font-bold bg-green-600/20 text-green-400 border border-green-600/30 animate-pulse">
-                        ● En vivo
+                {/* 2. Info: Grid para organizar fechas en móvil */}
+                <div className="flex-1 min-w-0 w-full space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {isActive(banner) ? (
+                      <span className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full uppercase font-black bg-green-500/10 text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                        Campañana Activa
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2.5 py-1 rounded-full uppercase font-black bg-white/5 text-white/40 border border-white/10">
+                        {new Date() > new Date(banner.end_date)
+                          ? "Finalizado"
+                          : "Programado"}
                       </span>
                     )}
                     {!banner.active && (
-                      <span className="text-[9px] px-2 py-0.5 rounded uppercase font-bold bg-neutral-600/20 text-neutral-400 border border-neutral-600/30">
-                        Desactivado
+                      <span className="text-[10px] px-2.5 py-1 rounded-full uppercase font-black bg-red-600/10 text-red-500 border border-red-600/20">
+                        Pausado Manualmente
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-white/60 space-y-1">
-                    <p><span className="text-white/40">Inicio:</span> {formatDate(banner.start_date)}</p>
-                    <p><span className="text-white/40">Fin:</span> {formatDate(banner.end_date)}</p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-1">
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] text-white/30 uppercase font-black tracking-widest">
+                        Fecha Inicio
+                      </p>
+                      <p className="text-xs text-white/80 font-medium">
+                        {formatDate(banner.start_date)}
+                      </p>
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] text-white/30 uppercase font-black tracking-widest">
+                        Fecha Fin
+                      </p>
+                      <p className="text-xs text-white/80 font-medium">
+                        {formatDate(banner.end_date)}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Acciones */}
-                <div className="flex flex-col gap-2">
+                {/* 3. Acciones: Botones grandes en móvil */}
+                <div className="flex sm:flex-col flex-row w-full sm:w-auto gap-2 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
                   <button
                     onClick={() => handleToggleActive(banner)}
-                    className={`p-2 ${banner.active ? 'bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-500' : 'bg-green-600/20 hover:bg-green-600/30 text-green-500'} transition-all border border-white/10 rounded`}
-                    title={banner.active ? 'Desactivar' : 'Activar'}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:p-2.5 transition-all duration-200 border rounded-lg ${
+                      banner.active
+                        ? "bg-amber-600/10 hover:bg-amber-600/20 text-amber-500 border-amber-600/20"
+                        : "bg-green-600/10 hover:bg-green-600/20 text-green-500 border-green-600/20"
+                    }`}
+                    title={banner.active ? "Pausar campaña" : "Activar campaña"}
                   >
-                    <span className="text-xs font-bold">{banner.active ? '⏸' : '▶'}</span>
+                    {banner.active ? (
+                      <Play size={16} className="rotate-90" />
+                    ) : (
+                      <Play size={16} />
+                    )}
+                    <span className="text-[10px] font-black uppercase sm:hidden">
+                      {banner.active ? "Pausar" : "Activar"}
+                    </span>
                   </button>
+
                   <button
                     onClick={() => handleDelete(banner.id)}
-                    className="p-2 bg-red-600/20 hover:bg-red-600/30 text-red-500 transition-all border border-white/10 rounded"
-                    title="Eliminar"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:p-2.5 bg-red-600/10 hover:bg-red-600/20 text-red-500 transition-all border border-red-600/20 rounded-lg"
+                    title="Eliminar banner"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
+                    <span className="text-[10px] font-black uppercase sm:hidden">
+                      Eliminar
+                    </span>
                   </button>
                 </div>
               </div>
