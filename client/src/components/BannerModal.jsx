@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
-import api from '../services/api';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
+import api from "../services/api";
 
 const BannerModal = () => {
   const [banner, setBanner] = useState(null);
@@ -36,7 +36,7 @@ const BannerModal = () => {
         setShow(true);
       }
     } catch (error) {
-      console.error('Error cargando banner:', error);
+      console.error("Error cargando banner:", error);
     }
   };
 
@@ -50,6 +50,8 @@ const BannerModal = () => {
 
   if (!banner) return null;
 
+  // ... resto del código igual hasta el return
+
   return (
     <AnimatePresence>
       {show && (
@@ -57,14 +59,15 @@ const BannerModal = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          // ✅ Solo cierra si showCloseButton es true
           className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex items-center justify-center p-6"
-          onClick={handleClose}
+          onClick={() => showCloseButton && handleClose()}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 10 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="relative w-full max-w-[340px] md:max-w-sm"
             onClick={(e) => e.stopPropagation()}
           >
@@ -83,10 +86,10 @@ const BannerModal = () => {
               )}
             </AnimatePresence>
 
-            {/* Contenedor Estilo Nomad (Marco Blanco) */}
+            {/* Contenido del Banner (Marco Blanco) */}
             <div className="bg-white p-1.5 shadow-[0_30px_60px_rgba(0,0,0,1)]">
               <div className="relative overflow-hidden bg-neutral-900 aspect-[9/16]">
-                {banner.media_type === 'video' ? (
+                {banner.media_type === "video" ? (
                   <video
                     src={banner.media_url}
                     className="w-full h-full object-cover"
@@ -102,20 +105,34 @@ const BannerModal = () => {
                     className="w-full h-full object-cover"
                   />
                 )}
-                
-                {/* Overlay sutil para mejorar la estética */}
-                <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_80px_rgba(0,0,0,0.3)]" />
               </div>
             </div>
 
-            {/* Hint visual opcional debajo del banner */}
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: showCloseButton ? 0 : 0.5 }}
-              className="text-white text-[10px] uppercase tracking-widest text-center mt-4 font-bold"
-            >
-              Cerrar disponible en breve...
-            </motion.p>
+            {/* Indicador de carga */}
+            <div className="h-8 flex items-center justify-center mt-4">
+              <AnimatePresence mode="wait">
+                {!showCloseButton ? (
+                  <motion.p
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    exit={{ opacity: 0 }}
+                    className="text-white text-[10px] uppercase tracking-widest font-bold"
+                  >
+                    Cerrar disponible en breve...
+                  </motion.p>
+                ) : (
+                  <motion.p
+                    key="ready"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.3 }}
+                    className="text-white text-[9px] uppercase tracking-[0.3em]"
+                  >
+                    Toca afuera para salir
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         </motion.div>
       )}
