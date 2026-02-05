@@ -72,7 +72,7 @@ const PushNotificationPanel = () => {
       
       // Actualizar formData con la URL de la imagen
       setFormData({ ...formData, image: response.url });
-      console.log('🖼️ URL de imagen subida:', response.url);
+     
       toast.success('✅ Imagen subida correctamente');
     } catch (error) {
       console.error('Error subiendo imagen:', error);

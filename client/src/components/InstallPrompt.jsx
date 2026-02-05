@@ -7,7 +7,7 @@ export default function InstallPrompt({ show, onClose }) {
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      console.log('Prompt de instalación capturado y listo');
+      
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -19,14 +19,13 @@ export default function InstallPrompt({ show, onClose }) {
 
   const handleInstall = async () => {
   if (!deferredPrompt) {
-    console.log('No hay prompt disponible');
+    
     return;
   }
   
   deferredPrompt.prompt();
   const { outcome } = await deferredPrompt.userChoice;
   
-  console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
   
   // ← AGREGAR: Solo guardar si instaló
   if (outcome === 'accepted') {
