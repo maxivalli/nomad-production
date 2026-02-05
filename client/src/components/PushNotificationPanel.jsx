@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Send, Users, TrendingUp, Clock, Image as ImageIcon, X } from 'lucide-react';
+import { Bell, Send, Users, TrendingUp, Clock, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { useToast } from './Toast';
 import api from '../services/api';
 
