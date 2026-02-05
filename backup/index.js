@@ -998,7 +998,7 @@ app.post("/api/push/send", authenticateAdmin, async (req, res) => {
       title,
       body,
       icon: icon || "/icon-192-192.png",
-      badge: "/icon-96-96.png",
+      badge: "/badge-96.png",
       image: image || null,
       url: url || "/",
       tag: tag || "nomad-notification",
