@@ -117,7 +117,6 @@ self.addEventListener("push", (event) => {
     tag: data.tag,
     requireInteraction: true, // Cambiado a true para que el usuario deba cerrarla
     vibrate: [200, 100, 200],
-    color: "#e60000",
     data: {
       ...data.data,
       url: convertedURL,
