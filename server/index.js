@@ -114,7 +114,7 @@ app.set("trust proxy", 1);
 
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: true,
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
@@ -155,7 +155,7 @@ const pool = new Pool({
   connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL,
   ssl:
     process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
+      ? { rejectUnauthorized: true }
       : false,
   max: 20,
   idleTimeoutMillis: 30000,
@@ -480,8 +480,6 @@ app.get("/share/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
 
-    console.log("📤 Solicitud de compartir:", slug);
-
     const result = await pool.query(
       `SELECT * FROM products 
        WHERE LOWER(REGEXP_REPLACE(title, '[^a-zA-Z0-9]', '-', 'g')) = LOWER($1)`,
@@ -489,12 +487,11 @@ app.get("/share/:slug", async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      console.log("❌ Producto no encontrado:", slug);
+   
       return res.redirect("/");
     }
 
     const product = result.rows[0];
-    console.log("✅ Producto encontrado:", product.title);
 
     let html;
     const possiblePaths = [
@@ -507,7 +504,7 @@ app.get("/share/:slug", async (req, res) => {
     for (const htmlPath of possiblePaths) {
       try {
         html = fs.readFileSync(htmlPath, "utf8");
-        console.log("✅ HTML encontrado en:", htmlPath);
+      
         break;
       } catch (err) {
         continue;
@@ -522,8 +519,6 @@ app.get("/share/:slug", async (req, res) => {
     const protocol = req.get("x-forwarded-proto") || req.protocol;
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
-
-    console.log("🔗 URL base:", baseUrl);
 
     const modifiedHtml = injectMetaTags(html, product, baseUrl);
     res.send(modifiedHtml);
@@ -969,8 +964,6 @@ app.post("/api/push/subscribe", async (req, res) => {
       [endpoint, keys.p256dh, keys.auth, userAgent],
     );
 
-    console.log("✅ Nueva suscripción push registrada");
-
     res.status(201).json({
       success: true,
       message: "Suscripción registrada correctamente",
@@ -993,8 +986,6 @@ app.post("/api/push/unsubscribe", async (req, res) => {
       "UPDATE push_subscriptions SET active = false WHERE endpoint = $1",
       [endpoint],
     );
-
-    console.log("✅ Suscripción desactivada");
 
     res.json({
       success: true,
@@ -1027,10 +1018,6 @@ app.post("/api/push/send", authenticateAdmin, async (req, res) => {
   try {
     const { title, body, url, icon, image, tag } = req.body;
 
-    console.log("📧 [PUSH] Iniciando envío de notificación");
-    console.log("📧 [PUSH] Título:", title);
-    console.log("📧 [PUSH] Imagen:", image || "Sin imagen");
-
     if (!title || !body) {
       return res.status(400).json({
         error: "Título y mensaje son requeridos",
@@ -1049,9 +1036,7 @@ app.post("/api/push/send", authenticateAdmin, async (req, res) => {
     );
 
     const subscriptions = result.rows;
-    console.log(
-      `📧 [PUSH] Suscripciones activas encontradas: ${subscriptions.length}`,
-    );
+   
 
     if (subscriptions.length === 0) {
       return res.json({
@@ -1085,15 +1070,12 @@ app.post("/api/push/send", authenticateAdmin, async (req, res) => {
       };
 
       try {
-        console.log(`📧 [PUSH] Enviando a suscripción ${index + 1}...`);
+
         const response = await webpush.sendNotification(
           pushSubscription,
           payload,
         );
-        console.log(
-          `✅ [PUSH] Suscripción ${index + 1} exitosa:`,
-          response.statusCode,
-        );
+        
         return {
           success: true,
           endpoint: sub.endpoint,
@@ -1107,9 +1089,7 @@ app.post("/api/push/send", authenticateAdmin, async (req, res) => {
         });
 
         if (error.statusCode === 410 || error.statusCode === 404) {
-          console.log(
-            `🗑️ [PUSH] Desactivando suscripción ${index + 1} (endpoint inválido)`,
-          );
+          
           await pool.query(
             "UPDATE push_subscriptions SET active = false WHERE endpoint = $1",
             [sub.endpoint],
@@ -1130,10 +1110,6 @@ app.post("/api/push/send", authenticateAdmin, async (req, res) => {
     const successCount = results.filter((r) => r.success).length;
     const failureCount = results.filter((r) => !r.success).length;
 
-    console.log(
-      `📊 [PUSH] Resultados finales: ${successCount} exitosos, ${failureCount} fallidos`,
-    );
-
     await pool.query(
       `INSERT INTO push_notifications 
        (title, body, url, icon, image, tag, recipients_count, success_count, failure_count)
@@ -1150,8 +1126,6 @@ app.post("/api/push/send", authenticateAdmin, async (req, res) => {
         failureCount,
       ],
     );
-
-    console.log(`✅ [PUSH] Notificación guardada en historial`);
 
     res.json({
       success: true,
@@ -1364,8 +1338,6 @@ app.post("/api/banners", authenticateAdmin, async (req, res) => {
       [media_url, media_type, start_date, end_date]
     );
 
-    console.log("✅ Banner creado:", result.rows[0]);
-
     res.json({
       success: true,
       banner: result.rows[0],
@@ -1451,8 +1423,6 @@ app.put("/api/banners/:id", authenticateAdmin, async (req, res) => {
       return res.status(404).json({ error: "Banner no encontrado" });
     }
 
-    console.log("✅ Banner actualizado:", result.rows[0]);
-
     res.json({
       success: true,
       banner: result.rows[0],
@@ -1501,8 +1471,6 @@ app.delete("/api/banners/:id", authenticateAdmin, async (req, res) => {
 
     // Eliminar de la base de datos
     await pool.query("DELETE FROM banners WHERE id = $1", [id]);
-
-    console.log("✅ Banner eliminado:", id);
 
     res.json({
       success: true,

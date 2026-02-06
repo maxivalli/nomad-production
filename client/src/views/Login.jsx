@@ -10,6 +10,7 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true); // Nuevo estado
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -18,11 +19,17 @@ const Login = () => {
     const checkAuth = async () => {
       try {
         await api.verifyAuth();
-        navigate('/admin');
+        // Si está autenticado, redirigir inmediatamente
+        navigate('/admin', { replace: true });
       } catch (err) {
-        // No está autenticado, continuar en login
+        // No está autenticado, mostrar formulario de login
+        console.log("No autenticado, mostrando login");
+      } finally {
+        // Siempre terminar el estado de verificación
+        setCheckingAuth(false);
       }
     };
+    
     checkAuth();
   }, [navigate]);
 
@@ -41,18 +48,33 @@ const Login = () => {
       
       if (response.success) {
         toast.success("Autenticación exitosa");
-        // Esperar un momento para que el usuario vea el mensaje
-        setTimeout(() => {
-          navigate("/admin");
-        }, 500);
+        // Navegar inmediatamente, el replace evita volver al login con el botón atrás
+        navigate("/admin", { replace: true });
       }
     } catch (error) {
       console.error("Error en login:", error);
       toast.error(error.message || "Usuario o contraseña incorrectos");
-    } finally {
-      setLoading(false);
+      setLoading(false); // Solo quitar loading si hay error
     }
+    // No quitamos loading si es exitoso, ya que navegamos a otra página
   };
+
+  // Mostrar pantalla de carga mientras verifica autenticación
+  if (checkingAuth) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+            <p className="text-xs uppercase tracking-[0.3em] text-neutral-500 font-bold">
+              Verificando acceso...
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

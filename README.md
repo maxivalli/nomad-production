@@ -963,16 +963,16 @@ Si encuentras problemas o tienes preguntas:
 1. Revisa la sección [Solución de Problemas](#-solución-de-problemas)
 2. Busca en [Issues existentes](https://github.com/tu-repo/issues)
 3. Abre un [nuevo Issue](https://github.com/tu-repo/issues/new)
-4. Contacta al equipo: contacto@nomadwear.com
+4. Contacta al equipo: info@nomadwear.com.ar
 
 ---
 
 ## 📞 Contacto
 
-- **Website**: [nomadwear.com](https://www.nomadwear.com.ar)
-- **Email**: contacto@nomadwear.com
-- **Instagram**: [@nomad.wear](https://instagram.com/nomadwearok)
-- **GitHub**: [github.com/nomadwear](https://github.com/maxivalli/nomad-production)
+- **Website**: [nomadwear.com.ar](https://www.nomadwear.com.ar)
+- **Email**: info@nomadwear.com
+- **Instagram**: [@nomadwearok](https://instagram.com/nomadwearok)
+- **GitHub**: [github.com/maxivalli/nomad-production](https://github.com/maxivalli/nomad-production)
 
 ---
 

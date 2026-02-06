@@ -255,6 +255,12 @@ const AdminBannersPanel = () => {
     return banner.active && now >= start && now <= end;
   };
 
+  const isCampaignExpired = (banner) => {
+    const now = new Date();
+    const end = new Date(banner.end_date);
+    return now > end;
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
       {/* Header con título */}
@@ -609,12 +615,21 @@ const AdminBannersPanel = () => {
                 <div className="flex sm:flex-col flex-row w-full sm:w-auto gap-2 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
                   <button
                     onClick={() => handleToggleActive(banner)}
+                    disabled={isCampaignExpired(banner)}
                     className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:p-2.5 transition-all duration-200 border rounded-lg ${
-                      banner.active
-                        ? "bg-amber-600/10 hover:bg-amber-600/20 text-amber-500 border-amber-600/20"
-                        : "bg-green-600/10 hover:bg-green-600/20 text-green-500 border-green-600/20"
+                      isCampaignExpired(banner)
+                        ? "bg-white/5 text-white/20 border-white/5 cursor-not-allowed"
+                        : banner.active
+                          ? "bg-amber-600/10 hover:bg-amber-600/20 text-amber-500 border-amber-600/20"
+                          : "bg-green-600/10 hover:bg-green-600/20 text-green-500 border-green-600/20"
                     }`}
-                    title={banner.active ? "Pausar campaña" : "Activar campaña"}
+                    title={
+                      isCampaignExpired(banner)
+                        ? "Campaña finalizada"
+                        : banner.active
+                          ? "Pausar campaña"
+                          : "Activar campaña"
+                    }
                   >
                     {banner.active ? (
                       <Play size={16} className="rotate-90" />
@@ -622,7 +637,11 @@ const AdminBannersPanel = () => {
                       <Play size={16} />
                     )}
                     <span className="text-[10px] font-black uppercase sm:hidden">
-                      {banner.active ? "Pausar" : "Activar"}
+                      {isCampaignExpired(banner)
+                        ? "Vencida"
+                        : banner.active
+                          ? "Pausar"
+                          : "Activar"}
                     </span>
                   </button>
 
