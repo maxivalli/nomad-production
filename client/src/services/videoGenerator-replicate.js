@@ -8,26 +8,36 @@ class VideoGeneratorService {
 
   /**
    * Crea una predicción en Replicate (a través del backend)
+   * Actualizado para Wan 2.2 Fast
    */
-  async createPrediction(imageUrl) {
+  async createPrediction(imageUrl, prompt = "") {
+    const requestBody = {
+      model: REPLICATE_CONFIG.model,
+      input: {
+        image: imageUrl,
+        prompt: prompt || "Smooth camera motion, natural movement",
+        // Parámetros optimizados para Wan 2.2 Fast
+        max_area: "832x480", // Resolución 480p (rápido y económico)
+        num_frames: 81,      // Número de frames (25-177 disponibles)
+        frames_per_second: 16, // FPS del video resultante
+        sample_steps: 30,     // Pasos de muestreo (calidad vs velocidad)
+        sample_guide_scale: 5, // Guidance scale para seguir el prompt
+        sample_shift: 3       // Control de timing del movimiento
+      }
+    };
+
+    // Solo agregar version si está definida en la config
+    if (REPLICATE_CONFIG.version) {
+      requestBody.version = REPLICATE_CONFIG.version;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/replicate/predictions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include', // Usar cookies en lugar de Bearer token
-      body: JSON.stringify({
-        version: REPLICATE_CONFIG.version,
-        input: {
-          image: imageUrl,
-          motion_bucket_id: 127,        // Controla intensidad del movimiento (1-255)
-          fps: 6,                        // Frames por segundo
-          num_frames: 25,                // Total de frames (max 25)
-          cond_aug: 0.02,                // Augmentación condicional
-          decoding_t: 14,                // Pasos de decodificación
-          num_inference_steps: 25,       // Pasos de inferencia
-        }
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -79,7 +89,7 @@ class VideoGeneratorService {
       const progress = Math.min((attempts / maxAttempts) * 100, 90);
       onProgress?.({ 
         status: 'processing', 
-        message: `Generando video... ${Math.round(progress)}%`,
+        message: `Generando video con Wan 2.2... ${Math.round(progress)}%`,
         progress 
       });
 
@@ -103,18 +113,22 @@ class VideoGeneratorService {
   }
 
   /**
-   * Genera un video a partir de una imagen usando Replicate
+   * Genera un video a partir de una imagen usando Replicate (Wan 2.2 Fast)
    */
-  async generateVideoFromImage(imageUrl, onProgress) {
+  async generateVideoFromImage(imageUrl, prompt = "", onProgress) {
     try {
-      onProgress?.({ status: 'loading', message: 'Iniciando generación en Replicate...', progress: 0 });
+      onProgress?.({ 
+        status: 'loading', 
+        message: 'Iniciando generación con Wan 2.2 Fast...', 
+        progress: 0 
+      });
 
       // 1. Crear la predicción
-      const prediction = await this.createPrediction(imageUrl);
+      const prediction = await this.createPrediction(imageUrl, prompt);
       
       onProgress?.({ 
         status: 'processing', 
-        message: 'Video en proceso de generación...', 
+        message: 'Video en proceso de generación (esto toma ~40 segundos)...', 
         progress: 10 
       });
 

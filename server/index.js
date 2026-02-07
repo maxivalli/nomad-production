@@ -1504,12 +1504,30 @@ app.delete("/api/banners/:id", authenticateAdmin, async (req, res) => {
 
 // ==========================================
 // ENDPOINTS DE REPLICATE (VIDEO GENERATION)
+// Actualizado para soportar Wan 2.2 Fast
 // ==========================================
 
 // Crear predicción en Replicate
 app.post("/api/replicate/predictions", authenticateAdmin, async (req, res) => {
   try {
-    const { version, input } = req.body;
+    const { model, version, input } = req.body;
+
+    // Preparar el body para Replicate
+    const replicateBody = {
+      input
+    };
+
+    // Si se proporciona version, usarla. Sino, usar el modelo por nombre
+    if (version) {
+      replicateBody.version = version;
+    } else if (model) {
+      // Usar el modelo por nombre (Replicate usará la última versión)
+      replicateBody.version = model;
+    } else {
+      return res.status(400).json({ 
+        error: "Debe proporcionar 'model' o 'version'" 
+      });
+    }
 
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
@@ -1517,14 +1535,12 @@ app.post("/api/replicate/predictions", authenticateAdmin, async (req, res) => {
         Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        version,
-        input,
-      }),
+      body: JSON.stringify(replicateBody),
     });
 
     if (!response.ok) {
       const error = await response.json();
+      console.error("Error de Replicate:", error);
       return res
         .status(response.status)
         .json({ error: error.detail || "Error al crear la predicción" });
