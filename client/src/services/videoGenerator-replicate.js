@@ -7,27 +7,15 @@ class VideoGeneratorService {
   }
 
   /**
-   * Obtiene el token de autenticación del localStorage
-   */
-  getAuthToken() {
-    return localStorage.getItem('token');
-  }
-
-  /**
    * Crea una predicción en Replicate (a través del backend)
    */
   async createPrediction(imageUrl) {
-    const token = this.getAuthToken();
-    if (!token) {
-      throw new Error('No hay token de autenticación');
-    }
-
     const response = await fetch(`${this.baseUrl}/api/replicate/predictions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Usar cookies en lugar de Bearer token
       body: JSON.stringify({
         version: REPLICATE_CONFIG.version,
         input: {
@@ -54,15 +42,8 @@ class VideoGeneratorService {
    * Obtiene el estado de una predicción (a través del backend)
    */
   async getPrediction(predictionId) {
-    const token = this.getAuthToken();
-    if (!token) {
-      throw new Error('No hay token de autenticación');
-    }
-
     const response = await fetch(`${this.baseUrl}/api/replicate/predictions/${predictionId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      }
+      credentials: 'include', // Usar cookies en lugar de Bearer token
     });
 
     if (!response.ok) {
