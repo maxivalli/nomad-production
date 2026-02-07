@@ -2,18 +2,30 @@ import { REPLICATE_CONFIG } from '../config/replicate';
 
 class VideoGeneratorService {
   constructor() {
-    this.apiToken = REPLICATE_CONFIG.apiToken;
-    this.baseUrl = 'https://api.replicate.com/v1';
+    // Cambiar para usar el backend en lugar de Replicate directamente
+    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   }
 
   /**
-   * Crea una predicción en Replicate
+   * Obtiene el token de autenticación del localStorage
+   */
+  getAuthToken() {
+    return localStorage.getItem('token');
+  }
+
+  /**
+   * Crea una predicción en Replicate (a través del backend)
    */
   async createPrediction(imageUrl) {
-    const response = await fetch(`${this.baseUrl}/predictions`, {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No hay token de autenticación');
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/replicate/predictions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${this.apiToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -32,19 +44,24 @@ class VideoGeneratorService {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Error al crear la predicción');
+      throw new Error(error.error || 'Error al crear la predicción');
     }
 
     return await response.json();
   }
 
   /**
-   * Obtiene el estado de una predicción
+   * Obtiene el estado de una predicción (a través del backend)
    */
   async getPrediction(predictionId) {
-    const response = await fetch(`${this.baseUrl}/predictions/${predictionId}`, {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No hay token de autenticación');
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/replicate/predictions/${predictionId}`, {
       headers: {
-        'Authorization': `Token ${this.apiToken}`,
+        'Authorization': `Bearer ${token}`,
       }
     });
 

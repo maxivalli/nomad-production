@@ -1503,6 +1503,74 @@ app.delete("/api/banners/:id", authenticateAdmin, async (req, res) => {
 });
 
 // ==========================================
+// ENDPOINTS DE REPLICATE (VIDEO GENERATION)
+// ==========================================
+
+// Crear predicción en Replicate
+app.post("/api/replicate/predictions", authenticateToken, async (req, res) => {
+  try {
+    const { version, input } = req.body;
+
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version,
+        input,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return res
+        .status(response.status)
+        .json({ error: error.detail || "Error al crear la predicción" });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("Error creando predicción en Replicate:", error);
+    res.status(500).json({ error: "Error al comunicarse con Replicate" });
+  }
+});
+
+// Obtener estado de predicción
+app.get(
+  "/api/replicate/predictions/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const response = await fetch(
+        `https://api.replicate.com/v1/predictions/${id}`,
+        {
+          headers: {
+            Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return res
+          .status(response.status)
+          .json({ error: "Error al obtener el estado de la predicción" });
+      }
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Error obteniendo predicción de Replicate:", error);
+      res.status(500).json({ error: "Error al comunicarse con Replicate" });
+    }
+  }
+);
+
+// ==========================================
 // MANEJO DE ERRORES GLOBAL
 // ==========================================
 
