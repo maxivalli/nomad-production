@@ -1507,7 +1507,7 @@ app.delete("/api/banners/:id", authenticateAdmin, async (req, res) => {
 // ==========================================
 
 // Crear predicción en Replicate
-app.post("/api/replicate/predictions", authenticateToken, async (req, res) => {
+app.post("/api/replicate/predictions", authenticateAdmin, async (req, res) => {
   try {
     const { version, input } = req.body;
 
@@ -1541,7 +1541,7 @@ app.post("/api/replicate/predictions", authenticateToken, async (req, res) => {
 // Obtener estado de predicción
 app.get(
   "/api/replicate/predictions/:id",
-  authenticateToken,
+  authenticateAdmin,
   async (req, res) => {
     try {
       const { id } = req.params;
