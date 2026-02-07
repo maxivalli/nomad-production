@@ -64,7 +64,7 @@ const AdminBannersPanel = () => {
           } else {
             reject(
               new Error(
-                `El video debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`,
+                `El video debe ser 720x1080px. Dimensiones actuales: ${width}x${height}px`,
               ),
             );
           }
@@ -87,7 +87,7 @@ const AdminBannersPanel = () => {
           } else {
             reject(
               new Error(
-                `La imagen debe ser 1080x720px. Dimensiones actuales: ${width}x${height}px`,
+                `La imagen debe ser 720x1080px. Dimensiones actuales: ${width}x${height}px`,
               ),
             );
           }
@@ -289,7 +289,7 @@ const AdminBannersPanel = () => {
                 <label className="text-white/80 text-xs font-bold uppercase flex items-center gap-2">
                   Imagen o Video <span className="text-red-500">*</span>
                   <span className="text-white/40 font-normal text-[10px]">
-                    (1080 x 720px)
+                    (720 x 1080px)
                   </span>
                 </label>
 
@@ -352,7 +352,7 @@ const AdminBannersPanel = () => {
                         {uploading ? "Subiendo..." : "Click para subir archivo"}
                       </span>
                       <span className="text-xs text-white/40">
-                        1080x720px - JPG, PNG, MP4 (max 10MB)
+                        720x1080px - JPG, PNG, MP4 (max 10MB)
                       </span>
                       <input
                         type="file"
@@ -503,7 +503,7 @@ const AdminBannersPanel = () => {
 
             <div className="mt-6 p-4 bg-yellow-600/5 border border-yellow-600/20 rounded-xl">
               <p className="text-yellow-500 text-[10px] font-bold uppercase leading-relaxed text-center">
-                ⚠️ Dimensiones requeridas: 1080 x 720 píxeles (vertical)
+                ⚠️ Dimensiones requeridas: 720 x 1080 píxeles (vertical)
               </p>
             </div>
           </div>
