@@ -221,6 +221,21 @@ const initDB = async () => {
       );
     `);
 
+    // Agregar columna video_url si no existe (para migraciones)
+    await pool.query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'products' 
+          AND column_name = 'video_url'
+        ) THEN
+          ALTER TABLE products ADD COLUMN video_url TEXT DEFAULT NULL;
+          RAISE NOTICE 'Columna video_url agregada a la tabla products';
+        END IF;
+      END $$;
+    `);
+
     // Trigger para products
     await pool.query(`
       DROP TRIGGER IF EXISTS update_products_updated_at ON products;
