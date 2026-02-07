@@ -10,13 +10,12 @@ class VideoGeneratorService {
    * Crea una predicción en Replicate (a través del backend)
    * Actualizado para Wan 2.2 Fast
    */
-  async createPrediction(imageUrl, prompt = "") {
+  async createPrediction(imageUrl) {
     const requestBody = {
       model: REPLICATE_CONFIG.model,
       input: {
         image: imageUrl,
-        prompt: prompt || "Smooth camera motion, natural movement",
-        // Parámetros optimizados para Wan 2.2 Fast
+        prompt: "Smooth camera motion, natural movement",
         max_area: "832x480", // Resolución 480p (rápido y económico)
         num_frames: 81,      // Número de frames (25-177 disponibles)
         frames_per_second: 16, // FPS del video resultante
