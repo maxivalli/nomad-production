@@ -17,10 +17,15 @@ import {
   Database,
   UploadCloud,
   Zap,
-  Bell, // Icono para notificaciones
-  Monitor, // Icono para banners
+  Bell,
+  Monitor,
+  Film,
+  Loader,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { videoGenerator } from "../services/videoGenerator-replicate";
 
 // ============================================================================
 // CONSTANTES Y CONFIGURACIÓN
@@ -59,6 +64,7 @@ const INITIAL_FORM_STATE = {
   sizes: [],
   purchase_link: "",
   color: [],
+  video_url: "",
 };
 
 // ============================================================================
@@ -90,6 +96,20 @@ const AdminPanel = () => {
   
   // NUEVO: Estado para el modal de banners
   const [isBannersModalOpen, setIsBannersModalOpen] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // ESTADO - Generación de videos AI
+  // --------------------------------------------------------------------------
+  const [videoGenerationState, setVideoGenerationState] = useState({
+    isGenerating: false,
+    previewUrl: null,
+    status: null,
+    message: '',
+    videoBlob: null,
+    progress: 0,
+  });
+
+  const [showVideoPreview, setShowVideoPreview] = useState(false);
 
   // ==========================================================================
   // EFFECTS - Carga inicial de datos
@@ -221,7 +241,7 @@ const AdminPanel = () => {
       return;
     }
 
-    // NOTA: purchase_link es OPCIONAL, no se valida
+    // NOTA: purchase_link y video_url son OPCIONALES, no se validan
 
     setIsLoading(true);
 
@@ -287,6 +307,7 @@ const AdminPanel = () => {
       sizes: item.sizes,
       purchase_link: item.purchase_link || "",
       color: colorData,
+      video_url: item.video_url || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -421,6 +442,142 @@ const AdminPanel = () => {
         ? prev.color.filter((c) => c !== colorName)
         : [...prev.color, colorName],
     }));
+  };
+
+  // ==========================================================================
+  // HANDLERS - Generación de videos AI
+  // ==========================================================================
+
+  /**
+   * Genera un video AI a partir de la primera imagen del producto
+   */
+  const handleGenerateVideo = async () => {
+    if (!formData.img || formData.img.length === 0) {
+      toast.warning("Necesitas al menos una imagen para generar el video");
+      return;
+    }
+
+    setVideoGenerationState({
+      isGenerating: true,
+      previewUrl: null,
+      status: 'loading',
+      message: 'Iniciando generación...',
+      videoBlob: null,
+      progress: 0,
+    });
+
+    setShowVideoPreview(true);
+
+    const result = await videoGenerator.generateVideoFromImage(
+      formData.img[0],
+      (progressData) => {
+        setVideoGenerationState(prev => ({
+          ...prev,
+          status: progressData.status,
+          message: progressData.message,
+          progress: progressData.progress || prev.progress,
+        }));
+      }
+    );
+
+    if (result.success) {
+      setVideoGenerationState({
+        isGenerating: false,
+        previewUrl: result.videoUrl,
+        status: 'complete',
+        message: 'Video generado con éxito',
+        videoBlob: result.videoBlob,
+        progress: 100,
+      });
+    } else {
+      setVideoGenerationState({
+        isGenerating: false,
+        previewUrl: null,
+        status: 'error',
+        message: result.error,
+        videoBlob: null,
+        progress: 0,
+      });
+    }
+  };
+
+  /**
+   * Acepta el video y lo sube a Cloudinary
+   */
+  const handleAcceptVideo = async () => {
+    if (!videoGenerationState.videoBlob) {
+      toast.error("No hay video para subir");
+      return;
+    }
+
+    if (!cloudinaryConfig) {
+      toast.error("Configuración de Cloudinary no disponible");
+      return;
+    }
+
+    setVideoGenerationState(prev => ({
+      ...prev,
+      status: 'uploading',
+      message: 'Subiendo video a Cloudinary...',
+      progress: 0,
+    }));
+
+    try {
+      const videoUrl = await videoGenerator.uploadVideoToCloudinary(
+        videoGenerationState.videoBlob,
+        cloudinaryConfig,
+        formData.title
+      );
+
+      // Agregar el video al formData
+      setFormData(prev => ({
+        ...prev,
+        video_url: videoUrl,
+      }));
+
+      toast.success("Video agregado al producto exitosamente");
+      
+      // Cerrar el preview
+      setShowVideoPreview(false);
+      setVideoGenerationState({
+        isGenerating: false,
+        previewUrl: null,
+        status: null,
+        message: '',
+        videoBlob: null,
+        progress: 0,
+      });
+
+    } catch (error) {
+      console.error("Error subiendo video:", error);
+      toast.error("Error al subir el video a Cloudinary");
+      
+      setVideoGenerationState(prev => ({
+        ...prev,
+        status: 'error',
+        message: 'Error al subir el video',
+        progress: 0,
+      }));
+    }
+  };
+
+  /**
+   * Descarta el video generado
+   */
+  const handleDiscardVideo = () => {
+    if (videoGenerationState.previewUrl) {
+      URL.revokeObjectURL(videoGenerationState.previewUrl);
+    }
+    
+    setShowVideoPreview(false);
+    setVideoGenerationState({
+      isGenerating: false,
+      previewUrl: null,
+      status: null,
+      message: '',
+      videoBlob: null,
+      progress: 0,
+    });
   };
 
   // ==========================================================================
@@ -675,6 +832,144 @@ const AdminPanel = () => {
       </FramerAnimatePresence>
 
       {/* ====================================================================
+          MODAL DE PREVIEW DE VIDEO AI
+          ==================================================================== */}
+      <FramerAnimatePresence>
+        {showVideoPreview && (
+          <framerMotion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+            onClick={handleDiscardVideo}
+          >
+            <framerMotion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              className="bg-gradient-to-br from-neutral-900 to-black border-2 border-purple-600/30 w-full max-w-3xl relative shadow-2xl shadow-purple-600/20 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-black/95 backdrop-blur-xl border-b border-purple-600/30 p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-purple-600/10 border border-purple-600/30">
+                    <Film size={20} className="text-purple-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-[900] uppercase italic tracking-tight text-white">
+                      AI Video Preview
+                    </h2>
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold mt-1">
+                      Powered by Replicate AI
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleDiscardVideo}
+                  className="group p-3 hover:bg-red-600 transition-colors border border-white/10"
+                >
+                  <X size={20} className="text-white group-hover:rotate-90 transition-transform" />
+                </button>
+              </div>
+
+              {/* Contenido */}
+              <div className="p-8">
+                {/* Estados de carga */}
+                {videoGenerationState.isGenerating && (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <Loader className="w-12 h-12 text-purple-500 animate-spin mb-6" />
+                    <p className="text-sm text-neutral-300 uppercase tracking-widest font-bold mb-2">
+                      {videoGenerationState.message}
+                    </p>
+                    {videoGenerationState.progress !== undefined && (
+                      <p className="text-xs text-purple-400 mb-4">
+                        {Math.round(videoGenerationState.progress)}%
+                      </p>
+                    )}
+                    <div className="mt-4 w-64 h-2 bg-neutral-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-300"
+                        style={{ width: `${videoGenerationState.progress || 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview del video */}
+                {videoGenerationState.status === 'complete' && videoGenerationState.previewUrl && (
+                  <div className="space-y-6">
+                    <div className="relative aspect-video bg-black border border-purple-600/30 overflow-hidden">
+                      <video
+                        src={videoGenerationState.previewUrl}
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+
+                    {/* Botones de acción */}
+                    <div className="flex gap-4">
+                      <button
+                        onClick={handleAcceptVideo}
+                        className="flex-1 group relative flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 overflow-hidden transition-all active:scale-95"
+                      >
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
+                        <CheckCircle size={20} className="relative z-10" />
+                        <span className="relative z-10 text-sm font-[900] uppercase tracking-wider">
+                          Agregar al Producto
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={handleDiscardVideo}
+                        className="flex-1 group relative flex items-center justify-center gap-3 bg-gradient-to-r from-red-600 to-rose-600 px-6 py-4 overflow-hidden transition-all active:scale-95"
+                      >
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
+                        <XCircle size={20} className="relative z-10" />
+                        <span className="relative z-10 text-sm font-[900] uppercase tracking-wider">
+                          Descartar
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Estado de subida */}
+                {videoGenerationState.status === 'uploading' && (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <Loader className="w-12 h-12 text-purple-500 animate-spin mb-6" />
+                    <p className="text-sm text-neutral-300 uppercase tracking-widest font-bold">
+                      {videoGenerationState.message}
+                    </p>
+                  </div>
+                )}
+
+                {/* Error */}
+                {videoGenerationState.status === 'error' && (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <XCircle className="w-16 h-16 text-red-500 mb-6" />
+                    <p className="text-sm text-red-400 uppercase tracking-widest font-bold mb-4">
+                      {videoGenerationState.message}
+                    </p>
+                    <button
+                      onClick={handleDiscardVideo}
+                      className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-[900] uppercase tracking-widest transition-all"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </framerMotion.div>
+          </framerMotion.div>
+        )}
+      </FramerAnimatePresence>
+
+      {/* ====================================================================
           CONFIGURACIÓN GLOBAL - Título de colección y fecha de lanzamiento
           ==================================================================== */}
       <div className="max-w-[1600px] mx-auto px-4 md:px-10 lg:px-16 pt-28 md:pt-40">
@@ -857,12 +1152,31 @@ const AdminPanel = () => {
 
             {/* Campo: Imágenes del producto */}
             <div className="space-y-4">
-              <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900] flex justify-between">
-                Visual Assets
-                <span className="text-red-500">
-                  {formData.img.length}/{MAX_IMAGES}
-                </span>
-              </label>
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
+                  Visual Assets
+                  <span className="text-red-500 ml-2">
+                    {formData.img.length}/{MAX_IMAGES}
+                  </span>
+                </label>
+                
+                {/* NUEVO: Botón para generar video AI */}
+                {formData.img.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateVideo}
+                    disabled={videoGenerationState.isGenerating}
+                    className="group relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[8px] font-[900] uppercase tracking-widest overflow-hidden transition-all hover:shadow-lg hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="absolute inset-0 bg-white/20 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
+                    <Film size={14} className="relative z-10" />
+                    <span className="relative z-10">
+                      {videoGenerationState.isGenerating ? 'Generando...' : 'Generate AI Video'}
+                    </span>
+                  </button>
+                )}
+              </div>
+              
               <div className="grid grid-cols-3 gap-3 md:gap-6">
                 {/* Imágenes cargadas */}
                 {formData.img.map((url, index) => (
@@ -905,6 +1219,25 @@ const AdminPanel = () => {
                   </button>
                 )}
               </div>
+
+              {/* Indicador de video cargado */}
+              {formData.video_url && (
+                <div className="mt-4 p-3 bg-purple-600/10 border border-purple-600/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Film size={16} className="text-purple-500" />
+                    <span className="text-[10px] uppercase tracking-widest text-purple-300 font-bold">
+                      Video AI agregado
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, video_url: '' }))}
+                    className="text-red-500 hover:text-red-400 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Campo: Descripción del producto */}
@@ -1124,6 +1457,16 @@ const AdminPanel = () => {
                           </div>
                         )}
                     </div>
+
+                    {/* Indicador de video */}
+                    {item.video_url && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <Film size={10} className="text-purple-500" />
+                        <span className="text-[7px] text-purple-400 uppercase tracking-wider font-bold">
+                          AI Video
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Botones de acción */}

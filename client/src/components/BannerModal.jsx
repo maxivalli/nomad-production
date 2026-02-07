@@ -79,7 +79,7 @@ const BannerModal = () => {
                   animate={{ scale: 1, opacity: 1, rotate: 0 }}
                   exit={{ scale: 0, opacity: 0 }}
                   onClick={handleClose}
-                  className="absolute -top-5 -right-5 bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-full transition-all z-[150] shadow-[0_5px_15px_rgba(0,0,0,0.5)] hover:scale-110 active:scale-90"
+                  className="absolute -top-4 -right-4 bg-[#393939] hover:bg-red-700 text-white p-2.5 rounded-full transition-all z-[150] shadow-[0_5px_15px_rgba(0,0,0,0.5)] hover:scale-110 active:scale-90"
                 >
                   <X size={22} strokeWidth={3} />
                 </motion.button>
