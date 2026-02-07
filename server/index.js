@@ -215,6 +215,7 @@ const initDB = async () => {
         sizes VARCHAR(10)[] NOT NULL,
         purchase_link TEXT DEFAULT '',
         color TEXT[] NOT NULL,
+        video_url TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -388,6 +389,9 @@ const productSchema = Joi.object({
     "array.base": "El campo color debe ser una lista de colores",
     "array.min": "Debes seleccionar al menos un color",
     "any.required": "Los colores son obligatorios",
+  }),
+  video_url: Joi.string().uri().allow("", null).default(null).messages({
+    "string.uri": "La URL del video debe ser válida",
   }),
 });
 
@@ -708,12 +712,13 @@ app.post("/api/products", authenticateAdmin, async (req, res) => {
       sizes,
       purchase_link,
       color,
+      video_url,
     } = value;
 
     const result = await pool.query(
-      `INSERT INTO products (season, year, title, description, img, sizes, purchase_link, color) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [season, year, title, description, img, sizes, purchase_link, color],
+      `INSERT INTO products (season, year, title, description, img, sizes, purchase_link, color, video_url) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [season, year, title, description, img, sizes, purchase_link, color, video_url],
     );
 
     res.status(201).json({
@@ -758,14 +763,15 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       sizes,
       purchase_link,
       color,
+      video_url,
     } = value;
 
     const result = await pool.query(
       `UPDATE products 
        SET season = $1, year = $2, title = $3, description = $4, img = $5, sizes = $6, 
-           purchase_link = $7, color = $8
-       WHERE id = $9 RETURNING *`,
-      [season, year, title, description, img, sizes, purchase_link, color, id],
+           purchase_link = $7, color = $8, video_url = $9
+       WHERE id = $10 RETURNING *`,
+      [season, year, title, description, img, sizes, purchase_link, color, video_url, id],
     );
 
     if (result.rows.length === 0) {

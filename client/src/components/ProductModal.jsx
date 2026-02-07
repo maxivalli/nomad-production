@@ -7,6 +7,7 @@ import {
   Loader2,
   ShoppingBag,
   Share2,
+  Film,
 } from "lucide-react";
 
 // --- COMPONENTE INTERNO PARA EL EFECTO DE CINTA ---
@@ -19,10 +20,11 @@ const Tape = ({ position = "top" }) => {
   };
 
   return (
-    <div 
+    <div
       className={`absolute ${styles[position]} z-[35] w-32 h-10 bg-white/25 backdrop-blur-[1.5px] pointer-events-none shadow-sm`}
       style={{
-        clipPath: "polygon(4% 0%, 12% 3%, 88% 1%, 96% 4%, 100% 35%, 97% 75%, 94% 100%, 6% 97%, 3% 72%, 0% 32%)",
+        clipPath:
+          "polygon(4% 0%, 12% 3%, 88% 1%, 96% 4%, 100% 35%, 97% 75%, 94% 100%, 6% 97%, 3% 72%, 0% 32%)",
         borderLeft: "1px solid rgba(255,255,255,0.15)",
         borderRight: "1px solid rgba(255,255,255,0.15)",
       }}
@@ -40,7 +42,14 @@ const ProductModal = ({ item, onClose }) => {
 
   if (!item) return null;
 
-  const images = Array.isArray(item.img) ? item.img : [item.img];
+  // Combinar imágenes y video (si existe) en un solo array de medios
+  const baseImages = Array.isArray(item.img) ? item.img : [item.img];
+  const mediaItems = [...baseImages];
+
+  // Agregar el video al final si existe
+  if (item.video_url) {
+    mediaItems.push({ type: "video", url: item.video_url });
+  }
 
   useEffect(() => {
     setIsImageLoading(true);
@@ -50,8 +59,8 @@ const ProductModal = ({ item, onClose }) => {
     const handlePopState = () => {
       onClose();
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [onClose]);
 
   useEffect(() => {
@@ -82,7 +91,7 @@ const ProductModal = ({ item, onClose }) => {
 
   const nextImg = (e) => {
     if (e) e.stopPropagation();
-    if (activeIdx < images.length - 1) {
+    if (activeIdx < mediaItems.length - 1) {
       setActiveIdx((prev) => prev + 1);
     }
   };
@@ -95,7 +104,7 @@ const ProductModal = ({ item, onClose }) => {
   };
 
   const onDragEnd = (e, { offset }) => {
-    if (offset.x < -dragThreshold && activeIdx < images.length - 1) {
+    if (offset.x < -dragThreshold && activeIdx < mediaItems.length - 1) {
       nextImg();
     } else if (offset.x > dragThreshold && activeIdx > 0) {
       prevImg();
@@ -173,10 +182,12 @@ const ProductModal = ({ item, onClose }) => {
       </AnimatePresence>
 
       <div className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden touch-pan-y perspective-[1200px]">
-        {images.map((img, index) => {
+        {mediaItems.map((media, index) => {
           const offset = index - activeIdx;
           const isActive = index === activeIdx;
-          
+          const isVideo = typeof media === "object" && media.type === "video";
+          const mediaUrl = isVideo ? media.url : media;
+
           // Lógica de posición de cinta: diferente para cada imagen del carrusel
           const tapes = ["top", "topRight", "topLeft"];
           const currentTape = tapes[index % tapes.length];
@@ -184,7 +195,7 @@ const ProductModal = ({ item, onClose }) => {
           return (
             <motion.div
               key={index}
-              drag={images.length > 1 ? "x" : false}
+              drag={mediaItems.length > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
               onDragEnd={onDragEnd}
               initial={false}
@@ -212,40 +223,85 @@ const ProductModal = ({ item, onClose }) => {
             >
               {/* CONTENEDOR ESTILO POLAROID */}
               <div className="relative w-full h-full p-3 pb-12 md:p-4 md:pb-16 bg-[#f9f9f9] shadow-[0_40px_80px_rgba(0,0,0,0.9)] border border-neutral-200 overflow-visible">
-                
                 {/* CINTA ADHESIVA (Solo en la activa para no saturar, o en todas) */}
                 <Tape position={currentTape} />
 
                 <div className="relative w-full h-full bg-neutral-900 overflow-hidden">
-                  <img
-                    src={optimizeCloudinaryUrl(img)}
-                    className="w-full h-full object-cover"
-                    alt={`${item.title} - ${index}`}
-                    draggable="false"
-                    onLoad={() => {
-                      if (isActive) setIsImageLoading(false);
-                    }}
-                    ref={(el) => {
-                      if (el && el.complete && isActive && isImageLoading) {
-                        setIsImageLoading(false);
-                      }
-                    }}
-                  />
-                  
-                  {/* TEXTURA DE PAPEL Y BRILLO SUTIL SOBRE LA FOTO */}
+                  {isVideo ? (
+                    // RENDERIZAR VIDEO
+                    <>
+                      <video
+                        src={mediaUrl}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        draggable="false"
+                        onLoadedData={() => {
+                          if (isActive) setIsImageLoading(false);
+                        }}
+                        onCanPlay={() => {
+                          if (isActive) setIsImageLoading(false);
+                        }}
+                        onPlaying={() => {
+                          // CORRECCIÓN: Se dispara cuando el video REALMENTE está reproduciéndose
+                          setIsImageLoading(false);
+                        }}
+                        onClick={(e) => {
+                          if (isActive) {
+                            e.stopPropagation();
+                            // Toggle play/pause
+                            const video = e.currentTarget;
+                            if (video.paused) {
+                              video.play();
+                            } else {
+                              video.pause();
+                            }
+                          }
+                        }}
+                      />
+
+                      {/* Badge "AI VIDEO" en la esquina superior */}
+                      {isActive && (
+                        <div className="absolute top-3 right-3 flex items-center gap-2 bg-purple-600/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-purple-400/30">
+                          <Film size={14} className="text-white" />
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-white">
+                            AI Video
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    // RENDERIZAR IMAGEN (código original)
+                    <img
+                      src={optimizeCloudinaryUrl(mediaUrl)}
+                      className="w-full h-full object-cover"
+                      alt={`${item.title} - ${index}`}
+                      draggable="false"
+                      onLoad={() => {
+                        if (isActive) setIsImageLoading(false);
+                      }}
+                      ref={(el) => {
+                        if (el && el.complete && isActive && isImageLoading) {
+                          setIsImageLoading(false);
+                        }
+                      }}
+                    />
+                  )}
+                  {/* TEXTURA DE PAPEL Y BRILLO SUTIL SOBRE LA FOTO/VIDEO */}
                   <div className="absolute inset-0 pointer-events-none opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
                   <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-black/20 via-transparent to-white/10" />
-
                   {!isActive && (
                     <div className="absolute inset-0 bg-black/40 transition-opacity duration-500" />
                   )}
                 </div>
 
-                {/* MARCA DE AGUA O PIE DE FOTO ESTILO POLAROID (Opcional) */}
+                {/* MARCA DE AGUA O PIE DE FOTO ESTILO POLAROID */}
                 <div className="absolute bottom-4 md:bottom-6 left-0 w-full flex justify-center opacity-50 pointer-events-none">
-                   <span className="text-[10px] font-serif italic text-black uppercase tracking-widest">
-                     RAW 1/125 f2.8 ISO 100 
-                   </span>
+                  <span className="text-[10px] font-serif italic text-black uppercase tracking-widest">
+                    {isVideo ? "AI GENERATED VIDEO" : "RAW 1/125 f2.8 ISO 100"}
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -274,26 +330,26 @@ const ProductModal = ({ item, onClose }) => {
         />
       </div>
 
-      {images.length > 1 && (
+      {mediaItems.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between px-2 md:px-10 z-[115] pointer-events-none">
           <button
             onClick={prevImg}
             disabled={activeIdx === 0}
             className={`pointer-events-auto p-4 transition-all duration-300 ${
-              activeIdx === 0 
-              ? "text-white/0 opacity-0 cursor-default" 
-              : "text-white/40 hover:text-white"
+              activeIdx === 0
+                ? "text-white/0 opacity-0 cursor-default"
+                : "text-white/40 hover:text-white"
             }`}
           >
             <ArrowLeft size={30} strokeWidth={1} />
           </button>
           <button
             onClick={nextImg}
-            disabled={activeIdx === images.length - 1}
+            disabled={activeIdx === mediaItems.length - 1}
             className={`pointer-events-auto p-4 transition-all duration-300 ${
-              activeIdx === images.length - 1 
-              ? "text-white/0 opacity-0 cursor-default" 
-              : "text-white/40 hover:text-white"
+              activeIdx === mediaItems.length - 1
+                ? "text-white/0 opacity-0 cursor-default"
+                : "text-white/40 hover:text-white"
             }`}
           >
             <ArrowRight size={30} strokeWidth={1} />
@@ -302,16 +358,21 @@ const ProductModal = ({ item, onClose }) => {
       )}
 
       <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-[120]">
-        {images.map((_, i) => (
-          <div
-            key={i}
-            className={`h-1 transition-all duration-300 ${
-              i === activeIdx
-                ? "w-6 md:w-8 bg-red-600"
-                : "w-1.5 md:w-2 bg-white/20"
-            }`}
-          />
-        ))}
+        {mediaItems.map((media, i) => {
+          const isVideo = typeof media === "object" && media.type === "video";
+          return (
+            <div
+              key={i}
+              className={`h-1 transition-all duration-300 ${
+                i === activeIdx
+                  ? isVideo
+                    ? "w-6 md:w-8 bg-purple-600"
+                    : "w-6 md:w-8 bg-red-600"
+                  : "w-1.5 md:w-2 bg-white/20"
+              }`}
+            />
+          );
+        })}
       </div>
 
       <button

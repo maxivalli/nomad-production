@@ -918,9 +918,9 @@ const AdminPanel = () => {
                         className="flex-1 group relative flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 overflow-hidden transition-all active:scale-95"
                       >
                         <div className="absolute inset-0 bg-white/20 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
-                        <CheckCircle size={20} className="relative z-10" />
+                     
                         <span className="relative z-10 text-sm font-[900] uppercase tracking-wider">
-                          Agregar al Producto
+                          Agregar
                         </span>
                       </button>
 
@@ -929,7 +929,7 @@ const AdminPanel = () => {
                         className="flex-1 group relative flex items-center justify-center gap-3 bg-gradient-to-r from-red-600 to-rose-600 px-6 py-4 overflow-hidden transition-all active:scale-95"
                       >
                         <div className="absolute inset-0 bg-white/20 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
-                        <XCircle size={20} className="relative z-10" />
+                      
                         <span className="relative z-10 text-sm font-[900] uppercase tracking-wider">
                           Descartar
                         </span>

@@ -1,3 +1,5 @@
+// Reemplaza todo el archivo videoGenerator-replicate.js con esta versión corregida:
+
 import { REPLICATE_CONFIG } from '../config/replicate';
 
 class VideoGeneratorService {
@@ -10,12 +12,12 @@ class VideoGeneratorService {
    * Crea una predicción en Replicate (a través del backend)
    * Actualizado para Wan 2.2 Fast
    */
-  async createPrediction(imageUrl) {
+  async createPrediction(imageUrl, prompt = "Smooth camera motion, natural movement") {
     const requestBody = {
       model: REPLICATE_CONFIG.model,
       input: {
         image: imageUrl,
-        prompt: "Smooth camera motion, natural movement",
+        prompt: prompt,
         max_area: "832x480", // Resolución 480p (rápido y económico)
         num_frames: 81,      // Número de frames (25-177 disponibles)
         frames_per_second: 16, // FPS del video resultante
@@ -35,7 +37,7 @@ class VideoGeneratorService {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Usar cookies en lugar de Bearer token
+      credentials: 'include',
       body: JSON.stringify(requestBody)
     });
 
@@ -52,7 +54,7 @@ class VideoGeneratorService {
    */
   async getPrediction(predictionId) {
     const response = await fetch(`${this.baseUrl}/api/replicate/predictions/${predictionId}`, {
-      credentials: 'include', // Usar cookies en lugar de Bearer token
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -73,6 +75,11 @@ class VideoGeneratorService {
       const prediction = await this.getPrediction(predictionId);
 
       if (prediction.status === 'succeeded') {
+        onProgress?.({ 
+          status: 'complete', 
+          message: 'Video generado exitosamente',
+          progress: 100 
+        });
         return prediction;
       }
 
@@ -84,8 +91,12 @@ class VideoGeneratorService {
         throw new Error('La generación fue cancelada');
       }
 
-      // Actualizar progreso
-      const progress = Math.min((attempts / maxAttempts) * 100, 90);
+      // CORRECCIÓN: Calcular progreso basado en el tiempo estimado
+      // Wan 2.2 Fast toma ~40 segundos, así que usamos una escala realista
+      const estimatedTime = 40; // segundos estimados
+      const elapsedTime = attempts; // segundos transcurridos
+      const progress = Math.min((elapsedTime / estimatedTime) * 90, 90); // Máximo 90% durante procesamiento
+      
       onProgress?.({ 
         status: 'processing', 
         message: `Generando video con Wan 2.2... ${Math.round(progress)}%`,
@@ -114,16 +125,20 @@ class VideoGeneratorService {
   /**
    * Genera un video a partir de una imagen usando Replicate (Wan 2.2 Fast)
    */
-  async generateVideoFromImage(imageUrl, prompt = "", onProgress) {
+  async generateVideoFromImage(imageUrl, onProgress) {
     try {
+      console.log('🎬 Iniciando generación de video...');
+      
       onProgress?.({ 
         status: 'loading', 
         message: 'Iniciando generación con Wan 2.2 Fast...', 
-        progress: 0 
+        progress: 5 
       });
 
       // 1. Crear la predicción
-      const prediction = await this.createPrediction(imageUrl, prompt);
+      const prediction = await this.createPrediction(imageUrl);
+      
+      console.log('✅ Predicción creada:', prediction.id);
       
       onProgress?.({ 
         status: 'processing', 
@@ -134,8 +149,10 @@ class VideoGeneratorService {
       // 2. Esperar a que termine
       const completedPrediction = await this.waitForPrediction(prediction.id, onProgress);
 
+      console.log('✅ Predicción completada');
+
       onProgress?.({ 
-        status: 'processing', 
+        status: 'downloading', 
         message: 'Descargando video generado...', 
         progress: 95 
       });
@@ -149,6 +166,8 @@ class VideoGeneratorService {
       const videoBlob = await this.downloadVideo(videoUrl);
       const localVideoUrl = URL.createObjectURL(videoBlob);
 
+      console.log('✅ Video descargado y listo');
+
       onProgress?.({ 
         status: 'complete', 
         message: 'Video generado exitosamente', 
@@ -159,11 +178,11 @@ class VideoGeneratorService {
         success: true,
         videoUrl: localVideoUrl,
         videoBlob,
-        replicateUrl: videoUrl, // URL original de Replicate (por si la necesitas)
+        replicateUrl: videoUrl,
       };
 
     } catch (error) {
-      console.error('Error generando video:', error);
+      console.error('❌ Error generando video:', error);
       
       onProgress?.({ 
         status: 'error', 
