@@ -52,7 +52,19 @@ const ProductModal = ({ item, onClose }) => {
   }
 
   useEffect(() => {
-    setIsImageLoading(true);
+    const currentMedia = mediaItems[activeIdx];
+    const isCurrentVideo = typeof currentMedia === "object" && currentMedia.type === "video";
+    
+    if (isCurrentVideo) {
+      // Para videos, dar un pequeño delay y luego ocultar el loading
+      const timer = setTimeout(() => {
+        setIsImageLoading(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      // Para imágenes, activar el loading y dejarlo que el onLoad lo desactive
+      setIsImageLoading(true);
+    }
   }, [activeIdx]);
 
   useEffect(() => {
@@ -241,12 +253,8 @@ const ProductModal = ({ item, onClose }) => {
                         onLoadedData={() => {
                           if (isActive) setIsImageLoading(false);
                         }}
-                        onCanPlay={() => {
-                          if (isActive) setIsImageLoading(false);
-                        }}
                         onPlaying={() => {
-                          // CORRECCIÓN: Se dispara cuando el video REALMENTE está reproduciéndose
-                          setIsImageLoading(false);
+                          if (isActive) setIsImageLoading(false);
                         }}
                         onClick={(e) => {
                           if (isActive) {
@@ -282,8 +290,11 @@ const ProductModal = ({ item, onClose }) => {
                       onLoad={() => {
                         if (isActive) setIsImageLoading(false);
                       }}
+                      onError={() => {
+                        if (isActive) setIsImageLoading(false);
+                      }}
                       ref={(el) => {
-                        if (el && el.complete && isActive && isImageLoading) {
+                        if (el && el.complete && isActive) {
                           setIsImageLoading(false);
                         }
                       }}
