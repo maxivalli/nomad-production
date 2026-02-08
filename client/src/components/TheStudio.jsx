@@ -35,12 +35,12 @@ const ProcessCard = ({ step, index }) => {
       className="relative my-[20vh] md:my-[30vh] group"
     >
       {/* Número de paso brutalista */}
-      <div className="absolute -left-6 md:-left-10 top-0 text-[#dc2626] font-mono text-4xl md:text-6xl font-black z-30">
+      <div className="absolute -left-6 md:-left-10 top-0 text-[#dc2626] font-black text-4xl md:text-6xl font-black z-30">
         0{index + 1}
       </div>
 
       {/* Contenedor principal con borde */}
-      <div className="relative border-4 border-white p-2 bg-black transition-all duration-700 group-hover:border-[#dc2626]">
+      <div className="relative border-4 border-white bg-black transition-all duration-700 group-hover:border-[#dc2626]">
         {/* Video container */}
         <div className="relative h-[300px] md:h-[500px] overflow-hidden">
           <AnimatePresence>
@@ -161,7 +161,7 @@ const Studio = () => {
   return (
     <div
       ref={containerRef}
-      className="bg-black text-white h-[500vh] font-black selection:bg-[#dc2626]"
+      className="bg-black text-white h-auto font-black selection:bg-[#dc2626]"
     >
       {/* --- SECTION 1: HERO KINÉTICO --- */}
       <section className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
@@ -171,7 +171,7 @@ const Studio = () => {
             scale: useTransform(scrollYProgress, [0, 0.2], [1, 15]),
             opacity: useTransform(scrollYProgress, [0, 0.15], [1, 0]),
           }}
-          className="absolute z-0 font-black italic text-[25vw] leading-none whitespace-nowrap text-[#dc2626]"
+          className="absolute z-0 font-black italic text-[25vw] leading-none whitespace-nowrap text-red-600"
         >
           STUDIO
         </motion.div>

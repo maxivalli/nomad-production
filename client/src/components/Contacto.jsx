@@ -9,7 +9,7 @@ const Contacto = () => {
     >
       {/* Enlace al Instagram que envuelve el Marquee */}
       <a
-        href="https://instagram.com/nomadwear"
+        href="https://instagram.com/nomadwearok"
         target="_blank"
         rel="noopener noreferrer"
         className="relative z-10 block"
