@@ -171,7 +171,7 @@ const Studio = () => {
             scale: useTransform(scrollYProgress, [0, 0.2], [1, 15]),
             opacity: useTransform(scrollYProgress, [0, 0.15], [1, 0]),
           }}
-          className="absolute z-0 font-black italic text-[25vw] leading-none whitespace-nowrap text-red-600"
+          className="absolute z-0 font-black italic text-[25vw] leading-none whitespace-nowrap text-white"
         >
           STUDIO
         </motion.div>
@@ -183,7 +183,7 @@ const Studio = () => {
             rotate: useTransform(scrollYProgress, [0, 1], [0, -5]),
           }}
         >
-          <h1 className="text-5xl md:text-[9vw] font-black uppercase italic leading-[0.8] tracking-tighter">
+          <h1 className="text-5xl md:text-[9vw] font-black uppercase italic leading-[0.8] tracking-tighter text-red-600">
             CREATIVE <br />
             <span
               className="text-transparent"
