@@ -130,9 +130,7 @@ const ProductModal = ({ item, onClose }) => {
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
-    
-    // Ahora usamos /producto/ para compartir, que es la ruta canónica
-    const shareUrl = `${window.location.origin}/producto/${slug}`;
+    const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
       navigator
@@ -163,7 +161,11 @@ const ProductModal = ({ item, onClose }) => {
   };
 
   const handleClose = () => {
-    onClose();
+    if (window.history.state?.modal) {
+      window.history.back();
+    } else {
+      onClose();
+    }
   };
 
   return (
@@ -215,60 +217,119 @@ const ProductModal = ({ item, onClose }) => {
                 opacity: isActive ? 1 : 0.6,
                 zIndex: isActive ? 20 : 10,
                 rotateY: isActive ? 0 : offset > 0 ? -25 : 25,
+                rotateZ: isActive ? 0 : offset > 0 ? 2 : -2,
               }}
               transition={{
                 type: "spring",
-                stiffness: 300,
-                damping: 35,
+                stiffness: 180,
+                damping: 22,
               }}
-              className="absolute w-[85vw] h-[85vh] md:w-[75vw] md:h-[75vh] flex-none bg-[#fbfbfb] shadow-2xl"
-              style={{
-                transformStyle: "preserve-3d",
-                backfaceVisibility: "hidden",
+              style={{ transformStyle: "preserve-3d" }}
+              className="absolute h-[60dvh] md:h-[80dvh] aspect-[2/3] cursor-grab active:cursor-grabbing"
+              onClick={(e) => {
+                if (!isActive) {
+                  e.stopPropagation();
+                  setActiveIdx(index);
+                }
               }}
             >
-              <Tape position={currentTape} />
-              {index % 3 === 0 && (
-                <Tape position={index % 2 === 0 ? "bottom" : "topLeft"} />
-              )}
+              {/* CONTENEDOR ESTILO POLAROID */}
+              <div className="relative w-full h-full p-3 pb-12 md:p-4 md:pb-16 bg-[#f9f9f9] shadow-[0_40px_80px_rgba(0,0,0,0.9)] border border-neutral-200 overflow-visible">
+                {/* CINTA ADHESIVA (Solo en la activa para no saturar, o en todas) */}
+                <Tape position={currentTape} />
 
-              <div className="relative w-full h-full overflow-hidden">
-                {isVideo ? (
-                  <video
-                    src={mediaUrl}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
-                    onLoadedData={() => setIsImageLoading(false)}
-                  />
-                ) : (
-                  <img
-                    src={optimizeCloudinaryUrl(mediaUrl)}
-                    alt={item.title}
-                    className="w-full h-full object-cover select-none"
-                    draggable="false"
-                    onLoad={() => setIsImageLoading(false)}
-                  />
-                )}
+                <div className="relative w-full h-full bg-neutral-900 overflow-hidden">
+                  {isVideo ? (
+                    // RENDERIZAR VIDEO
+                    <>
+                      <video
+                        src={mediaUrl}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        draggable="false"
+                        onLoadedData={() => {
+                          if (isActive) setIsImageLoading(false);
+                        }}
+                        onPlaying={() => {
+                          if (isActive) setIsImageLoading(false);
+                        }}
+                        onClick={(e) => {
+                          if (isActive) {
+                            e.stopPropagation();
+                            // Toggle play/pause
+                            const video = e.currentTarget;
+                            if (video.paused) {
+                              video.play();
+                            } else {
+                              video.pause();
+                            }
+                          }
+                        }}
+                      />
 
-                {isVideo && (
-                  <div className="absolute top-4 right-4 bg-purple-600 text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg z-[25]">
-                    <Film size={14} strokeWidth={2.5} />
-                    VIDEO
-                  </div>
-                )}
+                      {/* Badge "AI VIDEO" en la esquina superior */}
+                      {isActive && (
+                        <div className="absolute top-3 right-3 flex items-center gap-2 bg-purple-600/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-purple-400/30">
+                          <Film size={14} className="text-white" />
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-white">
+                            AI Video
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    // RENDERIZAR IMAGEN (código original)
+                    <img
+                      src={optimizeCloudinaryUrl(mediaUrl)}
+                      className="w-full h-full object-cover"
+                      alt={`${item.title} - ${index}`}
+                      draggable="false"
+                      onLoad={() => {
+                        if (isActive) setIsImageLoading(false);
+                      }}
+                      onError={() => {
+                        if (isActive) setIsImageLoading(false);
+                      }}
+                      ref={(el) => {
+                        if (el && el.complete && isActive) {
+                          setIsImageLoading(false);
+                        }
+                      }}
+                    />
+                  )}
+                  {/* TEXTURA DE PAPEL Y BRILLO SUTIL SOBRE LA FOTO/VIDEO */}
+                  <div className="absolute inset-0 pointer-events-none opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-black/20 via-transparent to-white/10" />
+                  {!isActive && (
+                    <div className="absolute inset-0 bg-black/40 transition-opacity duration-500" />
+                  )}
+                </div>
+
+                {/* MARCA DE AGUA O PIE DE FOTO ESTILO POLAROID */}
+                <div className="absolute bottom-4 md:bottom-6 left-0 w-full flex justify-center opacity-50 pointer-events-none">
+                  <span className="text-[10px] font-serif italic text-black uppercase tracking-widest">
+                    {isVideo ? "NOMAD AI VIDEO" : "RAW 1/125 f2.8 ISO 100"}
+                  </span>
+                </div>
               </div>
-
-              <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent opacity-40" />
-              <div className="absolute inset-0 pointer-events-none opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
             </motion.div>
           );
         })}
       </div>
 
-      <div className="hidden md:block absolute left-0 top-0 h-full w-1/2 z-[110] pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none z-[105]">
+        <motion.div
+          animate={{
+            background: showFullText
+              ? "linear-gradient(to top, black 40%, rgba(0,0,0,0.7) 70%, transparent 100%)"
+              : "linear-gradient(to top, black 0%, rgba(0,0,0,0.5) 10%, transparent 50%)",
+          }}
+          transition={{ duration: 0.5 }}
+          className="absolute inset-0 md:hidden"
+        />
         <motion.div
           animate={{
             background: showFullText

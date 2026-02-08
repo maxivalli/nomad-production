@@ -45,9 +45,7 @@ const shareProduct = async (req, res) => {
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
 
-    // Inyectar meta tags para compartir en redes sociales
-    // pero la URL canónica será /producto/:slug
-    const modifiedHtml = injectMetaTags(html, product, baseUrl, slug);
+    const modifiedHtml = injectMetaTags(html, product, baseUrl);
     res.send(modifiedHtml);
   } catch (err) {
     console.error("❌ Error en ruta de compartir:", err);
