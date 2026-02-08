@@ -311,7 +311,7 @@ const ProductModal = ({ item, onClose }) => {
                 {/* MARCA DE AGUA O PIE DE FOTO ESTILO POLAROID */}
                 <div className="absolute bottom-4 md:bottom-6 left-0 w-full flex justify-center opacity-50 pointer-events-none">
                   <span className="text-[10px] font-serif italic text-black uppercase tracking-widest">
-                    {isVideo ? "AI GENERATED VIDEO" : "RAW 1/125 f2.8 ISO 100"}
+                    {isVideo ? "NOMAD AI VIDEO" : "RAW 1/125 f2.8 ISO 100"}
                   </span>
                 </div>
               </div>

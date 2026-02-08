@@ -489,6 +489,50 @@ const generateSlug = (title) => {
 };
 
 // ==========================================
+// FUNCIÓN AUXILIAR: EXTRAER PUBLIC_ID DE CLOUDINARY
+// ==========================================
+
+/**
+ * Extrae el public_id de una URL de Cloudinary
+ * @param {string} cloudinaryUrl - URL completa de Cloudinary
+ * @returns {string|null} - Public ID sin extensión, o null si falla
+ * 
+ * Ejemplo:
+ * URL: https://res.cloudinary.com/CLOUD/image/upload/v123/folder/nomad-title-123.jpg
+ * Retorna: folder/nomad-title-123
+ */
+function extractPublicId(cloudinaryUrl) {
+  try {
+    if (!cloudinaryUrl || typeof cloudinaryUrl !== 'string') {
+      console.warn('⚠️ URL de Cloudinary inválida:', cloudinaryUrl);
+      return null;
+    }
+
+    // Cloudinary URL format: https://res.cloudinary.com/CLOUD/TYPE/upload/VERSION/PUBLIC_ID.EXT
+    const urlParts = cloudinaryUrl.split('/upload/');
+    
+    if (urlParts.length !== 2) {
+      console.warn('⚠️ URL de Cloudinary no válida:', cloudinaryUrl);
+      return null;
+    }
+    
+    // Obtener la parte después de /upload/
+    const afterUpload = urlParts[1];
+    
+    // Remover la versión (v12345/) si existe
+    const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+    
+    // Remover la extensión del archivo (.jpg, .mp4, etc.)
+    const publicId = withoutVersion.replace(/\.[^.]+$/, '');
+    
+    return publicId;
+  } catch (error) {
+    console.error('⚠️ Error extrayendo public_id:', error);
+    return null;
+  }
+}
+
+// ==========================================
 // FUNCIÓN AUXILIAR: INYECTAR META TAGS
 // ==========================================
 
@@ -816,9 +860,9 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       video_url,
     } = value;
 
-    // Obtener el producto actual para verificar si tiene video
+    // 1️⃣ OBTENER EL PRODUCTO ACTUAL (imágenes y video)
     const currentProduct = await pool.query(
-      "SELECT video_url FROM products WHERE id = $1",
+      "SELECT img, video_url FROM products WHERE id = $1",
       [id]
     );
 
@@ -829,63 +873,73 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       });
     }
 
+    const oldImages = currentProduct.rows[0].img || [];
     const oldVideoUrl = currentProduct.rows[0].video_url;
     
-    // Normalizar video_url: convertir string vacío a null
+    // 2️⃣ DETECTAR IMÁGENES ELIMINADAS
+    // Las imágenes que están en oldImages pero NO en img (nuevo array)
+    const deletedImages = oldImages.filter(oldImg => !img.includes(oldImg));
+    
+    console.log(`🔍 [UPDATE] Producto ${id}:`);
+    console.log(`   - Imágenes antiguas: ${oldImages.length}`);
+    console.log(`   - Imágenes nuevas: ${img.length}`);
+    console.log(`   - Imágenes a eliminar: ${deletedImages.length}`);
+    
+    // 3️⃣ ELIMINAR LAS IMÁGENES QUE YA NO ESTÁN EN EL ARRAY
+    if (deletedImages.length > 0) {
+      console.log(`🗑️ [LIMPIEZA] Eliminando ${deletedImages.length} imágenes de Cloudinary...`);
+      
+      for (const imageUrl of deletedImages) {
+        try {
+          const publicId = extractPublicId(imageUrl);
+          
+          if (publicId) {
+            const deleteResult = await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
+            console.log(`   ✅ Imagen eliminada: ${publicId}`, deleteResult);
+          } else {
+            console.warn(`   ⚠️ No se pudo extraer public_id de: ${imageUrl}`);
+          }
+        } catch (cloudinaryError) {
+          console.error(`   ❌ Error eliminando imagen:`, cloudinaryError.message);
+          // Continuar aunque falle la eliminación de una imagen
+        }
+      }
+    } else {
+      console.log(`   ℹ️ No hay imágenes para eliminar`);
+    }
+    
+    // 4️⃣ MANEJAR EL VIDEO
     const normalizedVideoUrl = video_url === "" ? null : video_url;
-
-    // LOGS DE DEBUG
-    console.log("🔍 [DEBUG] Actualizando producto ID:", id);
-    console.log("🔍 [DEBUG] Video anterior:", oldVideoUrl);
-    console.log("🔍 [DEBUG] Video nuevo (original):", video_url);
-    console.log("🔍 [DEBUG] Video nuevo (normalizado):", normalizedVideoUrl);
-    console.log("🔍 [DEBUG] Tipo de video_url:", typeof video_url);
-
+    
+    console.log(`🔍 [VIDEO] Estado:`);
+    console.log(`   - Video anterior: ${oldVideoUrl ? 'SÍ' : 'NO'}`);
+    console.log(`   - Video nuevo: ${normalizedVideoUrl ? 'SÍ' : 'NO'}`);
+    
     // Si el producto tenía video y ahora se está eliminando
     if (oldVideoUrl && !normalizedVideoUrl) {
-      console.log("🗑️ [DEBUG] Detectado eliminación de video, procediendo a borrar de Cloudinary");
+      console.log("🗑️ [LIMPIEZA] Detectado eliminación de video, procediendo a borrar...");
       
-      // Extraer public_id del video para eliminarlo de Cloudinary
-      // La URL puede ser: https://res.cloudinary.com/CLOUD_NAME/video/upload/v12345/path/to/video.mp4
-      // Necesitamos extraer: path/to/video (sin la extensión)
-      
-      const urlParts = oldVideoUrl.split('/upload/');
-      console.log("🔍 [DEBUG] URL parts:", urlParts);
-      
-      if (urlParts.length === 2) {
-        // Obtener la parte después de /upload/
-        const afterUpload = urlParts[1];
+      try {
+        const publicId = extractPublicId(oldVideoUrl);
         
-        // Remover la versión (v12345/) si existe
-        const withoutVersion = afterUpload.replace(/^v\d+\//, '');
-        
-        // Remover la extensión del archivo
-        const publicId = withoutVersion.replace(/\.[^.]+$/, '');
-        
-        console.log("🔍 [DEBUG] After upload:", afterUpload);
-        console.log("🔍 [DEBUG] Without version:", withoutVersion);
-        console.log("🔍 [DEBUG] Public ID extraído:", publicId);
-        
-        try {
+        if (publicId) {
           const deleteResult = await cloudinary.uploader.destroy(publicId, {
             resource_type: "video",
           });
-          console.log("✅ Video AI eliminado de Cloudinary:", publicId);
-          console.log("✅ Resultado de Cloudinary:", deleteResult);
-        } catch (cloudinaryError) {
-          console.error("⚠️ Error eliminando video de Cloudinary:", cloudinaryError);
-          // Continuamos aunque falle la eliminación de Cloudinary
+          console.log("   ✅ Video eliminado de Cloudinary:", publicId, deleteResult);
+        } else {
+          console.warn(`   ⚠️ No se pudo extraer public_id del video: ${oldVideoUrl}`);
         }
-      } else {
-        console.log("⚠️ [DEBUG] No se pudo extraer el public_id de la URL:", oldVideoUrl);
+      } catch (cloudinaryError) {
+        console.error("   ❌ Error eliminando video de Cloudinary:", cloudinaryError.message);
       }
     } else {
-      console.log("ℹ️ [DEBUG] No se detectó eliminación de video");
-      console.log("ℹ️ [DEBUG] Condición: oldVideoUrl existe?", !!oldVideoUrl);
-      console.log("ℹ️ [DEBUG] Condición: normalizedVideoUrl es null?", !normalizedVideoUrl);
+      console.log(`   ℹ️ No hay video para eliminar`);
     }
 
-    // Actualizar el producto (usando el video_url normalizado)
+    // 5️⃣ ACTUALIZAR EL PRODUCTO EN LA BASE DE DATOS
     const result = await pool.query(
       `UPDATE products 
        SET season = $1, year = $2, title = $3, description = $4, img = $5, sizes = $6, 
@@ -894,13 +948,19 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       [season, year, title, description, img, sizes, purchase_link, color, normalizedVideoUrl, id],
     );
 
+    console.log(`✅ [UPDATE] Producto ${id} actualizado exitosamente`);
+
     res.json({
       success: true,
       message: "Producto actualizado exitosamente",
       product: result.rows[0],
+      cloudinary_cleanup: {
+        deleted_images: deletedImages.length,
+        deleted_video: oldVideoUrl && !normalizedVideoUrl,
+      }
     });
   } catch (err) {
-    console.error("Error al actualizar producto:", err);
+    console.error("❌ [UPDATE] Error al actualizar producto:", err);
     res.status(500).json({
       error: "Error del servidor",
       message: "No se pudo actualizar el producto",
@@ -919,24 +979,86 @@ app.delete("/api/products/:id", authenticateAdmin, async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      "DELETE FROM products WHERE id = $1 RETURNING id",
-      [id],
+    // 1️⃣ OBTENER EL PRODUCTO ANTES DE ELIMINARLO
+    const productResult = await pool.query(
+      "SELECT img, video_url FROM products WHERE id = $1",
+      [id]
     );
 
-    if (result.rows.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({
         error: "No encontrado",
         message: "El producto no existe",
       });
     }
 
+    const product = productResult.rows[0];
+    
+    console.log(`🗑️ [DELETE] Eliminando producto ${id}...`);
+    
+    // 2️⃣ ELIMINAR TODAS LAS IMÁGENES DEL PRODUCTO
+    if (product.img && Array.isArray(product.img) && product.img.length > 0) {
+      console.log(`   📸 Eliminando ${product.img.length} imágenes de Cloudinary...`);
+      
+      for (const imageUrl of product.img) {
+        try {
+          const publicId = extractPublicId(imageUrl);
+          
+          if (publicId) {
+            const deleteResult = await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
+            console.log(`      ✅ Imagen eliminada: ${publicId}`, deleteResult);
+          } else {
+            console.warn(`      ⚠️ No se pudo extraer public_id de: ${imageUrl}`);
+          }
+        } catch (cloudinaryError) {
+          console.error(`      ❌ Error eliminando imagen:`, cloudinaryError.message);
+          // Continuar aunque falle la eliminación de una imagen
+        }
+      }
+    } else {
+      console.log(`   ℹ️ El producto no tiene imágenes para eliminar`);
+    }
+
+    // 3️⃣ ELIMINAR EL VIDEO SI EXISTE
+    if (product.video_url) {
+      console.log(`   🎬 Eliminando video de Cloudinary...`);
+      
+      try {
+        const publicId = extractPublicId(product.video_url);
+        
+        if (publicId) {
+          const deleteResult = await cloudinary.uploader.destroy(publicId, {
+            resource_type: "video",
+          });
+          console.log(`      ✅ Video eliminado: ${publicId}`, deleteResult);
+        } else {
+          console.warn(`      ⚠️ No se pudo extraer public_id del video: ${product.video_url}`);
+        }
+      } catch (cloudinaryError) {
+        console.error(`      ❌ Error eliminando video:`, cloudinaryError.message);
+      }
+    } else {
+      console.log(`   ℹ️ El producto no tiene video para eliminar`);
+    }
+
+    // 4️⃣ ELIMINAR EL PRODUCTO DE LA BASE DE DATOS
+    const result = await pool.query(
+      "DELETE FROM products WHERE id = $1 RETURNING id",
+      [id],
+    );
+
+    console.log(`✅ [DELETE] Producto ${id} eliminado completamente`);
+
     res.json({
       success: true,
-      message: "Producto eliminado exitosamente",
+      message: "Producto y archivos eliminados exitosamente",
+      deleted_images: product.img ? product.img.length : 0,
+      deleted_video: product.video_url ? true : false,
     });
   } catch (err) {
-    console.error("Error al eliminar producto:", err);
+    console.error("❌ [DELETE] Error al eliminar producto:", err);
     res.status(500).json({
       error: "Error del servidor",
       message: "No se pudo eliminar el producto",

@@ -4,9 +4,9 @@ import { ShoppingCart, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 import MLlogo from "../../src/assets/MLlogo.png";
 
 const MeliSection = () => {
-  const meliLink = "https://www.mercadolibre.com.ar";
+  const meliLink = "https://www.mercadolibre.com.ar"; 
   const productImg =
-    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1769708493/unqvrrh5cftb010pnwx5.jpg";
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512260/1_wezlig.jpg";
 
   return (
     <section className="py-20 bg-black px-6 flex flex-col items-center overflow-hidden">

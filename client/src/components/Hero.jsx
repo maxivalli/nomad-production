@@ -131,9 +131,9 @@ const Hero = () => {
           className={`w-full h-full object-cover grayscale brightness-[0.5] transition-opacity duration-[1500ms] ease-in-out ${
             videoLoaded ? "opacity-90" : "opacity-0"
           }`}
-        >
+        > 
           <source
-            src="https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,vc_vp9,w_1280/v1769986761/11788451-hd_1920_1080_24fps_wh1x8p.mp4"
+            src="https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,vc_vp9,w_1280/v1770525214/8230588-hd_1920_1080_30fps_bovbcy.mp4"
             type="video/mp4"
           />
         </video>

@@ -225,7 +225,7 @@ const ManifiestoSection = () => {
               <motion.img
                 whileHover={{ scale: 1.2 }}
                 transition={{ duration: 1.5 }}
-                src="https://images.unsplash.com/photo-1713885753849-3d32cfd3dd6d?q=80&w=1064"
+                src="https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770525401/keith-tanner-FtTbKwdBocg-unsplash_b1qphb.jpg"
                 alt="Nomad"
                 className="w-full h-full object-cover"
               />

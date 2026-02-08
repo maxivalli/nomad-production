@@ -46,9 +46,9 @@ const Retailers = () => {
   };
 
   const packagingImages = [
-    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770147943/b1_iwl1sn.jpg",
-    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770141858/PACKING-1_gc8sxz.jpg",
-    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770143304/calco_xn9cav.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512068/BOX_NEW_LOGO_kecpmi.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512068/PACKING-1_uym24f.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512466/P6_xecvth.jpg",
   ];
 
   return (
@@ -123,7 +123,7 @@ const Retailers = () => {
                 <div className="border border-white/10 bg-neutral-900/40 overflow-hidden group relative">
                   <div className="absolute inset-0 bg-red-600/10 mix-blend-overlay pointer-events-none" />
                   <img
-                    src="https://res.cloudinary.com/det2xmstl/image/upload/v1769983171/exhibidor_qy5ygu.jpg"
+                    src="https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512511/exhibidor_mwvmyt.jpg"
                     alt="NOMAD Mobile Stands"
                     className="w-full h-auto transition-all duration-700 group-hover:scale-105"
                   />

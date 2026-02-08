@@ -22,14 +22,14 @@ const Stockists = () => {
       name: "Nomad Studio",
       city: "SAN CRISTÓBAL,SFE",
       code: "R-04",
-      img: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=1000",
+      img: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770526157/quiksilver-2-_1_qky5sh.jpg",
       locate: "https://maps.app.goo.gl/hWGK6FApUEWRkdPn9",
     },
     {
       name: "Coming soon...",
       city: "SAN GUILLERMO,SFE",
       code: "R-23",
-      img: "https://i.etsystatic.com/54504602/r/il/3dcc51/6777432993/il_fullxfull.6777432993_mybe.jpg",
+      img: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770526123/image_oactrz.webp",
       locate: "",
     },
   ];
