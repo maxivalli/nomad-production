@@ -161,7 +161,7 @@ const Studio = () => {
   return (
     <div
       ref={containerRef}
-      className="bg-black text-white h-[500vh] font-sans selection:bg-[#dc2626]"
+      className="bg-black text-white h-[500vh] font-black selection:bg-[#dc2626]"
     >
       {/* --- SECTION 1: HERO KINÉTICO --- */}
       <section className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
