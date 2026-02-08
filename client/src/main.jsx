@@ -1,7 +1,7 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import App from "./App.jsx";
 import Login from "./views/Login.jsx";
 import Retailers from "./views/Retailers.jsx";
@@ -100,19 +100,20 @@ const Root = () => {
         try {
           sessionStorage.setItem("app_loaded", "true");
         } catch (e) {}
-      }, 1500); //
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, []);
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <ScrollToTop />
       {showLoader && <PreLoader />}
 
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/producto/:slug" element={<App />} />
+        <Route path="/share/:slug" element={<App />} />
         <Route path="/login" element={<Login />} />
         <Route path="/retailers" element={<Retailers />} />
         <Route
@@ -127,7 +128,7 @@ const Root = () => {
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 

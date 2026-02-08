@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -30,24 +30,13 @@ function App() {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const { slug } = useParams();
 
-  // Detectar links compartidos (cuando entran con /share/slug)
+  // Detectar links compartidos (cuando entran con /share/slug o /producto/slug)
   useEffect(() => {
-    // Obtener el slug desde useParams (para react-router) o desde window.location
-    let productSlug = slug;
-
-    // Si no hay slug en params, buscar en la URL actual
-    if (!productSlug) {
-      const path = window.location.pathname;
-      const shareMatch = path.match(/\/share\/([^\/]+)/);
-      if (shareMatch) {
-        productSlug = shareMatch[1];
-      }
-    }
-
-    if (productSlug && products.length > 0) {
+    if (slug && products.length > 0) {
       const product = products.find((p) => {
         const cleanTitle = p.title
           .toLowerCase()
@@ -55,18 +44,23 @@ function App() {
           .replace(/[^a-z0-9\s-]/g, "")
           .replace(/\s+/g, "-");
 
-        return cleanTitle === productSlug;
+        return cleanTitle === slug;
       });
 
       if (product) {
         setSelectedItem(product);
+      } else {
+        // Si no se encuentra el producto, redirigir al home
+        navigate("/", { replace: true });
       }
     }
-  }, [slug, products]);
+  }, [slug, products, navigate]);
 
   // Función para cerrar el modal
   const handleCloseModal = () => {
     setSelectedItem(null);
+    // Navegar de vuelta al home cuando se cierra el modal
+    navigate("/", { replace: true });
   };
 
   const handleShowInstallPrompt = () => {
@@ -88,7 +82,6 @@ function App() {
   }, [error, toast]);
 
   // Timer del Loader
-  // Dentro de App.js
   useEffect(() => {
     const hasLoaded = sessionStorage.getItem("app_loaded");
 

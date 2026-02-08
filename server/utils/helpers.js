@@ -60,10 +60,12 @@ const escapeHtml = (text) => {
  * @param {string} html - HTML base
  * @param {object} product - Datos del producto
  * @param {string} baseUrl - URL base del sitio
+ * @param {string} slug - Slug del producto
  * @returns {string} - HTML con meta tags inyectados
  */
-const injectMetaTags = (html, product, baseUrl) => {
-  const productUrl = `${baseUrl}/share/${generateSlug(product.title)}`;
+const injectMetaTags = (html, product, baseUrl, slug) => {
+  // La URL canónica ahora es /producto/:slug
+  const productUrl = `${baseUrl}/producto/${slug}`;
   const imageUrl = Array.isArray(product.img) ? product.img[0] : product.img;
   const tituloFormateado = escapeHtml(product.title.toUpperCase());
 
@@ -89,11 +91,11 @@ const injectMetaTags = (html, product, baseUrl) => {
     <meta name="description" content="${escapeHtml(product.description)}" />
     <title>NOMAD® - ${tituloFormateado}</title>
     
-    <!-- Script para redirigir a la ruta correcta del HashRouter -->
+    <!-- Script para redirigir /share/ a /producto/ -->
     <script>
       if (window.location.pathname.includes('/share/')) {
         const slug = window.location.pathname.split('/share/')[1];
-        window.location.href = '/#/producto/' + slug;
+        window.history.replaceState(null, '', '/producto/' + slug);
       }
     </script>
   `;

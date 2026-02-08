@@ -1,0 +1,8 @@
+# Redirect /share/:slug to server for SSR meta tags
+/share/*  /server/index.js  200
+
+# API routes to server
+/api/*  /server/index.js  200
+
+# SPA fallback - todas las demás rutas van al index.html
+/*  /index.html  200
