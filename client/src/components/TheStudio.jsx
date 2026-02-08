@@ -78,7 +78,7 @@ const ProcessCard = ({ step, index }) => {
             style={{
               opacity: isVideoLoading ? 0 : 1,
             }}
-            className="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000"
+            className="w-full h-full grayscale object-cover group-hover:scale-110 transition-all duration-1000"
           >
             <source src={optimizeVideoUrl(step.video)} type="video/mp4" />
           </motion.video>
@@ -171,7 +171,7 @@ const Studio = () => {
             scale: useTransform(scrollYProgress, [0, 0.2], [1, 15]),
             opacity: useTransform(scrollYProgress, [0, 0.15], [1, 0]),
           }}
-          className="absolute z-0 font-black italic text-[20vw] md:text-[25vw] leading-none whitespace-nowrap text-[#dc2626]"
+          className="absolute z-0 font-black italic text-[25vw] leading-none whitespace-nowrap text-[#dc2626]"
         >
           STUDIO
         </motion.div>
