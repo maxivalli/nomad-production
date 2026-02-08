@@ -55,6 +55,20 @@ const bannerStorage = new CloudinaryStorage({
   },
 });
 
+// Storage de Cloudinary para videos AI
+const aiVideoStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "ai-videos",
+    allowed_formats: ["mp4", "mov", "avi", "webm"],
+    resource_type: "video",
+    public_id: (req, file) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      return "ai-video-" + uniqueSuffix;
+    },
+  },
+});
+
 const upload = multer({
   storage: pushImageStorage,
   limits: {
@@ -102,6 +116,27 @@ const uploadBanner = multer({
         ),
         false
       );
+    }
+  },
+});
+
+const uploadVideo = multer({
+  storage: aiVideoStorage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB máximo para videos
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/webm",
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo se permiten videos (MP4, MOV, AVI, WebM)"), false);
     }
   },
 });
@@ -781,20 +816,83 @@ app.put("/api/products/:id", authenticateAdmin, async (req, res) => {
       video_url,
     } = value;
 
-    const result = await pool.query(
-      `UPDATE products 
-       SET season = $1, year = $2, title = $3, description = $4, img = $5, sizes = $6, 
-           purchase_link = $7, color = $8, video_url = $9
-       WHERE id = $10 RETURNING *`,
-      [season, year, title, description, img, sizes, purchase_link, color, video_url, id],
+    // Obtener el producto actual para verificar si tiene video
+    const currentProduct = await pool.query(
+      "SELECT video_url FROM products WHERE id = $1",
+      [id]
     );
 
-    if (result.rows.length === 0) {
+    if (currentProduct.rows.length === 0) {
       return res.status(404).json({
         error: "No encontrado",
         message: "El producto no existe",
       });
     }
+
+    const oldVideoUrl = currentProduct.rows[0].video_url;
+    
+    // Normalizar video_url: convertir string vacío a null
+    const normalizedVideoUrl = video_url === "" ? null : video_url;
+
+    // LOGS DE DEBUG
+    console.log("🔍 [DEBUG] Actualizando producto ID:", id);
+    console.log("🔍 [DEBUG] Video anterior:", oldVideoUrl);
+    console.log("🔍 [DEBUG] Video nuevo (original):", video_url);
+    console.log("🔍 [DEBUG] Video nuevo (normalizado):", normalizedVideoUrl);
+    console.log("🔍 [DEBUG] Tipo de video_url:", typeof video_url);
+
+    // Si el producto tenía video y ahora se está eliminando
+    if (oldVideoUrl && !normalizedVideoUrl) {
+      console.log("🗑️ [DEBUG] Detectado eliminación de video, procediendo a borrar de Cloudinary");
+      
+      // Extraer public_id del video para eliminarlo de Cloudinary
+      // La URL puede ser: https://res.cloudinary.com/CLOUD_NAME/video/upload/v12345/path/to/video.mp4
+      // Necesitamos extraer: path/to/video (sin la extensión)
+      
+      const urlParts = oldVideoUrl.split('/upload/');
+      console.log("🔍 [DEBUG] URL parts:", urlParts);
+      
+      if (urlParts.length === 2) {
+        // Obtener la parte después de /upload/
+        const afterUpload = urlParts[1];
+        
+        // Remover la versión (v12345/) si existe
+        const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+        
+        // Remover la extensión del archivo
+        const publicId = withoutVersion.replace(/\.[^.]+$/, '');
+        
+        console.log("🔍 [DEBUG] After upload:", afterUpload);
+        console.log("🔍 [DEBUG] Without version:", withoutVersion);
+        console.log("🔍 [DEBUG] Public ID extraído:", publicId);
+        
+        try {
+          const deleteResult = await cloudinary.uploader.destroy(publicId, {
+            resource_type: "video",
+          });
+          console.log("✅ Video AI eliminado de Cloudinary:", publicId);
+          console.log("✅ Resultado de Cloudinary:", deleteResult);
+        } catch (cloudinaryError) {
+          console.error("⚠️ Error eliminando video de Cloudinary:", cloudinaryError);
+          // Continuamos aunque falle la eliminación de Cloudinary
+        }
+      } else {
+        console.log("⚠️ [DEBUG] No se pudo extraer el public_id de la URL:", oldVideoUrl);
+      }
+    } else {
+      console.log("ℹ️ [DEBUG] No se detectó eliminación de video");
+      console.log("ℹ️ [DEBUG] Condición: oldVideoUrl existe?", !!oldVideoUrl);
+      console.log("ℹ️ [DEBUG] Condición: normalizedVideoUrl es null?", !normalizedVideoUrl);
+    }
+
+    // Actualizar el producto (usando el video_url normalizado)
+    const result = await pool.query(
+      `UPDATE products 
+       SET season = $1, year = $2, title = $3, description = $4, img = $5, sizes = $6, 
+           purchase_link = $7, color = $8, video_url = $9
+       WHERE id = $10 RETURNING *`,
+      [season, year, title, description, img, sizes, purchase_link, color, normalizedVideoUrl, id],
+    );
 
     res.json({
       success: true,
@@ -1520,6 +1618,115 @@ app.delete("/api/banners/:id", authenticateAdmin, async (req, res) => {
   } catch (error) {
     console.error("❌ Error eliminando banner:", error);
     res.status(500).json({ error: "Error al eliminar el banner" });
+  }
+});
+
+// ==========================================
+// RUTAS DE VIDEOS AI (CLOUDINARY)
+// ==========================================
+
+// Subir video AI a Cloudinary
+app.post(
+  "/api/videos/upload-ai-video",
+  authenticateAdmin,
+  uploadVideo.single("video"),
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error: "No se proporcionó ningún video",
+        });
+      }
+
+      console.log("✅ Video AI subido a Cloudinary:", {
+        url: req.file.path,
+        filename: req.file.filename,
+        size: req.file.size,
+      });
+
+      res.json({
+        success: true,
+        url: req.file.path,
+        filename: req.file.filename,
+        size: req.file.size,
+      });
+    } catch (error) {
+      console.error("❌ Error subiendo video:", error);
+      res.status(500).json({
+        error: "Error al subir el video",
+      });
+    }
+  }
+);
+
+// Eliminar video AI de Cloudinary
+app.delete(
+  "/api/videos/delete-ai-video/:public_id",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { public_id } = req.params;
+      
+      // Decodificar el public_id si viene codificado
+      const decodedPublicId = decodeURIComponent(public_id);
+
+      // Eliminar de Cloudinary (especificando que es un video)
+      const result = await cloudinary.uploader.destroy(decodedPublicId, {
+        resource_type: "video",
+      });
+
+      if (result.result !== "ok") {
+        return res.status(404).json({
+          error: "Video no encontrado en Cloudinary",
+          details: result,
+        });
+      }
+
+      console.log("✅ Video AI eliminado de Cloudinary:", decodedPublicId);
+
+      res.json({
+        success: true,
+        message: "Video eliminado correctamente",
+      });
+    } catch (error) {
+      console.error("❌ Error eliminando video:", error);
+      res.status(500).json({
+        error: "Error al eliminar el video",
+      });
+    }
+  }
+);
+
+// Listar videos AI de Cloudinary
+app.get("/api/videos/ai-videos", authenticateAdmin, async (req, res) => {
+  try {
+    // Obtener videos de la carpeta ai-videos en Cloudinary
+    const result = await cloudinary.api.resources({
+      type: "upload",
+      prefix: "ai-videos/",
+      resource_type: "video",
+      max_results: 100,
+    });
+
+    const videos = result.resources.map((resource) => ({
+      filename: resource.public_id,
+      url: resource.secure_url,
+      size: resource.bytes,
+      uploadedAt: resource.created_at,
+      duration: resource.duration,
+      format: resource.format,
+    }));
+
+    res.json({
+      success: true,
+      videos,
+      count: videos.length,
+    });
+  } catch (error) {
+    console.error("❌ Error listando videos:", error);
+    res.status(500).json({
+      error: "Error al listar videos",
+    });
   }
 });
 

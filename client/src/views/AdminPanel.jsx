@@ -918,7 +918,7 @@ const AdminPanel = () => {
                         className="flex-1 group relative flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 overflow-hidden transition-all active:scale-95"
                       >
                         <div className="absolute inset-0 bg-white/20 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
-                     
+                        <CheckCircle size={20} className="relative z-10" />
                         <span className="relative z-10 text-sm font-[900] uppercase tracking-wider">
                           Agregar
                         </span>
@@ -929,7 +929,7 @@ const AdminPanel = () => {
                         className="flex-1 group relative flex items-center justify-center gap-3 bg-gradient-to-r from-red-600 to-rose-600 px-6 py-4 overflow-hidden transition-all active:scale-95"
                       >
                         <div className="absolute inset-0 bg-white/20 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300" />
-                      
+                        <XCircle size={20} className="relative z-10" />
                         <span className="relative z-10 text-sm font-[900] uppercase tracking-wider">
                           Descartar
                         </span>
@@ -1160,8 +1160,8 @@ const AdminPanel = () => {
                   </span>
                 </label>
                 
-                {/* NUEVO: Botón para generar video AI */}
-                {formData.img.length > 0 && (
+                {/* NUEVO: Botón para generar video AI (solo si no hay video ya) */}
+                {formData.img.length > 0 && !formData.video_url && (
                   <button
                     type="button"
                     onClick={handleGenerateVideo}
@@ -1220,22 +1220,59 @@ const AdminPanel = () => {
                 )}
               </div>
 
-              {/* Indicador de video cargado */}
+              {/* Preview y controles del video AI */}
               {formData.video_url && (
-                <div className="mt-4 p-3 bg-purple-600/10 border border-purple-600/30 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Film size={16} className="text-purple-500" />
-                    <span className="text-[10px] uppercase tracking-widest text-purple-300 font-bold">
-                      Video AI agregado
+                <div className="mt-6 space-y-3">
+                  {/* Video preview */}
+                  <div className="relative aspect-video bg-black border-2 border-purple-600/30 overflow-hidden group shadow-2xl shadow-purple-600/20">
+                    <video
+                      src={formData.video_url}
+                      controls
+                      loop
+                      muted
+                      className="w-full h-full object-contain"
+                    />
+                    
+                    {/* Badge AI Video */}
+                    <div className="absolute top-3 left-3 flex items-center gap-2 bg-purple-600/90 backdrop-blur-sm px-3 py-1.5 border border-purple-400/30">
+                      <Film size={12} className="text-white" />
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-white">
+                        AI Generated
+                      </span>
+                    </div>
+
+                    {/* Botón eliminar video (aparece al hacer hover) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('¿Confirmas eliminar el video AI de este producto?')) {
+                          setFormData(prev => ({ ...prev, video_url: '' }));
+                          toast.success('Video eliminado');
+                        }
+                      }}
+                      className="absolute inset-0 bg-red-600/95 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+                    >
+                      <Trash2 size={32} className="text-white mb-2" />
+                      <span className="text-xs font-[900] text-white tracking-widest uppercase">
+                        Eliminar Video
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Info del video */}
+                  <div className="flex items-center justify-between p-3 bg-purple-600/10 border border-purple-600/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
+                      <span className="text-[9px] uppercase tracking-widest text-purple-300 font-bold">
+                        Video AI activo en este producto
+                      </span>
+                    </div>
+                    <span className="text-[8px] text-purple-400/60 font-mono">
+                      {formData.video_url.length > 40 
+                        ? formData.video_url.substring(0, 40) + '...' 
+                        : formData.video_url}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, video_url: '' }))}
-                    className="text-red-500 hover:text-red-400 transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
                 </div>
               )}
             </div>
