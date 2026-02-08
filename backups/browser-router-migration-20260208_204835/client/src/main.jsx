@@ -1,7 +1,7 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import App from "./App.jsx";
 import Login from "./views/Login.jsx";
 import Retailers from "./views/Retailers.jsx";
@@ -100,25 +100,19 @@ const Root = () => {
         try {
           sessionStorage.setItem("app_loaded", "true");
         } catch (e) {}
-      }, 1500);
+      }, 1500); //
       return () => clearTimeout(timer);
     }
   }, []);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ScrollToTop />
       {showLoader && <PreLoader />}
 
       <Routes>
-        {/* Ruta principal */}
         <Route path="/" element={<App />} />
-        
-        {/* Rutas de productos - ambas versiones para compatibilidad */}
         <Route path="/producto/:slug" element={<App />} />
-        <Route path="/share/:slug" element={<App />} />
-        
-        {/* Rutas de autenticación y admin */}
         <Route path="/login" element={<Login />} />
         <Route path="/retailers" element={<Retailers />} />
         <Route
@@ -131,11 +125,9 @@ const Root = () => {
             </PrivateRoute>
           }
         />
-        
-        {/* Catch-all - redirige al home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 

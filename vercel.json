@@ -15,16 +15,16 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server/index.js"
+      "source": "/share/(.*)",
+      "destination": "/api/share/$1"
     },
     {
-      "source": "/share/(.*)",
-      "destination": "server/index.js"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
       "source": "/(.*)",
-      "destination": "/client/$1"
+      "destination": "/index.html"
     }
   ],
   "headers": [
