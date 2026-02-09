@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom"; // ← AGREGAR
+import { useNavigate } from "react-router-dom";
 import {
   motion,
   useTransform,
   useScroll,
   AnimatePresence,
+  useInView, // ← AGREGAR ESTO
 } from "framer-motion";
 import { Loader2, Filter, Film } from "lucide-react";
 
@@ -34,7 +35,11 @@ const Tape = ({ position = "top" }) => {
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
-  const navigate = useNavigate(); // ← AGREGAR HOOK
+  const navigate = useNavigate();
+
+  // ✅ Detectar si la sección está a la vista
+  const isInView = useInView(targetRef, { amount: 0.1 });
+
   const [collectionName, setCollectionName] = useState("");
   const [loaded, setLoaded] = useState({});
   const [availableCollections, setAvailableCollections] = useState([]);
@@ -49,7 +54,6 @@ const Gallery = ({ items, setSelectedItem }) => {
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
 
-  // Helper: Generar slug limpio para URL
   const generateSlug = useCallback((title) => {
     return title
       .toLowerCase()
@@ -73,7 +77,8 @@ const Gallery = ({ items, setSelectedItem }) => {
       const deltaX = Math.abs(touchX - touchStartX);
       const deltaY = Math.abs(touchY - touchStartY);
 
-      if (deltaX > deltaY && deltaX > 30) {
+      // ✅ Solo activar la guía si la sección está visible
+      if (isInView && deltaX > deltaY && deltaX > 30) {
         setShowVerticalGuidance(true);
       } else if (deltaY > 10) {
         setShowVerticalGuidance(false);
@@ -85,7 +90,7 @@ const Gallery = ({ items, setSelectedItem }) => {
     };
 
     window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchmove", handleTouchMove);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("touchend", handleTouchEnd);
 
     return () => {
@@ -93,7 +98,7 @@ const Gallery = ({ items, setSelectedItem }) => {
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, []);
+  }, [isInView]); // ✅ Agregar isInView como dependencia
 
   useEffect(() => {
     if (items && items.length > 0) {
@@ -139,19 +144,17 @@ const Gallery = ({ items, setSelectedItem }) => {
     }
   }, [selectedCollection, items]);
 
-  // ← FUNCIÓN CORREGIDA: Navegar con React Router
-  const handleOpenProduct = useCallback((item) => {
-    const slug = generateSlug(item.title);
-    
-    // Navegar a la URL limpia /producto/:slug
-    navigate(`/producto/${slug}`, { 
-      state: { item }, // Pasar datos del item por state
-      replace: false // Agregar al historial
-    });
-    
-    // También setear el item para el modal (App.jsx lo detectará por URL)
-    setSelectedItem(item);
-  }, [navigate, setSelectedItem, generateSlug]);
+  const handleOpenProduct = useCallback(
+    (item) => {
+      const slug = generateSlug(item.title);
+      navigate(`/producto/${slug}`, {
+        state: { item },
+        replace: false,
+      });
+      setSelectedItem(item);
+    },
+    [navigate, setSelectedItem, generateSlug],
+  );
 
   const { scrollYProgress } = useScroll({ target: targetRef });
   const [totalScroll, setTotalScroll] = useState(0);
@@ -178,7 +181,6 @@ const Gallery = ({ items, setSelectedItem }) => {
     };
 
     const timeoutId = setTimeout(calculateScroll, 150);
-
     window.addEventListener("resize", calculateScroll);
     return () => {
       window.removeEventListener("resize", calculateScroll);
@@ -206,7 +208,6 @@ const Gallery = ({ items, setSelectedItem }) => {
     >
       <div className="sticky top-0 h-screen w-full flex flex-col overflow-hidden">
         <div className="flex-1 flex flex-col justify-center overflow-hidden">
-          {/* Título y Filtros */}
           <motion.div
             style={{ x: titleX, opacity }}
             className="relative z-10 px-6 md:px-12 mb-6 md:mb-8 pointer-events-auto"
@@ -214,7 +215,6 @@ const Gallery = ({ items, setSelectedItem }) => {
             <motion.span className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-0 pl-1">
               EL CATÁLOGO
             </motion.span>
-
             <h2 className="text-white text-3xl md:text-5xl font-black uppercase italic tracking-tighter leading-[0.8] flex flex-col py-2">
               {collectionName ? (
                 <>
@@ -229,7 +229,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                 "NOMAD CORE"
               )}
             </h2>
-
             {availableCollections.length > 0 && (
               <div className="mt-6 flex items-center gap-3">
                 <div className="flex items-center gap-2 px-3 py-2.5 bg-neutral-900/50 border border-white/10">
@@ -238,7 +237,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                     Filtro
                   </span>
                 </div>
-
                 <select
                   value={selectedCollection || ""}
                   onChange={(e) => setSelectedCollection(e.target.value)}
@@ -255,7 +253,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                     </option>
                   ))}
                 </select>
-
                 <div className="flex items-center border-l border-white/20 pl-3 h-9 ml-1">
                   <span className="text-red-600 text-[10px] md:text-xs font-black italic uppercase tracking-tighter flex items-center gap-1.5">
                     {filteredItems.length.toString().padStart(2, "0")} - ITEMS
@@ -265,7 +262,6 @@ const Gallery = ({ items, setSelectedItem }) => {
             )}
           </motion.div>
 
-          {/* Galería */}
           <div className="relative">
             <motion.div
               style={{ x: xPx }}
@@ -277,7 +273,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                   : item.img;
                 const isImgLoaded = loaded[item.id];
                 const hasVideo = item.video_url && item.video_url.length > 0;
-
                 const randomRotate =
                   (index % 2 === 0 ? 1 : -1) * ((index % 3) + 1);
                 const tapeOptions = ["top", "topLeft", "topRight", "bottom"];
@@ -288,12 +283,7 @@ const Gallery = ({ items, setSelectedItem }) => {
                     key={item.id}
                     onClick={() => handleOpenProduct(item)}
                     initial={{ rotate: randomRotate }}
-                    whileHover={{
-                      rotate: 0,
-                      scale: 1.08,
-                      y: -15,
-                      zIndex: 50,
-                    }}
+                    whileHover={{ rotate: 0, scale: 1.08, y: -15, zIndex: 50 }}
                     transition={{
                       type: "spring",
                       stiffness: 400,
@@ -313,7 +303,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                     {index % 3 === 0 && (
                       <Tape position={index % 2 === 0 ? "bottom" : "top"} />
                     )}
-
                     <div className="relative aspect-square overflow-hidden bg-neutral-200">
                       {!isImgLoaded && (
                         <div className="absolute inset-0 flex items-center justify-center bg-neutral-900 z-0">
@@ -324,7 +313,6 @@ const Gallery = ({ items, setSelectedItem }) => {
                           />
                         </div>
                       )}
-
                       <img
                         src={optimizeCloudinaryUrl(rawImage)}
                         alt={item.title}
@@ -332,11 +320,8 @@ const Gallery = ({ items, setSelectedItem }) => {
                         onLoad={() =>
                           setLoaded((prev) => ({ ...prev, [item.id]: true }))
                         }
-                        className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${
-                          isImgLoaded ? "opacity-100" : "opacity-0"
-                        }`}
+                        className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${isImgLoaded ? "opacity-100" : "opacity-0"}`}
                       />
-
                       {hasVideo && (
                         <div className="absolute top-3 right-3 flex items-center gap-2 bg-purple-600/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-purple-400/30 z-10">
                           <Film size={14} className="text-white" />
@@ -346,14 +331,12 @@ const Gallery = ({ items, setSelectedItem }) => {
                         </div>
                       )}
                     </div>
-
                     <div className="absolute bottom-0 left-0 w-full p-4 md:p-6 flex flex-col items-center">
                       <p className="text-neutral-800 text-lg md:text-xl font-medium tracking-tight font-serif italic text-center leading-tight">
                         {item.title}
                       </p>
                       <div className="mt-2 w-8 h-[1px] bg-red-600/30" />
                     </div>
-
                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent opacity-50" />
                     <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
                   </motion.div>
@@ -363,7 +346,6 @@ const Gallery = ({ items, setSelectedItem }) => {
           </div>
         </div>
 
-        {/* BARRA DE PROGRESO */}
         <div className="absolute bottom-0 left-0 w-full h-[5px] bg-white/10 z-[60]">
           <motion.div
             style={{ scaleX: scrollYProgress }}
@@ -371,14 +353,14 @@ const Gallery = ({ items, setSelectedItem }) => {
           />
         </div>
 
-        {/* OVERLAY DE GUÍA */}
         <AnimatePresence>
-          {showVerticalGuidance && (
+          {/* ✅ Se renderiza SOLAMENTE si showVerticalGuidance es true Y isInView es true */}
+          {showVerticalGuidance && isInView && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 z-[100] bg-black/85 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
+              className="md:hidden fixed inset-0 z-[999] bg-black/85 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
             >
               <div className="flex flex-col items-center px-6 -translate-y-[15vh] scale-90">
                 <div className="relative h-56 w-40 flex items-center justify-center">
@@ -390,6 +372,7 @@ const Gallery = ({ items, setSelectedItem }) => {
                       ease: "easeInOut",
                     }}
                   >
+                    {/* SVG Icono */}
                     <svg
                       width="110"
                       height="110"
