@@ -7,8 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['Nomad.svg', 'Nomad.png', 'hyperwave-one.ttf', 'icon-192-192.png', 'icon-512-512.png'],
+      includeAssets: ['Nomad.svg', 'Nomad.png', 'hyperwave-one.ttf'],
       
+      // Usar estrategia de inyección de manifest
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
@@ -20,8 +21,6 @@ export default defineConfig({
         theme_color: '#1b1b1b',
         background_color: '#1b1b1b',
         display: 'standalone',
-        start_url: '/',
-        scope: '/',
         icons: [
           {
             src: '/icon-192-192.png',
@@ -36,21 +35,9 @@ export default defineConfig({
         ]
       },
       
+      // IMPORTANTE: No usar workbox, usar injectManifest
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,woff,woff2}'],
-        // IMPORTANTE: No precachear rutas de navegación de React
-        globIgnores: ['**/index.html']
-      },
-      
-      workbox: {
-        navigateFallback: '/index.html',
-        navigateFallbackAllowlist: [/^\/(?!api|share).*/], // Excluir /api y /share
-        runtimeCaching: [
-          {
-            urlPattern: /^\/api\/.*/,
-            handler: 'NetworkOnly'
-          }
-        ]
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf}']
       },
       
       devOptions: {
@@ -59,12 +46,6 @@ export default defineConfig({
       }
     })
   ],
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    // Asegurar que los assets usen rutas absolutas
-    assetsInlineLimit: 0
-  },
   server: {
     proxy: {
       '/api': {
