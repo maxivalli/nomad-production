@@ -21,10 +21,24 @@
     {
       "source": "/share/:slug",
       "destination": "/server/index.js"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "dest": "/client/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/client/dist/index.html"
+      "src": "/manifest.json",
+      "dest": "/client/manifest.json"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "/client/sw.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/index.html"
     }
   ],
   "headers": [
