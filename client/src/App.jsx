@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -32,12 +32,22 @@ function App() {
   const toast = useToast();
 
   const { slug } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  // Detectar links compartidos y abrir modal automáticamente
+  // Detectar links compartidos (cuando entran con /share/slug)
   useEffect(() => {
-    if (slug && products.length > 0) {
+    // Obtener el slug desde useParams (para react-router) o desde window.location
+    let productSlug = slug;
+
+    // Si no hay slug en params, buscar en la URL actual
+    if (!productSlug) {
+      const path = window.location.pathname;
+      const shareMatch = path.match(/\/share\/([^\/]+)/);
+      if (shareMatch) {
+        productSlug = shareMatch[1];
+      }
+    }
+
+    if (productSlug && products.length > 0) {
       const product = products.find((p) => {
         const cleanTitle = p.title
           .toLowerCase()
@@ -45,41 +55,18 @@ function App() {
           .replace(/[^a-z0-9\s-]/g, "")
           .replace(/\s+/g, "-");
 
-        return cleanTitle === slug;
+        return cleanTitle === productSlug;
       });
 
       if (product) {
         setSelectedItem(product);
-        // Agregar estado al historial para manejar el botón "atrás"
-        if (!location.state?.fromModal) {
-          window.history.replaceState({ modal: true }, '');
-        }
-      } else {
-        // Si no se encuentra el producto, redirigir al home
-        navigate('/', { replace: true });
       }
     }
-  }, [slug, products, navigate, location.state]);
-
-  // Función para abrir modal y actualizar URL
-  const handleOpenModal = (product) => {
-    const productSlug = product.title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-    
-    setSelectedItem(product);
-    navigate(`/producto/${productSlug}`, { state: { fromModal: true } });
-  };
+  }, [slug, products]);
 
   // Función para cerrar el modal
   const handleCloseModal = () => {
     setSelectedItem(null);
-    // Volver a la página principal sin el parámetro de producto
-    if (slug) {
-      navigate('/', { replace: true });
-    }
   };
 
   const handleShowInstallPrompt = () => {
@@ -101,11 +88,12 @@ function App() {
   }, [error, toast]);
 
   // Timer del Loader
+  // Dentro de App.js
   useEffect(() => {
     const hasLoaded = sessionStorage.getItem("app_loaded");
 
     if (hasLoaded) {
-      setLoading(false);
+      setLoading(false); // Si ya cargó antes, lo desactivamos instantáneamente
     } else {
       const timer = setTimeout(() => {
         setLoading(false);
@@ -156,7 +144,7 @@ function App() {
               </p>
             </div>
           ) : (
-            <Gallery items={products} setSelectedItem={handleOpenModal} />
+            <Gallery items={products} setSelectedItem={setSelectedItem} />
           )}
 
           <Manifest />

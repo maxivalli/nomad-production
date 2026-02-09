@@ -1,46 +1,30 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/dist",
-  "installCommand": "npm install --prefix client && npm install --prefix server",
   "builds": [
     {
-      "src": "server/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "maxLambdaSize": "50mb"
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": { 
+        "distDir": "dist" 
       }
+    },
+    {
+      "src": "server/index.js",
+      "use": "@vercel/node"
     }
   ],
   "rewrites": [
     {
-      "source": "/api/:path*",
+      "source": "/api/(.*)",
       "destination": "/server/index.js"
     },
     {
-      "source": "/share/:path*",
-      "destination": "/server/index.js"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/robots.txt",
-      "dest": "/robots.txt"
+      "source": "/share/(.*)",
+      "destination": "server/index.js"
     },
     {
-      "src": "/sitemap.xml",
-      "dest": "/sitemap.xml"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/client/$1"
     }
   ],
   "headers": [
@@ -53,22 +37,33 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
+          "value": "DENY"
         },
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
         }
       ]
     },
     {
-      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot))",
+      "source": "/api/(.*)",
       "headers": [
         {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
