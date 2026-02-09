@@ -23,7 +23,36 @@
       "dest": "server/index.js"
     },
     {
-      "handle": "filesystem"
+      "src": "/assets/(.*)",
+      "dest": "client/dist/assets/$1"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "client/dist/sw.js"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "client/dist/manifest.json"
+    },
+    {
+      "src": "/icon-192-192.png",
+      "dest": "client/dist/icon-192-192.png"
+    },
+    {
+      "src": "/icon-512-512.png",
+      "dest": "client/dist/icon-512-512.png"
+    },
+    {
+      "src": "/Nomad.svg",
+      "dest": "client/dist/Nomad.svg"
+    },
+    {
+      "src": "/Nomad.png",
+      "dest": "client/dist/Nomad.png"
+    },
+    {
+      "src": "/hyperwave-one.ttf",
+      "dest": "client/dist/hyperwave-one.ttf"
     },
     {
       "src": "/(.*)",
