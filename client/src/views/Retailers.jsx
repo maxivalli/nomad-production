@@ -46,7 +46,7 @@ const Retailers = () => {
   };
 
   const packagingImages = [
-    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512068/BOX_NEW_LOGO_kecpmi.jpg",
+    "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770646946/BOX_BLACK_NEW_LOGO_jsmfll.jpg",
     "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512068/PACKING-1_uym24f.jpg",
     "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512466/P6_xecvth.jpg",
   ];
