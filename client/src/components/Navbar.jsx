@@ -251,7 +251,7 @@ const Navbar = ({ onContactClick }) => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 200 }}
-            className="fixed inset-0 z-[200] bg-black flex flex-col p-10"
+            className="fixed inset-0 z-[200] bg-black flex flex-col p-5"
           >
             <div className="flex justify-end">
               <motion.button
@@ -263,7 +263,7 @@ const Navbar = ({ onContactClick }) => {
               </motion.button>
             </div>
 
-            <div className="flex flex-col gap-5 mt-16">
+            <div className="flex flex-col gap-5 mt-2">
               {menuLinks.map((item, idx) => (
                 <motion.button
                   key={item}
