@@ -20,7 +20,11 @@
     },
     {
       "source": "/share/(.*)",
-      "destination": "/server/index.js"
+      "destination": "server/index.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/client/$1"
     }
   ],
   "headers": [
@@ -58,5 +62,8 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
