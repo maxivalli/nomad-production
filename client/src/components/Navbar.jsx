@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Instagram, Menu, X } from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // ← Agregar useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import PWAInstallButton from "./PWAInstallButton"; // ← NUEVO
 
 const Navbar = ({ onContactClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -284,6 +285,15 @@ const Navbar = ({ onContactClick }) => {
                   </motion.span>
                 </motion.button>
               ))}
+
+              {/* ← NUEVO: Botón de instalación PWA */}
+              <PWAInstallButton 
+                variant="menu"
+                onInstallComplete={() => {
+                  // Opcional: cerrar menú después de instalar
+                  setTimeout(() => setIsMenuOpen(false), 1000);
+                }}
+              />
 
               <motion.div
                 initial={{ opacity: 0 }}

@@ -1,43 +1,20 @@
-import { useState, useEffect } from 'react';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export default function InstallPrompt({ show, onClose }) {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
+  const { installPWA, canShowPrompt } = usePWAInstall();
 
   const handleInstall = async () => {
-  if (!deferredPrompt) {
+    const result = await installPWA();
     
-    return;
-  }
-  
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  
-  
-  // ← AGREGAR: Solo guardar si instaló
-  if (outcome === 'accepted') {
-    localStorage.setItem('pwa-install-prompt-seen', 'true');
-  }
-  
-  setDeferredPrompt(null);
-  onClose();
-};
+    if (result.success) {
+      // Solo guardar si instaló exitosamente
+      localStorage.setItem('pwa-install-prompt-seen', 'true');
+      onClose();
+    }
+  };
 
   // No mostrar si no hay prompt disponible o si show es false
-  if (!show || !deferredPrompt) return null;
+  if (!show || !canShowPrompt()) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
