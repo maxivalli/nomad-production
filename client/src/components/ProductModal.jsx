@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom"; // ← AGREGAR
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -35,9 +36,12 @@ const Tape = ({ position = "top" }) => {
 };
 
 const ProductModal = ({ item, onClose }) => {
+  const navigate = useNavigate(); // ← AGREGAR HOOK
+  const location = useLocation(); // ← AGREGAR HOOK
   const [activeIdx, setActiveIdx] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
+  const [isClosing, setIsClosing] = useState(false); // ← Prevenir doble cierre
   const dragThreshold = 50;
 
   if (!item) return null;
@@ -51,29 +55,40 @@ const ProductModal = ({ item, onClose }) => {
     mediaItems.push({ type: "video", url: item.video_url });
   }
 
+  // Helper: Generar slug consistente
+  const generateSlug = useCallback((title) => {
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+  }, []);
+
   useEffect(() => {
     const currentMedia = mediaItems[activeIdx];
     const isCurrentVideo = typeof currentMedia === "object" && currentMedia.type === "video";
     
     if (isCurrentVideo) {
-      // Para videos, dar un pequeño delay y luego ocultar el loading
       const timer = setTimeout(() => {
         setIsImageLoading(false);
       }, 300);
       return () => clearTimeout(timer);
     } else {
-      // Para imágenes, activar el loading y dejarlo que el onLoad lo desactive
       setIsImageLoading(true);
     }
   }, [activeIdx]);
 
+  // ← CORREGIDO: Manejar popstate para cerrar modal al usar botón atrás del navegador
   useEffect(() => {
     const handlePopState = () => {
-      onClose();
+      // Solo cerrar si estamos en una ruta de producto
+      if (location.pathname.includes('/producto/') || location.pathname.includes('/share/')) {
+        onClose();
+      }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [onClose]);
+  }, [onClose, location.pathname]);
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -123,19 +138,18 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  const handleShare = (e) => {
+  // ← CORREGIDO: Usar URL canónica /producto/ para compartir (mejor SEO)
+  const handleShare = useCallback((e) => {
     e.stopPropagation();
-    const slug = item.title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-    const shareUrl = `${window.location.origin}/share/${slug}`;
+    const slug = generateSlug(item.title);
+    // Usar /producto/ en lugar de /share/ para compartir (más limpio)
+    const shareUrl = `${window.location.origin}/producto/${slug}`;
 
     if (navigator.share) {
       navigator
         .share({
           title: `NOMAD - ${item.title}`,
+          text: item.description?.substring(0, 100) || '',
           url: shareUrl,
         })
         .catch(console.error);
@@ -143,7 +157,7 @@ const ProductModal = ({ item, onClose }) => {
       navigator.clipboard.writeText(shareUrl);
       alert("Enlace de producto copiado al portapapeles");
     }
-  };
+  }, [item, generateSlug]);
 
   const handlePurchase = (e) => {
     e.stopPropagation();
@@ -160,13 +174,19 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  const handleClose = () => {
-    if (window.history.state?.modal) {
-      window.history.back();
+  // ← CORREGIDO: Manejo robusto del cierre con navigate
+  const handleClose = useCallback(() => {
+    if (isClosing) return; // Prevenir doble cierre
+    setIsClosing(true);
+
+    // Si venimos de una navegación de React Router, usar navigate
+    if (location.pathname.includes('/producto/') || location.pathname.includes('/share/')) {
+      navigate('/', { replace: true });
     } else {
+      // Fallback: usar onClose prop
       onClose();
     }
-  };
+  }, [isClosing, location.pathname, navigate, onClose]);
 
   return (
     <motion.div
@@ -200,7 +220,6 @@ const ProductModal = ({ item, onClose }) => {
           const isVideo = typeof media === "object" && media.type === "video";
           const mediaUrl = isVideo ? media.url : media;
 
-          // Lógica de posición de cinta: diferente para cada imagen del carrusel
           const tapes = ["top", "topRight", "topLeft"];
           const currentTape = tapes[index % tapes.length];
 
@@ -233,14 +252,14 @@ const ProductModal = ({ item, onClose }) => {
                 }
               }}
             >
-              {/* CONTENEDOR ESTILO POLAROID */}
               <div className="relative w-full h-full p-3 pb-12 md:p-4 md:pb-16 bg-[#f9f9f9] shadow-[0_40px_80px_rgba(0,0,0,0.9)] border border-neutral-200 overflow-visible">
-                {/* CINTA ADHESIVA (Solo en la activa para no saturar, o en todas) */}
                 <Tape position={currentTape} />
+                {index % 3 === 0 && (
+                  <Tape position={index % 2 === 0 ? "bottom" : "top"} />
+                )}
 
                 <div className="relative w-full h-full bg-neutral-900 overflow-hidden">
                   {isVideo ? (
-                    // RENDERIZAR VIDEO
                     <>
                       <video
                         src={mediaUrl}
@@ -259,7 +278,6 @@ const ProductModal = ({ item, onClose }) => {
                         onClick={(e) => {
                           if (isActive) {
                             e.stopPropagation();
-                            // Toggle play/pause
                             const video = e.currentTarget;
                             if (video.paused) {
                               video.play();
@@ -270,7 +288,6 @@ const ProductModal = ({ item, onClose }) => {
                         }}
                       />
 
-                      {/* Badge "AI VIDEO" en la esquina superior */}
                       {isActive && (
                         <div className="absolute top-3 right-3 flex items-center gap-2 bg-purple-600/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-purple-400/30">
                           <Film size={14} className="text-white" />
@@ -281,7 +298,6 @@ const ProductModal = ({ item, onClose }) => {
                       )}
                     </>
                   ) : (
-                    // RENDERIZAR IMAGEN (código original)
                     <img
                       src={optimizeCloudinaryUrl(mediaUrl)}
                       className="w-full h-full object-cover"
@@ -300,7 +316,6 @@ const ProductModal = ({ item, onClose }) => {
                       }}
                     />
                   )}
-                  {/* TEXTURA DE PAPEL Y BRILLO SUTIL SOBRE LA FOTO/VIDEO */}
                   <div className="absolute inset-0 pointer-events-none opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
                   <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-black/20 via-transparent to-white/10" />
                   {!isActive && (
@@ -308,7 +323,6 @@ const ProductModal = ({ item, onClose }) => {
                   )}
                 </div>
 
-                {/* MARCA DE AGUA O PIE DE FOTO ESTILO POLAROID */}
                 <div className="absolute bottom-4 md:bottom-6 left-0 w-full flex justify-center opacity-50 pointer-events-none">
                   <span className="text-[10px] font-serif italic text-black uppercase tracking-widest">
                     {isVideo ? "NOMAD AI VIDEO" : "RAW 1/125 f2.8 ISO 100"}
@@ -391,7 +405,8 @@ const ProductModal = ({ item, onClose }) => {
           e.stopPropagation();
           handleClose();
         }}
-        className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors p-4"
+        disabled={isClosing} // ← Deshabilitar mientras se cierra
+        className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors p-4 disabled:opacity-50"
       >
         <X size={42} strokeWidth={1} />
       </button>

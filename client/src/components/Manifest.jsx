@@ -37,7 +37,7 @@ const ManifiestoSection = () => {
 
   return (
     <section
-      id="manifiesto"
+      id="manifest"
       ref={containerRef}
       className="relative min-h-screen bg-black text-white py-20 md:py-32 flex flex-col justify-center overflow-hidden"
     >

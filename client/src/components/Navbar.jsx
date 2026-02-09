@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Instagram, Menu, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // ← Agregar useLocation
 
 const Navbar = ({ onContactClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation(); // ← Agregar hook
 
   const menuLinks = [
     "Colecciones",
@@ -17,60 +18,90 @@ const Navbar = ({ onContactClick }) => {
     "Contacto",
   ];
 
-  const handleLinkClick = (item) => {
-    // Disparar prompt si clickean "Contacto"
+  // ← CORREGIDO: Helper para verificar si estamos en Home
+  const isHome = useCallback(() => {
+    return location.pathname === "/" || location.pathname === "";
+  }, [location.pathname]);
+
+  // ← CORREGIDO: Helper para verificar si estamos en una ruta específica
+  const isCurrentPath = useCallback((path) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  }, [location.pathname]);
+
+  const handleLinkClick = useCallback((item) => {
+    // 1. Disparar prompt si clickean "Contacto"
     if (item === "Contacto" && onContactClick) {
       onContactClick();
-    } 
-
-    // 1. Caso especial: Si ya estás en Retailers y haces clic en Retailers, no hace nada
-    if (item === "Retailers" && window.location.hash.includes("/retailers")) {
-      setIsMenuOpen(false);
-      return;
     }
 
-    // 2. Navegar a la página de Retailers
+    // 2. Caso especial: Retailers
     if (item === "Retailers") {
+      if (isCurrentPath("/retailers")) {
+        // Ya estamos en Retailers, solo cerrar menú
+        setIsMenuOpen(false);
+        return;
+      }
       navigate("/retailers");
       setIsMenuOpen(false);
       return;
     }
 
-    // 3. Si quieres ir a una sección de la Home pero estás en otra ruta (como Retailers)
-    const isHome = window.location.hash === "#/" || window.location.hash === "";
-
-    if (!isHome) {
-      // Primero volvemos a la Home
-      navigate("/");
-
-      // Esperamos a que el componente App se monte para buscar el ID
-      setTimeout(() => {
-        const element = document.getElementById(item.toLowerCase());
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 300); // Un delay un poco más largo para asegurar la carga
+    // 3. Navegación a secciones de la Home
+    const targetId = item.toLowerCase();
+    
+    if (!isHome()) {
+      // No estamos en Home: navegar a Home primero
+      navigate("/", { state: { scrollTo: targetId } });
     } else {
-      // Si ya estamos en Home, scroll normal
-      const element = document.getElementById(item.toLowerCase());
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      // Ya estamos en Home: hacer scroll directo
+      scrollToSection(targetId);
     }
 
     setIsMenuOpen(false);
-  };
+  }, [isHome, isCurrentPath, navigate, onContactClick]);
 
+  // ← NUEVO: Función para hacer scroll a una sección
+  const scrollToSection = useCallback((sectionId) => {
+    // Mapeo de nombres de menú a IDs reales del DOM
+    const idMap = {
+      "colecciones": "colecciones",
+      "manifiesto": "manifest", // ← Verificar que coincida con tu HTML
+      "packing": "packing",
+      "studio": "studio", // ← Verificar ID real
+      "tiendas": "stockists", // ← Verificar ID real
+    };
+
+    const targetId = idMap[sectionId] || sectionId;
+    const element = document.getElementById(targetId);
+    
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    } else {
+      console.warn(`[Navbar] Sección no encontrada: ${targetId}`);
+    }
+  }, []);
+
+  // ← NUEVO: Manejar scroll después de navegación
+  useEffect(() => {
+    if (location.state?.scrollTo && isHome()) {
+      // Pequeño delay para asegurar que el DOM esté listo
+      const timer = setTimeout(() => {
+        scrollToSection(location.state.scrollTo);
+        // Limpiar el state para no repetir el scroll al recargar
+        navigate("/", { replace: true, state: {} });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [location, isHome, navigate, scrollToSection]);
+
+  // Bloquear scroll cuando menú está abierto
   useEffect(() => {
     if (isMenuOpen) {
-      // Desactiva el scroll y evita saltos visuales de la barra de scroll
       document.body.style.overflow = "hidden";
     } else {
-      // Restablece el scroll cuando se cierra
       document.body.style.overflow = "unset";
     }
 
-    // Limpieza al desmontar el componente (importante)
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -144,7 +175,7 @@ const Navbar = ({ onContactClick }) => {
           {menuLinks.map((item) => (
             <motion.button
               key={item}
-              onClick={() => handleLinkClick(item)} // Cambiamos a la nueva función
+              onClick={() => handleLinkClick(item)}
               initial="initial"
               whileHover="hover"
               className="relative py-2 text-[10px] tracking-[0.4em] uppercase font-medium cursor-pointer text-white"
@@ -154,7 +185,7 @@ const Navbar = ({ onContactClick }) => {
                   initial: { opacity: 1 },
                   hover: { opacity: 0.6 },
                 }}
-                className={item === "Retailers" ? "text-red-600 font-bold" : ""} // Opcional: Destacar Retailers
+                className={item === "Retailers" ? "text-red-600 font-bold" : ""}
               >
                 {item}
               </motion.span>
@@ -173,14 +204,13 @@ const Navbar = ({ onContactClick }) => {
         <div className="flex-1 flex justify-end gap-6 items-center">
           {/* Icono de Spotify */}
           <motion.a
-            href="https://open.spotify.com/playlist/7vkNPoNq32Mm1185d8Xiey?si=jH6vO2sjRB6yYbb2NROh3w" // Reemplaza con el link de tu lista Nomad
+            href="https://open.spotify.com/playlist/7vkNPoNq32Mm1185d8Xiey?si=jH6vO2sjRB6yYbb2NROh3w"
             target="_blank"
             rel="noopener noreferrer"
             className="text-white"
-            whileHover={{ color: "#1DB954", scale: 1.2, rotate: -12 }} // Verde Spotify al hover
+            whileHover={{ color: "#1DB954", scale: 1.2, rotate: -12 }}
             whileTap={{ scale: 0.9 }}
           >
-            {/* Nota: Algunas versiones de lucide-react usan 'Music' o un SVG personalizado para Spotify */}
             <svg
               width="22"
               height="22"
@@ -245,7 +275,6 @@ const Navbar = ({ onContactClick }) => {
                   }`}
                 >
                   {item}
-                  {/* PUNTO ROJO MÓVIL CON PULSO SUTIL */}
                   <motion.span
                     animate={{ opacity: [0.5, 1, 0.5] }}
                     transition={{ repeat: Infinity, duration: 2 }}

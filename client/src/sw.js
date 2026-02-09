@@ -1,32 +1,31 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
-import { registerRoute } from "workbox-routing";
+import { registerRoute, NavigationRoute } from "workbox-routing";
 import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { clientsClaim } from "workbox-core";
 
+// Precachear assets del manifest generado por Vite
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 clientsClaim();
 
-const CACHE_NAME = "nomad-wear-v6";
+const CACHE_NAME = "nomad-wear-v7"; // Incrementamos versión por el cambio de router
 
 // 1. ESTRATEGIA PARA IMÁGENES (Cache First)
-// Optimiza el ancho de banda y carga instantáneamente fotos de productos.
 registerRoute(
   ({ request }) => request.destination === 'image',
   new CacheFirst({
     cacheName: 'nomad-images',
     plugins: [
       new ExpirationPlugin({
-        maxEntries: 60, // Limita a 60 imágenes para no saturar el móvil
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 días de vida
+        maxEntries: 60,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 días
       }),
     ],
   })
 );
 
 // 2. ESTRATEGIA PARA FUENTES Y ESTILOS (Stale While Revalidate)
-// Las fuentes no cambian seguido, pero queremos la versión más rápida disponible.
 registerRoute(
   ({ request }) => request.destination === 'font' || request.destination === 'style',
   new StaleWhileRevalidate({
@@ -34,20 +33,38 @@ registerRoute(
   })
 );
 
-// 3. ESTRATEGIA PARA API (Network First)
-// Siempre intenta traer el stock/precio real. Si falla (offline), usa el caché.
+// 3. ESTRATEGIA PARA API (Network First) - Excluir /api y /share del SW
 registerRoute(
-  ({ url }) => url.pathname.includes('/api/'),
+  ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/share/'),
   new NetworkFirst({
     cacheName: 'nomad-api-data',
     plugins: [
       new ExpirationPlugin({
         maxEntries: 20,
-        maxAgeSeconds: 24 * 60 * 60, // 24 horas para datos de API
+        maxAgeSeconds: 24 * 60 * 60, // 24 horas
       }),
     ],
   })
 );
+
+// 4. ESTRATEGIA PARA RUTAS DE NAVEGACIÓN (BrowserRouter)
+// Todas las rutas de navegación devuelven index.html (SPA fallback)
+const navigationRoute = new NavigationRoute(
+  new NetworkFirst({
+    cacheName: 'nomad-pages',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 10,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 días para páginas HTML
+      }),
+    ],
+  }),
+  {
+    // Excluir rutas que no deben ser manejadas por el SW de navegación
+    denylist: [/^\/api/, /^\/share/],
+  }
+);
+registerRoute(navigationRoute);
 
 // --- LÓGICA DE INSTALACIÓN Y ACTIVACIÓN ---
 
@@ -60,7 +77,17 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && !cacheName.startsWith("workbox-") && cacheName !== 'nomad-images') {
+          // Limpiar caches antiguas excepto las actuales
+          const validCaches = [
+            CACHE_NAME, 
+            'workbox-precache', 
+            'nomad-images', 
+            'nomad-assets', 
+            'nomad-api-data',
+            'nomad-pages'
+          ];
+          if (!validCaches.some(valid => cacheName.startsWith(valid))) {
+            console.log('[SW] Borrando cache antigua:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -69,25 +96,34 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// --- LÓGICA DE NOTIFICACIONES PUSH (ANDROID OPTIMIZED) ---
+// --- LÓGICA DE NOTIFICACIONES PUSH (BrowserRouter Optimizado) ---
 
-function convertToHashRouterURL(url) {
-  if (url.includes("#/")) return url;
-  if (url === "/" || url === "") return "/";
-
-  let slug = url;
-  if (url.includes("/share/")) {
-    slug = url.split("/share/")[1].split("?")[0].split("#")[0];
-  } else if (url.includes("/producto/")) {
-    slug = url.split("/producto/")[1].split("?")[0].split("#")[0];
-  } else if (!url.startsWith("http") && !url.startsWith("/")) {
-    slug = url.split("?")[0].split("#")[0];
-  } else if (url.startsWith("/") && !url.includes("/share/") && !url.includes("/producto/")) {
-    slug = url.substring(1).split("?")[0].split("#")[0];
+// Ya NO convertimos a hash router - usamos URLs limpias
+function normalizeURL(url) {
+  if (!url || url === "/" || url === "") return "/";
+  
+  // Si ya es una URL completa, devolverla
+  if (url.startsWith("http")) return url;
+  
+  // Limpiar parámetros de query y hash para rutas internas
+  let cleanUrl = url.split("?")[0].split("#")[0];
+  
+  // Asegurar que empiece con /
+  if (!cleanUrl.startsWith("/")) cleanUrl = "/" + cleanUrl;
+  
+  // Manejar rutas específicas
+  if (cleanUrl.includes("/share/")) {
+    const slug = cleanUrl.split("/share/")[1];
+    return slug ? `/producto/${slug}` : "/";
   }
-
-  slug = slug.replace(/\/$/, "");
-  return (!slug || slug === "") ? "/" : `/#/producto/${slug}`;
+  
+  if (cleanUrl.includes("/producto/")) {
+    return cleanUrl; // Ya está en formato correcto
+  }
+  
+  // Remover trailing slash excepto para root
+  cleanUrl = cleanUrl.replace(/\/$/, "");
+  return cleanUrl || "/";
 }
 
 self.addEventListener("push", (event) => {
@@ -105,21 +141,24 @@ self.addEventListener("push", (event) => {
     try {
       const parsedData = event.data.json();
       data = { ...data, ...parsedData };
-    } catch (e) {}
+    } catch (e) {
+      console.error('[SW] Error parseando push data:', e);
+    }
   }
 
-  const convertedURL = convertToHashRouterURL(data.url || data.data?.url || "/");
+  // Normalizar URL para BrowserRouter (sin #/)
+  const normalizedURL = normalizeURL(data.url || data.data?.url || "/");
 
   const options = {
     body: data.body,
     icon: data.icon || "/icon-192-192.png",
     badge: data.badge || "/badge-96.png",
     tag: data.tag,
-    requireInteraction: true, // Cambiado a true para que el usuario deba cerrarla
+    requireInteraction: true,
     vibrate: [200, 100, 200],
     data: {
       ...data.data,
-      url: convertedURL,
+      url: normalizedURL,
       dateOfArrival: Date.now(),
     },
     actions: [
@@ -139,15 +178,19 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   if (event.action === "close") return;
 
+  // URL limpia sin #/ para BrowserRouter
   const urlToOpen = event.notification.data?.url || "/";
-  const finalURL = new URL(urlToOpen.startsWith("/#") ? urlToOpen.substring(1) : urlToOpen, self.location.origin).href;
+  const finalURL = new URL(urlToOpen, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.startsWith(self.location.origin)) {
           return client.focus().then(() => {
-            if (client.url !== finalURL) return client.navigate(finalURL);
+            // Navegar a la URL limpia (sin hash)
+            if (new URL(client.url).pathname !== urlToOpen) {
+              return client.navigate(finalURL);
+            }
             return client;
           });
         }

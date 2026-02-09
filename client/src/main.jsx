@@ -1,7 +1,7 @@
 import React, { useEffect, useState, lazy, Suspense, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // ← Cambio aquí
 import App from "./App.jsx";
 import Login from "./views/Login.jsx";
 import Retailers from "./views/Retailers.jsx";
@@ -12,11 +12,12 @@ import "./index.css";
 
 const AdminPanel = lazy(() => import("./views/AdminPanel.jsx"));
 
-// SW solo en producción
+// SW solo en producción - AJUSTAR RUTA PARA BROWSER ROUTER
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
+    // En BrowserRouter, el SW debe estar en la raíz absoluta
     navigator.serviceWorker
-      .register("/sw.js")
+      .register("/sw.js") // ← Asegúrate que sw.js esté en public/sw.js
       .then((reg) => console.log("SW registrado:", reg.scope))
       .catch((err) => console.error("Error SW:", err));
   });
@@ -90,7 +91,6 @@ const Root = () => {
       setShowLoader(true);
       const timer = setTimeout(() => {
         setShowLoader(false);
-        // Precarga admin panel
         import("./views/AdminPanel.jsx").catch(() => {});
         try {
           sessionStorage.setItem("app_loaded", "true");
@@ -101,7 +101,7 @@ const Root = () => {
   }, []);
 
   return (
-    <HashRouter>
+    <BrowserRouter> {/* ← Cambio aquí: HashRouter → BrowserRouter */}
       <ScrollToTop />
       {showLoader && <PreLoader />}
       
@@ -122,7 +122,7 @@ const Root = () => {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 

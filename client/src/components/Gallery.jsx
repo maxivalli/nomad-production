@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom"; // ← AGREGAR
 import {
   motion,
   useTransform,
@@ -33,6 +34,7 @@ const Tape = ({ position = "top" }) => {
 
 const Gallery = ({ items, setSelectedItem }) => {
   const targetRef = useRef(null);
+  const navigate = useNavigate(); // ← AGREGAR HOOK
   const [collectionName, setCollectionName] = useState("");
   const [loaded, setLoaded] = useState({});
   const [availableCollections, setAvailableCollections] = useState([]);
@@ -46,6 +48,15 @@ const Gallery = ({ items, setSelectedItem }) => {
     const optimizationParams = "f_auto,q_auto,w_1000";
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
+
+  // Helper: Generar slug limpio para URL
+  const generateSlug = useCallback((title) => {
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+  }, []);
 
   useEffect(() => {
     let touchStartX = 0;
@@ -128,14 +139,19 @@ const Gallery = ({ items, setSelectedItem }) => {
     }
   }, [selectedCollection, items]);
 
-  const handleOpenProduct = (item) => {
+  // ← FUNCIÓN CORREGIDA: Navegar con React Router
+  const handleOpenProduct = useCallback((item) => {
+    const slug = generateSlug(item.title);
+    
+    // Navegar a la URL limpia /producto/:slug
+    navigate(`/producto/${slug}`, { 
+      state: { item }, // Pasar datos del item por state
+      replace: false // Agregar al historial
+    });
+    
+    // También setear el item para el modal (App.jsx lo detectará por URL)
     setSelectedItem(item);
-    window.history.pushState(
-      { modal: true, itemId: item.id },
-      "",
-      window.location.href,
-    );
-  };
+  }, [navigate, setSelectedItem, generateSlug]);
 
   const { scrollYProgress } = useScroll({ target: targetRef });
   const [totalScroll, setTotalScroll] = useState(0);
@@ -145,20 +161,13 @@ const Gallery = ({ items, setSelectedItem }) => {
       if (typeof window !== "undefined" && targetRef.current) {
         const isMobile = window.innerWidth < 768;
         const containerWidth = window.innerWidth;
-
-        // 1. Coincidir exactamente con las clases px-6 (24px) y px-12 (48px)
         const paddingSide = isMobile ? 24 : 48;
-        const gap = isMobile ? 40 : 64; // Aumentamos un poco el gap para dar aire entre Polaroids
-
-        // 2. Ancho de la tarjeta (debe ser igual al del render)
+        const gap = isMobile ? 40 : 64;
         const cardWidth = isMobile ? 300 : 400;
 
-        // 3. Cálculo del contenido total
         const totalContentWidth =
           filteredItems.length * cardWidth + (filteredItems.length - 1) * gap;
 
-        // 4. EL TRUCO: Añadimos un "Extra Offset" (60px-100px)
-        // para compensar la rotación y que no se corte la esquina.
         const rotationBuffer = isMobile ? 60 : 100;
 
         const maxScroll =
@@ -168,7 +177,6 @@ const Gallery = ({ items, setSelectedItem }) => {
       }
     };
 
-    // Ejecutamos después de un breve delay para que el layout esté listo
     const timeoutId = setTimeout(calculateScroll, 150);
 
     window.addEventListener("resize", calculateScroll);
@@ -257,7 +265,7 @@ const Gallery = ({ items, setSelectedItem }) => {
             )}
           </motion.div>
 
-          {/* Galería - Sin mt exagerado y con items-center para equilibrio visual */}
+          {/* Galería */}
           <div className="relative">
             <motion.div
               style={{ x: xPx }}

@@ -36,7 +36,7 @@ const Stockists = () => {
 
   return (
     <section
-      id="tiendas"
+      id="stockists"
       ref={containerRef}
       className="relative bg-black py-20 md:py-32 overflow-hidden border-t border-white/10"
     >

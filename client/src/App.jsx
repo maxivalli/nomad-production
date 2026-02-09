@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -30,24 +30,43 @@ function App() {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
-
+  
+  // Hooks de router para BrowserRouter
   const { slug } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Detectar links compartidos (cuando entran con /share/slug)
+  // 1. MANEJO DE RUTAS ANTIGUAS (HashRouter → BrowserRouter)
   useEffect(() => {
-    // Obtener el slug desde useParams (para react-router) o desde window.location
-    let productSlug = slug;
+    // Detectar si hay hash en la URL (formato antiguo #/producto/xyz)
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#/')) {
+      const newPath = hash.substring(1); // Remover el # para obtener /producto/xyz
+      console.log('[App] Redirigiendo desde HashRouter:', hash, '→', newPath);
+      // Reemplazar la URL sin recargar la página
+      window.location.replace(newPath);
+      return;
+    }
+  }, []);
 
-    // Si no hay slug en params, buscar en la URL actual
-    if (!productSlug) {
-      const path = window.location.pathname;
-      const shareMatch = path.match(/\/share\/([^\/]+)/);
+  // 2. DETECTAR PRODUCTO DESDE URL (/producto/:slug o /share/:slug)
+  useEffect(() => {
+    // No procesar si estamos redirigiendo desde hash
+    if (window.location.hash) return;
+
+    let productSlug = slug;
+    let isFromShare = false;
+
+    // Si no hay slug en params, verificar si estamos en /share/
+    if (!productSlug && location.pathname.includes('/share/')) {
+      const shareMatch = location.pathname.match(/\/share\/([^\/]+)/);
       if (shareMatch) {
         productSlug = shareMatch[1];
+        isFromShare = true;
       }
     }
 
-    if (productSlug && products.length > 0) {
+    if (productSlug && products.length > 0 && !productsLoading) {
       const product = products.find((p) => {
         const cleanTitle = p.title
           .toLowerCase()
@@ -60,15 +79,71 @@ function App() {
 
       if (product) {
         setSelectedItem(product);
+        // Si venía de /share/, limpiar la URL a /producto/:slug para SEO/sharing
+        if (isFromShare) {
+          const cleanPath = `/producto/${productSlug}`;
+          window.history.replaceState({}, '', cleanPath);
+        }
+      } else {
+        // Producto no encontrado, podrías mostrar error o redirigir
+        console.warn('[App] Producto no encontrado:', productSlug);
       }
     }
-  }, [slug, products]);
+  }, [slug, location.pathname, products, productsLoading]);
 
-  // Función para cerrar el modal
-  const handleCloseModal = () => {
+  // 3. SINCRONIZAR ESTADO DEL MODAL CON URL
+  const handleCloseModal = useCallback(() => {
     setSelectedItem(null);
-  };
+    // Si la URL es /producto/:slug, volver a /
+    if (location.pathname.startsWith('/producto/')) {
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
+  // 4. MANEJAR ESCAPE KEY PARA CERRAR MODAL
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && selectedItem) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [selectedItem, handleCloseModal]);
+
+  // 5. LOADER - Solo si no viene de main.jsx (fallback)
+  useEffect(() => {
+    // Verificar si main.jsx ya manejó el loader global
+    const mainHandledLoader = sessionStorage.getItem("app_loaded");
+    
+    if (mainHandledLoader) {
+      setLoading(false);
+      return;
+    }
+
+    // Fallback: manejar loader aquí si main.jsx no lo hizo
+    const timer = setTimeout(() => {
+      setLoading(false);
+      try {
+        sessionStorage.setItem("app_loaded", "true");
+      } catch (e) {}
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 6. BLOQUEO DE SCROLL
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = loading || selectedItem ? "hidden" : "auto";
+    
+    // Cleanup: restaurar overflow original al desmontar
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [loading, selectedItem]);
+
+  // 7. INSTALL PROMPT
   const handleShowInstallPrompt = () => {
     const hasSeenPrompt = localStorage.getItem("pwa-install-prompt-seen");
     if (!hasSeenPrompt) {
@@ -78,35 +153,26 @@ function App() {
 
   const handleCloseInstallPrompt = () => {
     setShowInstallPrompt(false);
+    localStorage.setItem("pwa-install-prompt-seen", "true");
   };
 
-  // Mostrar error si hay problemas cargando productos
+  // 8. ERROR HANDLING
   useEffect(() => {
     if (error) {
       toast.error(error);
     }
   }, [error, toast]);
 
-  // Timer del Loader
-  // Dentro de App.js
-  useEffect(() => {
-    const hasLoaded = sessionStorage.getItem("app_loaded");
-
-    if (hasLoaded) {
-      setLoading(false); // Si ya cargó antes, lo desactivamos instantáneamente
-    } else {
-      const timer = setTimeout(() => {
-        setLoading(false);
-        sessionStorage.setItem("app_loaded", "true");
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  // Bloqueo de Scroll global
-  useEffect(() => {
-    document.body.style.overflow = loading || selectedItem ? "hidden" : "auto";
-  }, [loading, selectedItem]);
+  // No renderizar nada mientras redirigimos desde hash
+  if (window.location.hash) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xs uppercase tracking-widest">
+          Redirigiendo...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -117,6 +183,7 @@ function App() {
       />
       <PushNotificationPrompt />
       <BannerModal />
+      
       <div className="bg-black text-white selection:bg-white selection:text-black">
         <Navbar onContactClick={handleShowInstallPrompt} />
 
@@ -161,7 +228,10 @@ function App() {
 
         <AnimatePresence>
           {selectedItem && (
-            <ProductModal item={selectedItem} onClose={handleCloseModal} />
+            <ProductModal 
+              item={selectedItem} 
+              onClose={handleCloseModal}
+            />
           )}
         </AnimatePresence>
       </div>
