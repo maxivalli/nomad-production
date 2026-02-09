@@ -4,8 +4,8 @@
     {
       "src": "client/package.json",
       "use": "@vercel/static-build",
-      "config": { 
-        "distDir": "dist" 
+      "config": {
+        "distDir": "dist"
       }
     },
     {
@@ -13,99 +13,21 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server/index.js"
+      "src": "/api/(.*)",
+      "dest": "server/index.js"
     },
     {
-      "source": "/share/(.*)",
-      "destination": "/server/index.js"
+      "src": "/share/(.*)",
+      "dest": "server/index.js"
     },
     {
-      "source": "/sw.js",
-      "destination": "/client/dist/sw.js"
+      "handle": "filesystem"
     },
     {
-      "source": "/manifest.json",
-      "destination": "/client/dist/manifest.json"
-    },
-    {
-      "source": "/assets/(.*)",
-      "destination": "/client/dist/assets/$1"
-    },
-    {
-      "source": "/icon-(.*)",
-      "destination": "/client/dist/icon-$1"
-    },
-    {
-      "source": "/Nomad.(.*)",
-      "destination": "/client/dist/Nomad.$1"
-    },
-    {
-      "source": "/hyperwave-one.ttf",
-      "destination": "/client/dist/hyperwave-one.ttf"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/client/dist/index.html"
+      "src": "/(.*)",
+      "dest": "client/dist/index.html"
     }
-  ],
-  "headers": [
-    {
-      "source": "/client/dist/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/client/dist/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=()"
-        }
-      ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
-        }
-      ]
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
