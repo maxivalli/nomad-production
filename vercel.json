@@ -4,8 +4,8 @@
     {
       "src": "client/package.json",
       "use": "@vercel/static-build",
-      "config": { 
-        "distDir": "dist" 
+      "config": {
+        "distDir": "dist"
       }
     },
     {
@@ -20,10 +20,22 @@
     },
     {
       "source": "/share/(.*)",
-      "destination": "server/index.js"
+      "destination": "/server/index.js"
     },
     {
-      "source": "/(.*)",
+      "source": "/assets/(.*)",
+      "destination": "/client/assets/$1"
+    },
+    {
+      "source": "/registerSW.js",
+      "destination": "/client/registerSW.js"
+    },
+    {
+      "source": "/manifest.json",
+      "destination": "/client/manifest.json"
+    },
+    {
+      "source": "/((?!api|share|assets|registerSW.js|manifest.json).*)",
       "destination": "/client/index.html"
     }
   ],
