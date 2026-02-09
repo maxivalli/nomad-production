@@ -27,15 +27,11 @@
       "destination": "/client/assets/$1"
     },
     {
-      "source": "/registerSW.js",
-      "destination": "/client/registerSW.js"
+      "source": "/(Nomad.svg|hyperwave-one.ttf|sw.js|manifest.json|registerSW.js)",
+      "destination": "/client/$1"
     },
     {
-      "source": "/manifest.json",
-      "destination": "/client/manifest.json"
-    },
-    {
-      "source": "/((?!api|share|assets|registerSW.js|manifest.json).*)",
+      "source": "/((?!api|share|assets|Nomad.svg|hyperwave-one.ttf|sw.js|manifest.json|registerSW.js).*)",
       "destination": "/client/index.html"
     }
   ],
