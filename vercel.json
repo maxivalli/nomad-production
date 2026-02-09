@@ -21,24 +21,18 @@
     {
       "source": "/share/:slug",
       "destination": "/server/index.js"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/assets/(.*)",
-      "dest": "/client/$1"
     },
     {
-      "src": "/manifest.json",
-      "dest": "/client/manifest.json"
+      "source": "/assets/(.*)",
+      "destination": "/client/assets/$1"
     },
     {
-      "src": "/sw.js",
-      "dest": "/client/sw.js"
+      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json))",
+      "destination": "/client/$1"
     },
     {
-      "src": "/(.*)",
-      "dest": "/client/index.html"
+      "source": "/(.*)",
+      "destination": "/client/index.html"
     }
   ],
   "headers": [
