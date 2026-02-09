@@ -19,6 +19,7 @@ const bannerRoutes = require("./routes/bannerRoutes");
 const videoRoutes = require("./routes/videoRoutes");
 const replicateRoutes = require("./routes/replicateRoutes");
 const shareRoutes = require("./routes/shareRoutes");
+const sitemapRoutes = require("./routes/sitemapRoutes"); // ← NUEVO
 
 // ==========================================
 // MIDDLEWARE GLOBAL
@@ -40,6 +41,9 @@ initDB();
 // ==========================================
 // RUTAS
 // ==========================================
+
+// Sitemap dinámico (debe ir antes de las rutas API)
+app.use("/", sitemapRoutes); // ← NUEVO
 
 // Ruta de compartir (SSR) - debe ir antes de las rutas API
 app.use("/share", shareRoutes);
@@ -70,6 +74,7 @@ if (process.env.NODE_ENV !== "production") {
     console.log(`🚀 Nomad Core activo en puerto ${PORT}`);
     console.log(`🔒 Autenticación JWT habilitada`);
     console.log(`🛡️  Headers de seguridad activos`);
+    console.log(`🗺️  Sitemap dinámico habilitado en /sitemap.xml`); // ← NUEVO
   });
 }
 
