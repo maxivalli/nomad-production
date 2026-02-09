@@ -6,7 +6,7 @@ import {
   useScroll,
   AnimatePresence,
 } from "framer-motion";
-import { Loader2, Filter } from "lucide-react";
+import { Loader2, Filter, Film } from "lucide-react";
 
 // --- COMPONENTE DE CINTA ADHESIVA ---
 const Tape = ({ position = "top" }) => {
@@ -276,6 +276,7 @@ const Gallery = ({ items, setSelectedItem }) => {
                   ? item.img[0]
                   : item.img;
                 const isImgLoaded = loaded[item.id];
+                const hasVideo = item.video_url && item.video_url.length > 0;
 
                 const randomRotate =
                   (index % 2 === 0 ? 1 : -1) * ((index % 3) + 1);
@@ -335,6 +336,15 @@ const Gallery = ({ items, setSelectedItem }) => {
                           isImgLoaded ? "opacity-100" : "opacity-0"
                         }`}
                       />
+
+                      {hasVideo && (
+                        <div className="absolute top-3 right-3 flex items-center gap-2 bg-purple-600/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-purple-400/30 z-10">
+                          <Film size={14} className="text-white" />
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-white">
+                            AI Video
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="absolute bottom-0 left-0 w-full p-4 md:p-6 flex flex-col items-center">
