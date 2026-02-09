@@ -20,11 +20,57 @@
     },
     {
       "source": "/share/(.*)",
-      "destination": "server/index.js"
+      "destination": "/server/index.js"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "dest": "/client/dist/assets/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/client/$1"
+      "src": "/sw.js",
+      "dest": "/client/dist/sw.js"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/client/dist/manifest.json"
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "dest": "/client/dist/manifest.webmanifest"
+    },
+    {
+      "src": "/icon-(.*)",
+      "dest": "/client/dist/icon-$1"
+    },
+    {
+      "src": "/badge-(.*)",
+      "dest": "/client/dist/badge-$1"
+    },
+    {
+      "src": "/Nomad\\.(.*)",
+      "dest": "/client/dist/Nomad.$1"
+    },
+    {
+      "src": "/hyperwave-one.ttf",
+      "dest": "/client/dist/hyperwave-one.ttf"
+    },
+    {
+      "src": "/registerSW.js",
+      "dest": "/client/dist/registerSW.js"
+    },
+    {
+      "src": "/robots.txt",
+      "dest": "/client/dist/robots.txt"
+    },
+    {
+      "src": "/sitemap.xml",
+      "dest": "/client/dist/sitemap.xml"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/dist/index.html"
     }
   ],
   "headers": [
