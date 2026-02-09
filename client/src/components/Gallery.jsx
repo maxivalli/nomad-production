@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   motion,
   useTransform,
@@ -39,6 +40,7 @@ const Gallery = ({ items, setSelectedItem }) => {
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [filteredItems, setFilteredItems] = useState([]);
   const [showVerticalGuidance, setShowVerticalGuidance] = useState(false);
+  const navigate = useNavigate(); 
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -128,13 +130,19 @@ const Gallery = ({ items, setSelectedItem }) => {
     }
   }, [selectedCollection, items]);
 
-  const handleOpenProduct = (item) => {
+  const handleItemClick = (item) => {
+    // Generar el slug del producto
+    const productSlug = item.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+
+    // Cambiar la URL
+    navigate(`/producto/${productSlug}`);
+    
+    // Abrir el modal
     setSelectedItem(item);
-    window.history.pushState(
-      { modal: true, itemId: item.id },
-      "",
-      window.location.href,
-    );
   };
 
   const { scrollYProgress } = useScroll({ target: targetRef });
@@ -277,7 +285,7 @@ const Gallery = ({ items, setSelectedItem }) => {
                 return (
                   <motion.div
                     key={item.id}
-                    onClick={() => handleOpenProduct(item)}
+                    onClick={() => handleItemClick(item)}
                     initial={{ rotate: randomRotate }}
                     whileHover={{
                       rotate: 0,

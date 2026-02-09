@@ -19,12 +19,12 @@
       "destination": "/server/index.js"
     },
     {
-      "source": "/share/(.*)",
-      "destination": "server/index.js"
+      "source": "/share/:slug",
+      "destination": "/server/index.js"
     },
     {
       "source": "/(.*)",
-      "destination": "/client/$1"
+      "destination": "/client/dist/index.html"
     }
   ],
   "headers": [

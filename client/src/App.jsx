@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -30,39 +30,29 @@ function App() {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const { products, loading: productsLoading, error, refetch } = useProducts();
   const toast = useToast();
+  const navigate = useNavigate(); 
 
   const { slug } = useParams();
 
   // Detectar links compartidos (cuando entran con /share/slug)
-  useEffect(() => {
-    // Obtener el slug desde useParams (para react-router) o desde window.location
-    let productSlug = slug;
+  // Detectar links compartidos
+useEffect(() => {
+  if (slug && products.length > 0) {
+    const product = products.find((p) => {
+      const cleanTitle = p.title
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-");
 
-    // Si no hay slug en params, buscar en la URL actual
-    if (!productSlug) {
-      const path = window.location.pathname;
-      const shareMatch = path.match(/\/share\/([^\/]+)/);
-      if (shareMatch) {
-        productSlug = shareMatch[1];
-      }
+      return cleanTitle === slug;
+    });
+
+    if (product) {
+      setSelectedItem(product);
     }
-
-    if (productSlug && products.length > 0) {
-      const product = products.find((p) => {
-        const cleanTitle = p.title
-          .toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9\s-]/g, "")
-          .replace(/\s+/g, "-");
-
-        return cleanTitle === productSlug;
-      });
-
-      if (product) {
-        setSelectedItem(product);
-      }
-    }
-  }, [slug, products]);
+  }
+}, [slug, products]);
 
   // Función para cerrar el modal
   const handleCloseModal = () => {
