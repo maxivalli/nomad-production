@@ -1,15 +1,22 @@
 // hooks/usePWAInstall.js
 // Hook centralizado para manejar la instalación de PWA
+// Usa Context API para compartir el estado del prompt entre todos los componentes
 
-import { useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-export const usePWAInstall = () => {
+// Context para compartir el estado del prompt
+const PWAContext = createContext(null);
+
+// Provider que debe envolver la app
+export const PWAProvider = ({ children }) => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [platform, setPlatform] = useState('unknown');
 
   useEffect(() => {
+    console.log('[PWA Provider] Inicializando...');
+
     // 1. Detectar plataforma
     const detectPlatform = () => {
       const userAgent = navigator.userAgent.toLowerCase();
@@ -17,43 +24,46 @@ export const usePWAInstall = () => {
       if (/android/.test(userAgent)) return 'android';
       return 'desktop';
     };
-    setPlatform(detectPlatform());
+    const detectedPlatform = detectPlatform();
+    setPlatform(detectedPlatform);
+    console.log('[PWA Provider] Plataforma detectada:', detectedPlatform);
 
     // 2. Detectar si ya está instalada
     const checkIfInstalled = () => {
       // Verificar si se está ejecutando como PWA instalada
       if (window.matchMedia('(display-mode: standalone)').matches) {
-        setIsInstalled(true);
+        console.log('[PWA Provider] App ya instalada (standalone mode)');
         return true;
       }
       // iOS Safari check
       if (window.navigator.standalone === true) {
-        setIsInstalled(true);
+        console.log('[PWA Provider] App ya instalada (iOS standalone)');
         return true;
       }
       return false;
     };
 
     if (checkIfInstalled()) {
-      return; // Si ya está instalada, no necesitamos hacer nada más
+      setIsInstalled(true);
+      return; // Si ya está instalada, no necesitamos escuchar eventos
     }
 
     // 3. Capturar evento de instalación (solo Android/Desktop)
     const handleBeforeInstallPrompt = (e) => {
+      console.log('[PWA Provider] beforeinstallprompt capturado!');
       e.preventDefault();
       setDeferredPrompt(e);
       setIsInstallable(true);
-      console.log('[PWA] Prompt de instalación capturado');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     // 4. Detectar cuando se instala la app
     const handleAppInstalled = () => {
+      console.log('[PWA Provider] App instalada exitosamente');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
-      console.log('[PWA] App instalada exitosamente');
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -67,19 +77,21 @@ export const usePWAInstall = () => {
 
   // Función para instalar la PWA
   const installPWA = useCallback(async () => {
+    console.log('[PWA Provider] installPWA llamado, deferredPrompt:', !!deferredPrompt);
+
     if (!deferredPrompt) {
-      console.warn('[PWA] No hay prompt de instalación disponible');
+      console.warn('[PWA Provider] No hay prompt disponible');
       return { success: false, reason: 'no-prompt' };
     }
 
     try {
       // Mostrar el prompt nativo
+      console.log('[PWA Provider] Mostrando prompt nativo...');
       deferredPrompt.prompt();
       
       // Esperar la decisión del usuario
       const { outcome } = await deferredPrompt.userChoice;
-      
-      console.log(`[PWA] Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
+      console.log(`[PWA Provider] Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'}`);
 
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
@@ -89,27 +101,37 @@ export const usePWAInstall = () => {
 
       return { success: false, outcome };
     } catch (error) {
-      console.error('[PWA] Error al instalar:', error);
+      console.error('[PWA Provider] Error:', error);
       return { success: false, error };
     }
   }, [deferredPrompt]);
 
   // Verificar si puede mostrar el prompt
   const canShowPrompt = useCallback(() => {
-    return isInstallable && !isInstalled && deferredPrompt !== null;
+    const canShow = isInstallable && !isInstalled && deferredPrompt !== null;
+    console.log('[PWA Provider] canShowPrompt:', canShow, { isInstallable, isInstalled, hasDeferredPrompt: !!deferredPrompt });
+    return canShow;
   }, [isInstallable, isInstalled, deferredPrompt]);
 
-  return {
-    // Estados
-    isInstallable,    // true si se puede instalar (hay deferredPrompt)
-    isInstalled,      // true si ya está instalada
-    platform,         // 'ios' | 'android' | 'desktop'
-    
-    // Funciones
-    installPWA,       // Función para disparar la instalación
-    canShowPrompt,    // Helper para verificar si puede mostrar el prompt
-    
-    // Raw prompt (por si se necesita acceso directo)
+  const value = {
     deferredPrompt,
+    isInstallable,
+    isInstalled,
+    platform,
+    installPWA,
+    canShowPrompt,
   };
+
+  return <PWAContext.Provider value={value}>{children}</PWAContext.Provider>;
+};
+
+// Hook para usar el contexto
+export const usePWAInstall = () => {
+  const context = useContext(PWAContext);
+  
+  if (!context) {
+    throw new Error('usePWAInstall debe usarse dentro de PWAProvider');
+  }
+  
+  return context;
 };

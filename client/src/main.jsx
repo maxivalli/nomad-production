@@ -1,13 +1,14 @@
 import React, { useEffect, useState, lazy, Suspense, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // ← Cambio aquí
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import App from "./App.jsx";
 import Login from "./views/Login.jsx";
 import Retailers from "./views/Retailers.jsx";
 import PreLoader from "./components/PreLoader.jsx";
 import api from "./services/api.js";
 import { Loader2 } from "lucide-react";
+import { PWAProvider } from "./hooks/usePWAInstall.jsx"; // ← NUEVO
 import "./index.css";
 
 const AdminPanel = lazy(() => import("./views/AdminPanel.jsx"));
@@ -101,28 +102,30 @@ const Root = () => {
   }, []);
 
   return (
-    <BrowserRouter> {/* ← Cambio aquí: HashRouter → BrowserRouter */}
-      <ScrollToTop />
-      {showLoader && <PreLoader />}
-      
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/producto/:slug" element={<App />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/retailers" element={<Retailers />} />
-        <Route
-          path="/admin"
-          element={
-            <PrivateRoute>
-              <Suspense fallback={<PageLoader />}>
-                <AdminPanel />
-              </Suspense>
-            </PrivateRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <PWAProvider> {/* ← NUEVO: Envuelve todo con PWAProvider */}
+      <BrowserRouter>
+        <ScrollToTop />
+        {showLoader && <PreLoader />}
+        
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/producto/:slug" element={<App />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/retailers" element={<Retailers />} />
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <Suspense fallback={<PageLoader />}>
+                  <AdminPanel />
+                </Suspense>
+              </PrivateRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </PWAProvider>
   );
 };
 
