@@ -5,7 +5,7 @@
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "."
+        "distDir": "dist"
       }
     },
     {
@@ -24,51 +24,51 @@
     },
     {
       "src": "/assets/(.*)",
-      "dest": "client/assets/$1"
+      "dest": "client/dist/assets/$1"
     },
     {
       "src": "/sw.js",
-      "dest": "client/sw.js"
+      "dest": "client/dist/sw.js"
     },
     {
       "src": "/manifest.json",
-      "dest": "client/manifest.json"
+      "dest": "client/dist/manifest.json"
     },
     {
       "src": "/manifest.webmanifest",
-      "dest": "client/manifest.webmanifest"
+      "dest": "client/dist/manifest.webmanifest"
     },
     {
       "src": "/icon-(.*)",
-      "dest": "client/icon-$1"
+      "dest": "client/dist/icon-$1"
     },
     {
       "src": "/badge-(.*)",
-      "dest": "client/badge-$1"
+      "dest": "client/dist/badge-$1"
     },
     {
       "src": "/Nomad.(.*)",
-      "dest": "client/Nomad.$1"
+      "dest": "client/dist/Nomad.$1"
     },
     {
       "src": "/hyperwave-one.ttf",
-      "dest": "client/hyperwave-one.ttf"
+      "dest": "client/dist/hyperwave-one.ttf"
     },
     {
       "src": "/registerSW.js",
-      "dest": "client/registerSW.js"
+      "dest": "client/dist/registerSW.js"
     },
     {
       "src": "/robots.txt",
-      "dest": "client/robots.txt"
+      "dest": "client/dist/robots.txt"
     },
     {
       "src": "/sitemap.xml",
-      "dest": "client/sitemap.xml"
+      "dest": "client/dist/sitemap.xml"
     },
     {
       "src": "/(.*)",
-      "dest": "client/index.html"
+      "dest": "client/dist/index.html"
     }
   ]
 }
