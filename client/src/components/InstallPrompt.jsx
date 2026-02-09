@@ -45,7 +45,7 @@ export default function InstallPrompt({ show, onClose }) {
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
             <img 
-              src="/Nomad.svg" 
+              src="/nomadv2.svg" 
               alt="NOMAD Logo" 
               className="w-16 h-16"
             />
