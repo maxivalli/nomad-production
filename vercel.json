@@ -27,19 +27,12 @@
       "destination": "/client/assets/$1"
     },
     {
-      "source": "/((?!api|share|assets).*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "x-not-found",
-          "value": "true"
-        }
-      ],
-      "destination": "/client/index.html"
+      "source": "/(.*\\.(?:ico|png|svg|jpg|jpeg|xml|json|webmanifest|ttf|woff|woff2))",
+      "destination": "/client/$1"
     },
     {
-      "source": "/((?!api|share|assets).*)",
-      "destination": "/client/$1"
+      "source": "/((?!api|share|assets|.*\\.(?:ico|png|svg|jpg|jpeg|xml|json|webmanifest|ttf|woff|woff2)).*)",
+      "destination": "/client/index.html"
     }
   ],
   "headers": [

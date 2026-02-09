@@ -66,8 +66,9 @@ const ProductModal = ({ item, onClose }) => {
 
   useEffect(() => {
     const currentMedia = mediaItems[activeIdx];
-    const isCurrentVideo = typeof currentMedia === "object" && currentMedia.type === "video";
-    
+    const isCurrentVideo =
+      typeof currentMedia === "object" && currentMedia.type === "video";
+
     if (isCurrentVideo) {
       const timer = setTimeout(() => {
         setIsImageLoading(false);
@@ -80,25 +81,15 @@ const ProductModal = ({ item, onClose }) => {
 
   // ← CORREGIDO: Manejar popstate para cerrar modal al usar botón atrás del navegador
   useEffect(() => {
-    const handlePopState = () => {
-      // Solo cerrar si estamos en una ruta de producto
-      if (location.pathname.includes('/producto/') || location.pathname.includes('/share/')) {
-        onClose();
-      }
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [onClose, location.pathname]);
+    // Si la URL ya no tiene producto o share, forzamos el cierre del modal
+    const isProductRoute =
+      location.pathname.includes("/producto/") ||
+      location.pathname.includes("/share/");
 
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") {
-        handleClose();
-      }
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, []);
+    if (!isProductRoute && !isClosing) {
+      onClose();
+    }
+  }, [location.pathname, onClose, isClosing]);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -139,24 +130,27 @@ const ProductModal = ({ item, onClose }) => {
   };
 
   // ← CORREGIDO: Usar URL canónica /producto/ para compartir (mejor SEO)
-  const handleShare = useCallback((e) => {
-    e.stopPropagation();
-    const slug = generateSlug(item.title);
-    // Usar /producto/ en lugar de /share/ para compartir (más limpio)
-    const shareUrl = `${window.location.origin}/share/${slug}`;
+  const handleShare = useCallback(
+    (e) => {
+      e.stopPropagation();
+      const slug = generateSlug(item.title);
+      // Usar /producto/ en lugar de /share/ para compartir (más limpio)
+      const shareUrl = `${window.location.origin}/share/${slug}`;
 
-    if (navigator.share) {
-      navigator
-        .share({
-          title: `NOMAD - ${item.title}`,
-          url: shareUrl,
-        })
-        .catch(console.error);
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      alert("Enlace de producto copiado al portapapeles");
-    }
-  }, [item, generateSlug]);
+      if (navigator.share) {
+        navigator
+          .share({
+            title: `NOMAD - ${item.title}`,
+            url: shareUrl,
+          })
+          .catch(console.error);
+      } else {
+        navigator.clipboard.writeText(shareUrl);
+        alert("Enlace de producto copiado al portapapeles");
+      }
+    },
+    [item, generateSlug],
+  );
 
   const handlePurchase = (e) => {
     e.stopPropagation();
@@ -173,19 +167,27 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  // ← CORREGIDO: Manejo robusto del cierre con navigate
   const handleClose = useCallback(() => {
-    if (isClosing) return; // Prevenir doble cierre
+    if (isClosing) return;
     setIsClosing(true);
 
-    // Si venimos de una navegación de React Router, usar navigate
-    if (location.pathname.includes('/producto/') || location.pathname.includes('/share/')) {
-      navigate('/', { replace: true });
-    } else {
-      // Fallback: usar onClose prop
-      onClose();
-    }
-  }, [isClosing, location.pathname, navigate, onClose]);
+    if (onClose) onClose();
+
+    navigate("/", { replace: true });
+
+    setTimeout(() => setIsClosing(false), 500);
+  }, [isClosing, navigate, onClose]);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+     
+        handleClose();
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [handleClose]);
 
   return (
     <motion.div
