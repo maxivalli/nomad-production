@@ -5,7 +5,7 @@
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "."
       }
     },
     {
@@ -13,18 +13,62 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "server/index.js"
+      "src": "/api/(.*)",
+      "dest": "server/index.js"
     },
     {
-      "source": "/share/(.*)",
-      "destination": "server/index.js"
+      "src": "/share/(.*)",
+      "dest": "server/index.js"
     },
     {
-      "source": "/(.*)",
-      "destination": "client/dist/index.html"
+      "src": "/assets/(.*)",
+      "dest": "client/assets/$1"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "client/sw.js"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "client/manifest.json"
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "dest": "client/manifest.webmanifest"
+    },
+    {
+      "src": "/icon-(.*)",
+      "dest": "client/icon-$1"
+    },
+    {
+      "src": "/badge-(.*)",
+      "dest": "client/badge-$1"
+    },
+    {
+      "src": "/Nomad.(.*)",
+      "dest": "client/Nomad.$1"
+    },
+    {
+      "src": "/hyperwave-one.ttf",
+      "dest": "client/hyperwave-one.ttf"
+    },
+    {
+      "src": "/registerSW.js",
+      "dest": "client/registerSW.js"
+    },
+    {
+      "src": "/robots.txt",
+      "dest": "client/robots.txt"
+    },
+    {
+      "src": "/sitemap.xml",
+      "dest": "client/sitemap.xml"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "client/index.html"
     }
   ]
 }
