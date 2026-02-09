@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -40,7 +39,6 @@ const ProductModal = ({ item, onClose }) => {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
   const dragThreshold = 50;
-  const navigate = useNavigate();
 
   if (!item) return null;
 
@@ -55,9 +53,8 @@ const ProductModal = ({ item, onClose }) => {
 
   useEffect(() => {
     const currentMedia = mediaItems[activeIdx];
-    const isCurrentVideo =
-      typeof currentMedia === "object" && currentMedia.type === "video";
-
+    const isCurrentVideo = typeof currentMedia === "object" && currentMedia.type === "video";
+    
     if (isCurrentVideo) {
       // Para videos, dar un pequeño delay y luego ocultar el loading
       const timer = setTimeout(() => {
@@ -126,35 +123,27 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  const handleShare = async () => {
-  try {
-    // Generar el slug desde el título del producto
-    const productSlug = item.title
+  const handleShare = (e) => {
+    e.stopPropagation();
+    const slug = item.title
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-");
-
-    const shareUrl = `${window.location.origin}/share/${productSlug}`;
+    const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
-      await navigator.share({
-        title: item.title,
-        url: shareUrl,
-      });
-      toast.success("¡Compartido exitosamente!");
+      navigator
+        .share({
+          title: `NOMAD - ${item.title}`,
+          url: shareUrl,
+        })
+        .catch(console.error);
     } else {
-      // Solo copiar la URL, sin el texto
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copiado al portapapeles");
+      navigator.clipboard.writeText(shareUrl);
+      alert("Enlace de producto copiado al portapapeles");
     }
-  } catch (error) {
-    if (error.name !== "AbortError") {
-      console.error("Error al compartir:", error);
-      toast.error("Error al compartir el producto");
-    }
-  }
-};
+  };
 
   const handlePurchase = (e) => {
     e.stopPropagation();
@@ -172,9 +161,12 @@ const ProductModal = ({ item, onClose }) => {
   };
 
   const handleClose = () => {
-  navigate('/'); // ← AGREGAR ESTO
-  onClose();
-};
+    if (window.history.state?.modal) {
+      window.history.back();
+    } else {
+      onClose();
+    }
+  };
 
   return (
     <motion.div

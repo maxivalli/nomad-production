@@ -1,7 +1,7 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import App from "./App.jsx";
 import Login from "./views/Login.jsx";
 import Retailers from "./views/Retailers.jsx";
@@ -10,14 +10,10 @@ import api from "./services/api.js";
 import { Loader2 } from "lucide-react";
 import "./index.css";
 
+// Lazy Load del Panel
 const AdminPanel = lazy(() => import("./views/AdminPanel.jsx"));
 
-// ← AGREGAR ESTE COMPONENTE NUEVO
-const ShareRedirect = () => {
-  const { slug } = useParams();
-  return <Navigate to={`/producto/${slug}`} replace />;
-};
-
+// --- 1. COMPONENTE DE PROTECCIÓN DE RUTAS ---
 const PrivateRoute = ({ children }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -61,6 +57,7 @@ const PrivateRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
+// --- 2. FALLBACK PARA SUSPENSE ---
 const PageLoader = () => (
   <div className="min-h-screen bg-black flex items-center justify-center">
     <div className="flex flex-col items-center gap-3">
@@ -76,16 +73,19 @@ const ScrollToTop = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
+    // Forzamos el scroll al inicio cada vez que cambia la ruta
     window.scrollTo(0, 0);
   }, [pathname]);
 
   return null;
 };
 
+// --- 3. COMPONENTE ROOT (Orquestador Global) ---
 const Root = () => {
   const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
+    // Intentar leer de sessionStorage de forma segura para evitar el error de "Access denied"
     let hasLoadedBefore = false;
     try {
       hasLoadedBefore = sessionStorage.getItem("app_loaded");
@@ -100,20 +100,19 @@ const Root = () => {
         try {
           sessionStorage.setItem("app_loaded", "true");
         } catch (e) {}
-      }, 1500);
+      }, 1500); //
       return () => clearTimeout(timer);
     }
   }, []);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ScrollToTop />
       {showLoader && <PreLoader />}
 
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/producto/:slug" element={<App />} />
-        <Route path="/share/:slug" element={<ShareRedirect />} /> {/* ← CAMBIO AQUÍ */}
         <Route path="/login" element={<Login />} />
         <Route path="/retailers" element={<Retailers />} />
         <Route
@@ -128,10 +127,11 @@ const Root = () => {
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
+// --- 4. RENDER FINAL ---
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Root />
