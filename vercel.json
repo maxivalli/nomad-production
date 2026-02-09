@@ -4,9 +4,7 @@
     {
       "src": "client/package.json",
       "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "config": { "distDir": "dist" }
     },
     {
       "src": "server/index.js",
@@ -27,18 +25,11 @@
       "destination": "/client/assets/$1"
     },
     {
-      "source": "/((?!api|share|assets).*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "x-not-found",
-          "value": "true"
-        }
-      ],
+      "source": "/((?!api|share|assets|.*\\.).*)",
       "destination": "/client/index.html"
     },
     {
-      "source": "/((?!api|share|assets).*)",
+      "source": "/(.*)",
       "destination": "/client/$1"
     }
   ],
@@ -46,39 +37,10 @@
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=()"
-        }
-      ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
-        }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
       ]
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }

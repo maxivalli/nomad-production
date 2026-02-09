@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['Nomad.svg', 'Nomad.png', 'hyperwave-one.ttf'],
+      includeAssets: ['nomadv2.svg', 'Nomad.png', 'hyperwave-one.ttf'],
       
       // Usar estrategia de inyección de manifest
       strategies: 'injectManifest',
