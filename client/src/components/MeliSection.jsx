@@ -18,7 +18,7 @@ const MeliSection = () => {
             Terminal Online 
           </span>
           <h2 className="text-white text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.75]">
-            official <br /> <span className="text-red-600">Store</span>
+            Mercado <br /> <span className="text-red-600">libre</span>
           </h2>
         </div>
 
@@ -60,7 +60,7 @@ const MeliSection = () => {
               />
               <div className="h-6 w-[1px] bg-black/20" />
               <span className="text-[10px] font-black uppercase tracking-widest text-black/60">
-                Official Store
+                Tienda oficial
               </span>
             </div>
 
