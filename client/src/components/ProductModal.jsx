@@ -143,13 +143,12 @@ const ProductModal = ({ item, onClose }) => {
     e.stopPropagation();
     const slug = generateSlug(item.title);
     // Usar /producto/ en lugar de /share/ para compartir (más limpio)
-    const shareUrl = `${window.location.origin}/producto/${slug}`;
+    const shareUrl = `${window.location.origin}/share/${slug}`;
 
     if (navigator.share) {
       navigator
         .share({
           title: `NOMAD - ${item.title}`,
-          text: item.description?.substring(0, 100) || '',
           url: shareUrl,
         })
         .catch(console.error);
