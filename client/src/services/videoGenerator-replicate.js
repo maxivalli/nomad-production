@@ -1,36 +1,42 @@
-// Reemplaza todo el archivo videoGenerator-replicate.js con esta versión corregida:
-
 import { REPLICATE_CONFIG } from "../config/replicate";
 
 class VideoGeneratorService {
   constructor() {
-    // Cambiar para usar el backend en lugar de Replicate directamente
+    // Usar backend como proxy (más seguro que llamar a Replicate directo)
     this.baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
   }
 
   /**
    * Crea una predicción en Replicate (a través del backend)
-   * Actualizado para Wan 2.2 Fast
+   * Configurado para Wan 2.2 Fast
    */
   async createPrediction(
     imageUrl,
-    prompt = "Cinematic fashion video generated from the reference imag. Ultra realistic, high quality, smooth motion, no distortion",
+    prompt = `
+Cinematic street fashion video generated from the reference image.
+Male model walking forward with subtle attitude.
+Stable camera, smooth natural motion.
+Clothing remains perfectly identical to the reference image.
+No deformation, no warping, no flickering, no morphing.
+Realistic fabric behavior, natural folds.
+High-end fashion commercial style, natural lighting, sharp details.
+`.trim()
   ) {
     const requestBody = {
       model: REPLICATE_CONFIG.model,
       input: {
         image: imageUrl,
-        prompt: prompt,
-        max_area: "832x480", // Resolución 480p (rápido y económico)
-        num_frames: 81, // Número de frames (25-177 disponibles)
-        frames_per_second: 16, // FPS del video resultante
-        sample_steps: 30, // Pasos de muestreo (calidad vs velocidad)
-        sample_guide_scale: 5, // Guidance scale para seguir el prompt
-        sample_shift: 3, // Control de timing del movimiento
+        prompt,
+        max_area: "832x480", // Mejor ratio para humanos
+        num_frames: 81, // Frames del video
+        frames_per_second: 16, // FPS final
+        sample_steps: 30, // Calidad vs velocidad
+        sample_guide_scale: 5, // Qué tanto sigue el prompt
+        sample_shift: 3, // Timing del movimiento
       },
     };
 
-    // Solo agregar version si está definida en la config
+    // Agregar versión solo si existe
     if (REPLICATE_CONFIG.version) {
       requestBody.version = REPLICATE_CONFIG.version;
     }
@@ -53,14 +59,14 @@ class VideoGeneratorService {
   }
 
   /**
-   * Obtiene el estado de una predicción (a través del backend)
+   * Obtiene el estado de una predicción
    */
   async getPrediction(predictionId) {
     const response = await fetch(
       `${this.baseUrl}/api/replicate/predictions/${predictionId}`,
       {
         credentials: "include",
-      },
+      }
     );
 
     if (!response.ok) {
@@ -75,7 +81,7 @@ class VideoGeneratorService {
    */
   async waitForPrediction(predictionId, onProgress) {
     let attempts = 0;
-    const maxAttempts = 120; // 2 minutos máximo (1 seg por intento)
+    const maxAttempts = 120; // 2 minutos
 
     while (attempts < maxAttempts) {
       const prediction = await this.getPrediction(predictionId);
@@ -97,19 +103,17 @@ class VideoGeneratorService {
         throw new Error("La generación fue cancelada");
       }
 
-      // CORRECCIÓN: Calcular progreso basado en el tiempo estimado
-      // Wan 2.2 Fast toma ~40 segundos, así que usamos una escala realista
-      const estimatedTime = 40; // segundos estimados
-      const elapsedTime = attempts; // segundos transcurridos
-      const progress = Math.min((elapsedTime / estimatedTime) * 90, 90); // Máximo 90% durante procesamiento
+      // Progreso estimado (Wan 2.2 Fast ~40s)
+      const estimatedTime = 40;
+      const elapsedTime = attempts;
+      const progress = Math.min((elapsedTime / estimatedTime) * 90, 90);
 
       onProgress?.({
         status: "processing",
-        message: `Generando video con Wan 2.2`,
+        message: "Generando video con Wan 2.2 Fast...",
         progress,
       });
 
-      // Esperar 1 segundo antes de volver a consultar
       await new Promise((resolve) => setTimeout(resolve, 1000));
       attempts++;
     }
@@ -118,7 +122,7 @@ class VideoGeneratorService {
   }
 
   /**
-   * Descarga el video generado y lo convierte a Blob
+   * Descarga el video generado
    */
   async downloadVideo(videoUrl) {
     const response = await fetch(videoUrl);
@@ -129,7 +133,7 @@ class VideoGeneratorService {
   }
 
   /**
-   * Genera un video a partir de una imagen usando Replicate (Wan 2.2 Fast)
+   * Genera un video a partir de una imagen
    */
   async generateVideoFromImage(imageUrl, onProgress) {
     try {
@@ -141,21 +145,21 @@ class VideoGeneratorService {
         progress: 5,
       });
 
-      // 1. Crear la predicción
+      // 1. Crear predicción
       const prediction = await this.createPrediction(imageUrl);
 
       console.log("✅ Predicción creada:", prediction.id);
 
       onProgress?.({
         status: "processing",
-        message: "Video en proceso de generación (esto toma ~40 segundos)...",
+        message: "Video en proceso (~40 segundos)...",
         progress: 10,
       });
 
-      // 2. Esperar a que termine
+      // 2. Esperar resultado
       const completedPrediction = await this.waitForPrediction(
         prediction.id,
-        onProgress,
+        onProgress
       );
 
       console.log("✅ Predicción completada");
@@ -166,16 +170,17 @@ class VideoGeneratorService {
         progress: 95,
       });
 
-      // 3. Descargar el video
-      const videoUrl = completedPrediction.output;
+      // 3. Obtener URL del video (array o string)
+      const videoUrl = Array.isArray(completedPrediction.output)
+        ? completedPrediction.output[0]
+        : completedPrediction.output;
+
       if (!videoUrl) {
-        throw new Error("No se generó URL del video");
+        throw new Error("No se recibió la URL del video");
       }
 
       const videoBlob = await this.downloadVideo(videoUrl);
       const localVideoUrl = URL.createObjectURL(videoBlob);
-
-      console.log("✅ Video descargado y listo");
 
       onProgress?.({
         status: "complete",
@@ -214,14 +219,16 @@ class VideoGeneratorService {
       formData.append("file", videoBlob);
       formData.append("upload_preset", cloudinaryConfig.uploadPreset);
 
-      // Generar nombre optimizado para el video
       const cleanTitle = productTitle
         .toLowerCase()
         .trim()
         .replace(/[^\w\s-]/g, "")
         .replace(/[\s_-]+/g, "-");
 
-      formData.append("public_id", `nomad-video-${cleanTitle}-${Date.now()}`);
+      formData.append(
+        "public_id",
+        `nomad-video-${cleanTitle}-${Date.now()}`
+      );
       formData.append("resource_type", "video");
 
       fetch(
@@ -229,9 +236,9 @@ class VideoGeneratorService {
         {
           method: "POST",
           body: formData,
-        },
+        }
       )
-        .then((response) => response.json())
+        .then((res) => res.json())
         .then((data) => {
           if (data.secure_url) {
             resolve(data.secure_url);
