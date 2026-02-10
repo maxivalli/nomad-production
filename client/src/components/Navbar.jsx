@@ -4,7 +4,7 @@ import { Instagram, Menu, X } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import PWAInstallButton from "./PWAInstallButton"; // ← NUEVO
 
-const Navbar = ({ onContactClick }) => {
+const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation(); // ← Agregar hook
@@ -25,56 +25,58 @@ const Navbar = ({ onContactClick }) => {
   }, [location.pathname]);
 
   // ← CORREGIDO: Helper para verificar si estamos en una ruta específica
-  const isCurrentPath = useCallback((path) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  }, [location.pathname]);
+  const isCurrentPath = useCallback(
+    (path) => {
+      return (
+        location.pathname === path || location.pathname.startsWith(`${path}/`)
+      );
+    },
+    [location.pathname],
+  );
 
-  const handleLinkClick = useCallback((item) => {
-    // 1. Disparar prompt si clickean "Contacto"
-    if (item === "Contacto" && onContactClick) {
-      onContactClick();
-    }
-
-    // 2. Caso especial: Retailers
-    if (item === "Retailers") {
-      if (isCurrentPath("/retailers")) {
-        // Ya estamos en Retailers, solo cerrar menú
+  const handleLinkClick = useCallback(
+    (item) => {
+      // 2. Caso especial: Retailers
+      if (item === "Retailers") {
+        if (isCurrentPath("/retailers")) {
+          setIsMenuOpen(false);
+          return;
+        }
+        navigate("/retailers");
         setIsMenuOpen(false);
         return;
       }
-      navigate("/retailers");
+
+      // 3. Navegación a secciones de la Home
+      const targetId = item.toLowerCase();
+
+      if (!isHome()) {
+        // No estamos en Home: navegar a Home primero
+        navigate("/", { state: { scrollTo: targetId } });
+      } else {
+        // Ya estamos en Home: hacer scroll directo
+        scrollToSection(targetId);
+      }
+
       setIsMenuOpen(false);
-      return;
-    }
-
-    // 3. Navegación a secciones de la Home
-    const targetId = item.toLowerCase();
-    
-    if (!isHome()) {
-      // No estamos en Home: navegar a Home primero
-      navigate("/", { state: { scrollTo: targetId } });
-    } else {
-      // Ya estamos en Home: hacer scroll directo
-      scrollToSection(targetId);
-    }
-
-    setIsMenuOpen(false);
-  }, [isHome, isCurrentPath, navigate, onContactClick]);
+    },
+    [isHome, isCurrentPath, navigate],
+  );
 
   // ← NUEVO: Función para hacer scroll a una sección
   const scrollToSection = useCallback((sectionId) => {
     // Mapeo de nombres de menú a IDs reales del DOM
     const idMap = {
-      "colecciones": "colecciones",
-      "manifiesto": "manifest", // ← Verificar que coincida con tu HTML
-      "packing": "packing",
-      "studio": "studio", // ← Verificar ID real
-      "tiendas": "stockists", // ← Verificar ID real
+      colecciones: "colecciones",
+      manifiesto: "manifest", // ← Verificar que coincida con tu HTML
+      packing: "packing",
+      studio: "studio", // ← Verificar ID real
+      tiendas: "stockists", // ← Verificar ID real
     };
 
     const targetId = idMap[sectionId] || sectionId;
     const element = document.getElementById(targetId);
-    
+
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     } else {
@@ -286,15 +288,6 @@ const Navbar = ({ onContactClick }) => {
                 </motion.button>
               ))}
 
-              {/* ← NUEVO: Botón de instalación PWA */}
-              <PWAInstallButton 
-                variant="menu"
-                onInstallComplete={() => {
-                  // Opcional: cerrar menú después de instalar
-                  setTimeout(() => setIsMenuOpen(false), 1000);
-                }}
-              />
-
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -308,6 +301,15 @@ const Navbar = ({ onContactClick }) => {
                   Staff Access
                 </Link>
               </motion.div>
+
+              {/* ← NUEVO: Botón de instalación PWA */}
+              <PWAInstallButton
+                variant="menu"
+                onInstallComplete={() => {
+                  // Opcional: cerrar menú después de instalar
+                  setTimeout(() => setIsMenuOpen(false), 1000);
+                }}
+              />
             </div>
           </motion.div>
         )}

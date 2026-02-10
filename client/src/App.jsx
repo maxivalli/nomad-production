@@ -143,14 +143,6 @@ function App() {
     };
   }, [loading, selectedItem]);
 
-  // 7. INSTALL PROMPT
-  const handleShowInstallPrompt = () => {
-    const hasSeenPrompt = localStorage.getItem("pwa-install-prompt-seen");
-    if (!hasSeenPrompt) {
-      setShowInstallPrompt(true);
-    }
-  };
-
   const handleCloseInstallPrompt = () => {
     setShowInstallPrompt(false);
     localStorage.setItem("pwa-install-prompt-seen", "true");
@@ -185,7 +177,7 @@ function App() {
       <BannerModal />
       
       <div className="bg-black text-white selection:bg-white selection:text-black">
-        <Navbar onContactClick={handleShowInstallPrompt} />
+        <Navbar />
 
         <main>
           <Hero />
