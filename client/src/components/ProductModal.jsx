@@ -201,49 +201,40 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  // ✅ MANEJO DEL BOTÓN "ATRÁS" FÍSICO / NAVEGADOR
-  useEffect(() => {
-    // 1. Al montar el modal, inyectamos un estado en el historial
+  // ✅ Control de botón atrás (Mobile UX)
+useEffect(() => {
+  // Solo si el item existe (modal abierto)
+  if (item) {
     window.history.pushState({ modalOpen: true }, "");
+  }
 
-    const handlePopState = () => {
-      // 2. Si el usuario presiona "atrás", cerramos el modal manualmente
-      // El 'onClose' ya debería encargarse de limpiar todo
-      onClose();
-    };
+  const handlePopState = (e) => {
+    // Si el usuario vuelve atrás, forzamos el cierre sin navegar
+    if (onClose) onClose();
+  };
 
-    // 3. Escuchamos el evento de retroceso
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      // 4. Limpieza: quitamos el listener
-      window.removeEventListener("popstate", handlePopState);
-
-      // 5. Si el modal se cierra por un botón (X) y no por el botón atrás,
-      // quitamos el estado que inyectamos para no ensuciar el historial
-      if (window.history.state?.modalOpen) {
-        window.history.back();
-      }
-    };
-  }, [onClose]);
-
-  // ✅ Delegar completamente el cierre al padre
-  const handleClose = useCallback(() => {
-    if (isClosing) return;
-    setIsClosing(true);
-
-    // Si el modal se cierra por clic en X o fuera,
-    // volvemos atrás en el historial para remover el estado {modalOpen: true}
+  window.addEventListener("popstate", handlePopState);
+  
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+    // Si el componente se desmonta por la X, limpiamos el pushState que sobró
     if (window.history.state?.modalOpen) {
       window.history.back();
     }
+  };
+}, [item, onClose]); // Solo se dispara cuando el item cambia
 
-    if (onClose) {
-      onClose();
-    }
-
-    setTimeout(() => setIsClosing(false), 300);
-  }, [isClosing, onClose]);
+  // ✅ Delegar completamente el cierre al padre
+  const handleClose = useCallback(() => {
+  if (isClosing) return;
+  setIsClosing(true);
+  
+  if (onClose) {
+    onClose(); // El useEffect se encargará del resto al desmontarse
+  }
+  
+  setTimeout(() => setIsClosing(false), 300);
+}, [isClosing, onClose]);
 
   // Determinar si mostrar loader
   const currentMedia = mediaItems[activeIdx];
