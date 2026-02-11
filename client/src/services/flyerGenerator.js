@@ -143,9 +143,9 @@ const drawCanvas = async (item, productImg, logoImg, overlayImg, width, height, 
   });
 };
 
-export const generateProductFlyer = async (item, optimizeUrl) => {
+// Agregamos 'selectedImg' como tercer parámetro
+export const generateProductFlyer = async (item, optimizeUrl, selectedImg = null) => {
   try {
-    // Intentamos cargar la fuente antes de empezar
     await document.fonts.load('900 italic 100px Inter');
     
     const [logoImg, overlayImg] = await Promise.all([
@@ -153,8 +153,12 @@ export const generateProductFlyer = async (item, optimizeUrl) => {
       loadImage("/overlay.png")
     ]);
     
-    const firstImage = Array.isArray(item.img) ? item.img[0] : item.img;
-    const productImageUrl = optimizeUrl ? optimizeUrl(firstImage) : firstImage;
+    // LÓGICA DE SELECCIÓN:
+    // Si viene selectedImg del modal, usamos esa. 
+    // Si no (fallback), usamos la primera del item.
+    const baseImage = selectedImg || (Array.isArray(item.img) ? item.img[0] : item.img);
+    
+    const productImageUrl = optimizeUrl ? optimizeUrl(baseImage) : baseImage;
     const productImg = await loadImage(productImageUrl);
 
     await drawCanvas(item, productImg, logoImg, overlayImg, 1080, 1350, "feed");

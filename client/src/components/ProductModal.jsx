@@ -48,16 +48,17 @@ const ProductModal = ({ item, onClose }) => {
   // ✅ SOLUCIÓN SIMPLIFICADA: Solo bloquear scroll sin position fixed
   useEffect(() => {
     // Guardar ancho actual para prevenir shift por scrollbar
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-    
+    const scrollBarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
     // Bloquear scroll
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     document.body.style.paddingRight = `${scrollBarWidth}px`;
-    
+
     return () => {
       // Restaurar scroll
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
     };
   }, []);
 
@@ -87,16 +88,16 @@ const ProductModal = ({ item, onClose }) => {
 
     if (!isCurrentVideo) {
       const imageUrl = optimizeCloudinaryUrl(currentMedia);
-      
+
       if (loadedImages.has(imageUrl)) {
         return;
       }
 
       const img = new Image();
       img.src = imageUrl;
-      
+
       img.onload = () => {
-        setLoadedImages(prev => new Set([...prev, imageUrl]));
+        setLoadedImages((prev) => new Set([...prev, imageUrl]));
       };
     }
   }, [activeIdx, mediaItems, loadedImages]);
@@ -143,7 +144,7 @@ const ProductModal = ({ item, onClose }) => {
     (e) => {
       e.stopPropagation();
       const slug = generateSlug(item.title);
-      const shareUrl = `${window.location.origin}/producto/${slug}`;
+      const shareUrl = `${window.location.origin}/share/${slug}`;
 
       if (navigator.share) {
         navigator
@@ -172,11 +173,25 @@ const ProductModal = ({ item, onClose }) => {
   const handleGenerateFlyer = async (e) => {
     e.stopPropagation();
     try {
-      await generateProductFlyer(item, optimizeCloudinaryUrl);
+      // 1. Identificamos el medio actual
+      const currentMedia = mediaItems[activeIdx];
+      let imageToUse;
+
+      // 2. Si es un objeto de video, usamos la primera imagen del array como backup
+      if (typeof currentMedia === "object" && currentMedia.type === "video") {
+        imageToUse = Array.isArray(item.img) ? item.img[0] : item.img;
+      } else {
+        // Si es una imagen (string), usamos esa misma
+        imageToUse = currentMedia;
+      }
+
+      // 3. Pasamos la imagen específica al generador
+      await generateProductFlyer(item, optimizeCloudinaryUrl, imageToUse);
+
       toast.success("Flyers generados en la carpeta descargas");
     } catch (error) {
-      console.error('Error al generar flyer:', error);
-      alert('Error al generar el flyer. Por favor intenta nuevamente.');
+      console.error("Error al generar flyer:", error);
+      toast.error("Error al generar el flyer");
     }
   };
 
@@ -190,18 +205,21 @@ const ProductModal = ({ item, onClose }) => {
   const handleClose = useCallback(() => {
     if (isClosing) return;
     setIsClosing(true);
-    
+
     if (onClose) {
       onClose();
     }
-    
+
     setTimeout(() => setIsClosing(false), 300);
   }, [isClosing, onClose]);
 
   // Determinar si mostrar loader
   const currentMedia = mediaItems[activeIdx];
-  const isCurrentVideo = typeof currentMedia === "object" && currentMedia.type === "video";
-  const currentImageUrl = isCurrentVideo ? null : optimizeCloudinaryUrl(currentMedia);
+  const isCurrentVideo =
+    typeof currentMedia === "object" && currentMedia.type === "video";
+  const currentImageUrl = isCurrentVideo
+    ? null
+    : optimizeCloudinaryUrl(currentMedia);
   const showLoader = !isCurrentVideo && !loadedImages.has(currentImageUrl);
 
   return (
@@ -317,7 +335,7 @@ const ProductModal = ({ item, onClose }) => {
                       loading={isActive ? "eager" : "lazy"}
                       onLoad={() => {
                         const url = optimizeCloudinaryUrl(mediaUrl);
-                        setLoadedImages(prev => new Set([...prev, url]));
+                        setLoadedImages((prev) => new Set([...prev, url]));
                       }}
                     />
                   )}
@@ -578,7 +596,6 @@ const ProductModal = ({ item, onClose }) => {
       </div>
       <toast.ToastContainer />
     </motion.div>
-    
   );
 };
 
