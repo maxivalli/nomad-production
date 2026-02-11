@@ -201,40 +201,17 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  // ✅ Control de botón atrás (Mobile UX)
-useEffect(() => {
-  // Solo si el item existe (modal abierto)
-  if (item) {
-    window.history.pushState({ modalOpen: true }, "");
-  }
-
-  const handlePopState = (e) => {
-    // Si el usuario vuelve atrás, forzamos el cierre sin navegar
-    if (onClose) onClose();
-  };
-
-  window.addEventListener("popstate", handlePopState);
-  
-  return () => {
-    window.removeEventListener("popstate", handlePopState);
-    // Si el componente se desmonta por la X, limpiamos el pushState que sobró
-    if (window.history.state?.modalOpen) {
-      window.history.back();
-    }
-  };
-}, [item, onClose]); // Solo se dispara cuando el item cambia
-
   // ✅ Delegar completamente el cierre al padre
   const handleClose = useCallback(() => {
-  if (isClosing) return;
-  setIsClosing(true);
-  
-  if (onClose) {
-    onClose(); // El useEffect se encargará del resto al desmontarse
-  }
-  
-  setTimeout(() => setIsClosing(false), 300);
-}, [isClosing, onClose]);
+    if (isClosing) return;
+    setIsClosing(true);
+
+    if (onClose) {
+      onClose();
+    }
+
+    setTimeout(() => setIsClosing(false), 300);
+  }, [isClosing, onClose]);
 
   // Determinar si mostrar loader
   const currentMedia = mediaItems[activeIdx];
