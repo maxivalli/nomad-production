@@ -65,7 +65,7 @@ const drawCanvas = async (item, productImg, logoImg, overlayImg, width, height, 
   const firstWord = words[0];
   const restOfTitle = words.slice(1).join(" ");
   
-  let fontSize = isStory ? 170 : 150; 
+  let fontSize = isStory ? 120 : 100; 
   const maxWidth = width * 0.94;
   const textY = height - (height * 0.18); 
 
@@ -85,10 +85,6 @@ const drawCanvas = async (item, productImg, logoImg, overlayImg, width, height, 
     ctx.shadowBlur = 30;
     ctx.shadowOffsetY = 10;
 
-    // Dibujamos el texto dos veces en la misma posición. 
-    // Esto en Canvas ayuda a que los bordes se vean más "densos" sin usar stroke.
-    ctx.fillText(text, x, y);
-    ctx.shadowColor = "transparent"; // La segunda capa sin sombra para no ensuciar
     ctx.fillText(text, x, y);
     
     ctx.restore();
