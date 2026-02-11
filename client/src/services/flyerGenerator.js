@@ -81,7 +81,7 @@ const drawCanvas = async (item, productImg, logoImg, overlayImg, width, height, 
     ctx.fillStyle = color;
     
     // Sombra para despegar del fondo
-    ctx.shadowColor = "rgba(0,0,0,0.9)";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
     ctx.shadowBlur = 30;
     ctx.shadowOffsetY = 10;
 
