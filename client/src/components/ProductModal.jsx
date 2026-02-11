@@ -44,8 +44,45 @@ const ProductModal = ({ item, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const dragThreshold = 50;
   const toast = useToast();
+  const closedByPopStateRef = useRef(false); // ✅ Detectar si se cerró por botón atrás
 
-  // ✅ SOLUCIÓN SIMPLIFICADA: Solo bloquear scroll sin position fixed
+  // ✅ SOLUCIÓN MEJORADA: Gestionar historial del navegador con React Router
+  useEffect(() => {
+    // Agregar entrada al historial SOLO si no estamos en una ruta de producto
+    // (React Router ya maneja la navegación a /producto/:slug)
+    const currentPath = window.location.pathname;
+    const isProductRoute = currentPath.startsWith('/producto/') || currentPath.startsWith('/share/');
+    
+    // Si NO estamos en una ruta de producto, agregar entrada al historial
+    if (!isProductRoute) {
+      window.history.pushState({ modalOpen: true }, '');
+    }
+
+    // Escuchar evento popstate (botón atrás del navegador)
+    const handlePopState = (event) => {
+      // Marcar que se cerró por popstate
+      closedByPopStateRef.current = true;
+      
+      // Cerrar el modal
+      if (onClose) {
+        onClose();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      
+      // Si el modal se cierra programáticamente (botón X, no por botón atrás)
+      // Y NO estamos en una ruta de producto, remover la entrada del historial
+      if (!closedByPopStateRef.current && !isProductRoute && window.history.state?.modalOpen) {
+        window.history.back();
+      }
+    };
+  }, [onClose]);
+
+  // ✅ Bloquear scroll sin position fixed
   useEffect(() => {
     // Guardar ancho actual para prevenir shift por scrollbar
     const scrollBarWidth =
@@ -144,7 +181,7 @@ const ProductModal = ({ item, onClose }) => {
     (e) => {
       e.stopPropagation();
       const slug = generateSlug(item.title);
-      const shareUrl = `${window.location.origin}/share/${slug}`;
+      const shareUrl = `${window.location.origin}/producto/${slug}`;
 
       if (navigator.share) {
         navigator
@@ -155,10 +192,10 @@ const ProductModal = ({ item, onClose }) => {
           .catch(console.error);
       } else {
         navigator.clipboard.writeText(shareUrl);
-        alert("Enlace de producto copiado al portapapeles");
+        toast.success("Enlace copiado al portapapeles");
       }
     },
-    [item, generateSlug],
+    [item, generateSlug, toast],
   );
 
   const handlePurchase = (e) => {

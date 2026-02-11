@@ -94,15 +94,16 @@ function App() {
     }
   }, [slug, location.pathname, products, productsLoading, navigate]);
 
-  // 3. ✅ MEJORADO: Cierre del modal con preservación del scroll
+  // 3. ✅ MEJORADO: Cierre del modal - React Router maneja la navegación
   const handleCloseModal = useCallback(() => {
     setSelectedItem(null);
     
     // Si la URL tiene /producto/ o /share/, volver a home
     if (location.pathname.startsWith("/producto/") || location.pathname.startsWith("/share/")) {
-      // Usar replace para que el botón "atrás" del navegador no vuelva al modal
+      // Navegar a home - esto disparará el popstate en ProductModal
       navigate("/", { replace: true });
     }
+    // Si no estamos en una ruta de producto, el ProductModal manejará su propio historial
   }, [location.pathname, navigate]);
 
   // 4. MANEJAR ESCAPE KEY PARA CERRAR MODAL
