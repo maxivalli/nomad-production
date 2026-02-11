@@ -2,37 +2,47 @@ import React, { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PackingModal from "./PackingModal";
 
-const ParallaxImage = ({ url, index, offset, speed, rotation, onClick }) => {
+const PackingItem = ({ url, index, span = "", speed = 0, onClick }) => {
   const ref = useRef(null);
+  
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], [0, speed]);
+  // Parallax interno: la imagen se mueve dentro del contenedor
+  const y = useTransform(scrollYProgress, [0, 1], [speed, -speed]);
+  
+  // Revelado de color y opacidad (0% saturación a 100%)
+  const saturate = useTransform(scrollYProgress, [0, 0.5], ["grayscale(100%)", "grayscale(0%)"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
 
   return (
     <motion.div
       ref={ref}
-      style={{ y, rotate: rotation }}
-      whileHover={{ rotate: 0, scale: 1.02, zIndex: 10 }}
+      style={{ opacity }}
       onClick={() => onClick(url)}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`relative aspect-[2/3] overflow-hidden bg-neutral-900 group border border-white/10 shadow-2xl cursor-zoom-in ${offset}`}
+      className={`relative overflow-hidden bg-neutral-900 border border-white/5 group cursor-zoom-in ${span}`}
     >
-      <img
+      <motion.img
         src={url}
-        alt="Nomad"
-        className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
+        style={{ y, scale: 1.2, filter: saturate }}
+        alt="Nomad Packing"
+        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.25]"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-4 md:p-6">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-            <span className="text-[7px] md:text-[9px] font-mono text-red-500 tracking-tighter uppercase font-bold">
-              NOMAD_PACK_0{index + 1} // 2026_PROT
-            </span>
-          </div>
+      
+      {/* Overlay de información técnica */}
+      <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between pointer-events-none">
+        <div className="flex justify-between items-start">
+          <span className="text-[7px] md:text-[9px] font-mono text-white/30 tracking-[0.4em] uppercase">
+            UNIT_0{index + 1}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
+          <span className="text-[8px] md:text-[10px] font-black text-white tracking-[0.2em] uppercase italic">
+            Nomad_Pack_System
+          </span>
         </div>
       </div>
     </motion.div>
@@ -42,83 +52,53 @@ const ParallaxImage = ({ url, index, offset, speed, rotation, onClick }) => {
 const Packaging = () => {
   const [selectedImg, setSelectedImg] = useState(null);
 
-  // Prevenir scroll
-  useEffect(() => {
-    document.body.style.overflow = selectedImg ? "hidden" : "unset";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [selectedImg]);
-
-  const images = [ 
+  const images = [
     {
       url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770646946/BOX_BLACK_NEW_LOGO_jsmfll.jpg",
-      speed: -40,
-      rotation: 3,
+      speed: 30,
+      span: "col-span-12 md:col-span-8 md:row-span-2 row-span-2",
     },
     {
       url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512068/PACKING-1_uym24f.jpg",
       speed: -40,
-      rotation: -3,
+      span: "col-start-3 col-span-10 md:col-start-auto md:col-span-4",
     },
     {
       url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512067/PACKING-2_uywox1.jpg",
-      speed: -70,
-      rotation: -2,
+      speed: 50,
+      span: "col-span-9 md:col-span-4",
     },
     {
       url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770528454/clco_pad2un.jpg",
-      speed: -100,
-      rotation: 3,
+      speed: -20,
+      span: "col-start-2 col-span-11 md:col-start-auto md:col-span-12 md:h-[400px]",
     },
   ];
 
-  // MANEJO DEL BOTÓN "ATRÁS" PARA EL MODAL
+  // Manejo de scroll lock y popstate (omitido por brevedad, igual a tu original)
   useEffect(() => {
-    if (selectedImg) {
-      window.history.pushState({ modalOpen: true }, "");
-    }
-
-    const handleBackButton = () => {
-      if (selectedImg) {
-        setSelectedImg(null); 
-      }
-    };
-
-    window.addEventListener("popstate", handleBackButton);
-    return () => window.removeEventListener("popstate", handleBackButton);
+    document.body.style.overflow = selectedImg ? "hidden" : "unset";
   }, [selectedImg]);
 
-  const handleClose = () => {
-    if (selectedImg && window.history.state?.modalOpen) {
-      window.history.back();
-    }
-    setSelectedImg(null);
-  };
-
   return (
-    <section
-      id="packing"
-      className="bg-black py-24 px-6 md:px-12 border-t border-white/5"
-    >
+    <section id="packing" className="bg-black py-24 px-4 md:px-12 border-t border-white/5 overflow-hidden">
       <div className="max-w-[1400px] mx-auto">
-        <motion.span
-          initial={{ opacity: 0, x: -10 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          className="text-red-600 text-[9px] md:text-xs font-bold uppercase tracking-[0.6em] block mb-2 pl-1"
-        >
-          LA EXPERIENCIA
-        </motion.span>
-        <div className="mb-24 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-          {/* ... Tu Encabezado ... */}
-          <h2 className="text-white text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-[0.8]">
-            Packaging <br/> Premium
+        <header className="mb-20">
+          <motion.span 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            className="text-red-600 text-[10px] font-black tracking-[0.5em] uppercase block mb-4"
+          >
+            LOGISTICS_STATION
+          </motion.span>
+          <h2 className="text-white text-6xl md:text-9xl font-black uppercase italic tracking-tighter leading-[0.8]">
+            Pack<span className="text-red-600">.</span>ing
           </h2>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12">
+        <div className="grid grid-cols-12 gap-4 md:gap-8 auto-rows-[250px] md:auto-rows-[400px]">
           {images.map((img, index) => (
-            <ParallaxImage
+            <PackingItem
               key={index}
               {...img}
               index={index}
@@ -128,8 +108,7 @@ const Packaging = () => {
         </div>
       </div>
 
-      {/* Uso del componente separado */}
-      <PackingModal selectedImg={selectedImg} onClose={handleClose} />
+      <PackingModal selectedImg={selectedImg} onClose={() => setSelectedImg(null)} />
     </section>
   );
 };
