@@ -8,7 +8,7 @@ import Retailers from "./views/Retailers.jsx";
 import PreLoader from "./components/PreLoader.jsx";
 import api from "./services/api.js";
 import { Loader2 } from "lucide-react";
-import { PWAProvider } from "./hooks/usePWAInstall.jsx"; // ← NUEVO
+import { PWAProvider } from "./hooks/usePWAInstall.jsx";
 import "./index.css";
 
 const AdminPanel = lazy(() => import("./views/AdminPanel.jsx"));
@@ -16,9 +16,8 @@ const AdminPanel = lazy(() => import("./views/AdminPanel.jsx"));
 // SW solo en producción - AJUSTAR RUTA PARA BROWSER ROUTER
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
-    // En BrowserRouter, el SW debe estar en la raíz absoluta
     navigator.serviceWorker
-      .register("/sw.js") // ← Asegúrate que sw.js esté en public/sw.js
+      .register("/sw.js")
       .then((reg) => console.log("SW registrado:", reg.scope))
       .catch((err) => console.error("Error SW:", err));
   });
@@ -69,11 +68,38 @@ const PageLoader = () => (
   </div>
 );
 
+// ✅ SOLUCIÓN: ScrollToTop debe ignorar las rutas de productos
 const ScrollToTop = () => {
   const { pathname } = useLocation();
+  const prevPathnameRef = useRef(pathname);
+
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const prevPath = prevPathnameRef.current;
+    const currentPath = pathname;
+
+    // NO hacer scroll si:
+    // 1. Vamos de "/" a "/producto/..." (abriendo modal)
+    // 2. Vamos de "/producto/..." a "/" (cerrando modal)
+    // 3. Vamos de "/producto/..." a "/producto/..." (cambiando producto)
+    const isProductRoute = currentPath.startsWith('/producto/') || currentPath.startsWith('/share/');
+    const wasProductRoute = prevPath.startsWith('/producto/') || prevPath.startsWith('/share/');
+    const isHome = currentPath === '/';
+    const wasHome = prevPath === '/';
+
+    // Solo hacer scroll to top en cambios de página reales (no modales)
+    const shouldScrollToTop = 
+      !isProductRoute && // No estamos yendo a un producto
+      !wasProductRoute && // No venimos de un producto
+      !(isHome && wasProductRoute) && // No estamos cerrando un modal
+      !(wasHome && isProductRoute); // No estamos abriendo un modal
+
+    if (shouldScrollToTop) {
+      window.scrollTo(0, 0);
+    }
+
+    prevPathnameRef.current = currentPath;
   }, [pathname]);
+
   return null;
 };
 
@@ -102,7 +128,7 @@ const Root = () => {
   }, []);
 
   return (
-    <PWAProvider> {/* ← NUEVO: Envuelve todo con PWAProvider */}
+    <PWAProvider>
       <BrowserRouter>
         <ScrollToTop />
         {showLoader && <PreLoader />}
@@ -110,6 +136,7 @@ const Root = () => {
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/producto/:slug" element={<App />} />
+          <Route path="/share/:slug" element={<App />} />
           <Route path="/login" element={<Login />} />
           <Route path="/retailers" element={<Retailers />} />
           <Route

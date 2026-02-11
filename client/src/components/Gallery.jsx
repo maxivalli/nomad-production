@@ -50,7 +50,7 @@ const Gallery = ({ items, setSelectedItem }) => {
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
     const splitUrl = url.split("/upload/");
-    const optimizationParams = "f_auto,q_auto,w_1000";
+    const optimizationParams = "f_auto,q_auto,w_1200";
     return `${splitUrl[0]}/upload/${optimizationParams}/${splitUrl[1]}`;
   };
 
@@ -158,7 +158,8 @@ const Gallery = ({ items, setSelectedItem }) => {
       if (targetRef.current) {
         const isMobile = window.innerWidth < 768;
         const containerWidth = window.innerWidth;
-        const cardWidth = isMobile ? 300 : 400;
+        // IMPLEMENTACIÓN: 350px para móvil, 490px para desktop
+        const cardWidth = isMobile ? 350 : 490;
         const gap = isMobile ? 40 : 64;
         const paddingSide = isMobile ? 24 : 48;
 
@@ -260,7 +261,8 @@ const Gallery = ({ items, setSelectedItem }) => {
                   whileHover={{ rotate: 0, scale: 1.03, y: -8, zIndex: 50 }}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   className="group relative p-3 pb-16 md:p-4 md:pb-20 flex-none bg-[#fbfbfb] shrink-0 cursor-pointer shadow-2xl border border-neutral-200"
-                  style={{ width: window.innerWidth < 768 ? "290px" : "390px" }}
+                  // IMPLEMENTACIÓN: Ancho de 350px para móvil, 490px para desktop
+                  style={{ width: window.innerWidth < 768 ? "350px" : "490px" }}
                 >
                   <Tape position={index % 2 === 0 ? "topLeft" : "topRight"} />
                   <div className="relative aspect-square overflow-hidden bg-neutral-200">

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // ← AGREGAR
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useToast } from "../components/Toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -9,7 +9,9 @@ import {
   ShoppingBag,
   Share2,
   Film,
+  Download,
 } from "lucide-react";
+import { generateProductFlyer } from "../services/flyerGenerator";
 
 // --- COMPONENTE INTERNO PARA EL EFECTO DE CINTA ---
 const Tape = ({ position = "top" }) => {
@@ -36,26 +38,39 @@ const Tape = ({ position = "top" }) => {
 };
 
 const ProductModal = ({ item, onClose }) => {
-  const navigate = useNavigate(); // ← AGREGAR HOOK
-  const location = useLocation(); // ← AGREGAR HOOK
   const [activeIdx, setActiveIdx] = useState(0);
-  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [loadedImages, setLoadedImages] = useState(new Set());
   const [showFullText, setShowFullText] = useState(false);
-  const [isClosing, setIsClosing] = useState(false); // ← Prevenir doble cierre
+  const [isClosing, setIsClosing] = useState(false);
   const dragThreshold = 50;
+  const toast = useToast();
+
+  // ✅ SOLUCIÓN SIMPLIFICADA: Solo bloquear scroll sin position fixed
+  useEffect(() => {
+    // Guardar ancho actual para prevenir shift por scrollbar
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    // Bloquear scroll
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+    
+    return () => {
+      // Restaurar scroll
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, []);
 
   if (!item) return null;
 
-  // Combinar imágenes y video (si existe) en un solo array de medios
+  // Combinar imágenes y video
   const baseImages = Array.isArray(item.img) ? item.img : [item.img];
   const mediaItems = [...baseImages];
 
-  // Agregar el video al final si existe
   if (item.video_url) {
     mediaItems.push({ type: "video", url: item.video_url });
   }
 
-  // Helper: Generar slug consistente
   const generateSlug = useCallback((title) => {
     return title
       .toLowerCase()
@@ -64,32 +79,27 @@ const ProductModal = ({ item, onClose }) => {
       .replace(/\s+/g, "-");
   }, []);
 
+  // ✅ Pre-cargar imágenes para evitar flasheos
   useEffect(() => {
     const currentMedia = mediaItems[activeIdx];
     const isCurrentVideo =
       typeof currentMedia === "object" && currentMedia.type === "video";
 
-    if (isCurrentVideo) {
-      const timer = setTimeout(() => {
-        setIsImageLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setIsImageLoading(true);
-    }
-  }, [activeIdx]);
+    if (!isCurrentVideo) {
+      const imageUrl = optimizeCloudinaryUrl(currentMedia);
+      
+      if (loadedImages.has(imageUrl)) {
+        return;
+      }
 
-  // ← CORREGIDO: Manejar popstate para cerrar modal al usar botón atrás del navegador
-  useEffect(() => {
-    // Si la URL ya no tiene producto o share, forzamos el cierre del modal
-    const isProductRoute =
-      location.pathname.includes("/producto/") ||
-      location.pathname.includes("/share/");
-
-    if (!isProductRoute && !isClosing) {
-      onClose();
+      const img = new Image();
+      img.src = imageUrl;
+      
+      img.onload = () => {
+        setLoadedImages(prev => new Set([...prev, imageUrl]));
+      };
     }
-  }, [location.pathname, onClose, isClosing]);
+  }, [activeIdx, mediaItems, loadedImages]);
 
   const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes("cloudinary.com")) return url;
@@ -129,13 +139,11 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  // ← CORREGIDO: Usar URL canónica /producto/ para compartir (mejor SEO)
   const handleShare = useCallback(
     (e) => {
       e.stopPropagation();
       const slug = generateSlug(item.title);
-      // Usar /producto/ en lugar de /share/ para compartir (más limpio)
-      const shareUrl = `${window.location.origin}/share/${slug}`;
+      const shareUrl = `${window.location.origin}/producto/${slug}`;
 
       if (navigator.share) {
         navigator
@@ -161,33 +169,40 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
+  const handleGenerateFlyer = async (e) => {
+    e.stopPropagation();
+    try {
+      await generateProductFlyer(item, optimizeCloudinaryUrl);
+      toast.success("Flyers generados en la carpeta descargas");
+    } catch (error) {
+      console.error('Error al generar flyer:', error);
+      alert('Error al generar el flyer. Por favor intenta nuevamente.');
+    }
+  };
+
   const handleGlobalClick = () => {
     if (showFullText) {
       setShowFullText(false);
     }
   };
 
+  // ✅ Delegar completamente el cierre al padre
   const handleClose = useCallback(() => {
     if (isClosing) return;
     setIsClosing(true);
+    
+    if (onClose) {
+      onClose();
+    }
+    
+    setTimeout(() => setIsClosing(false), 300);
+  }, [isClosing, onClose]);
 
-    if (onClose) onClose();
-
-    navigate("/", { replace: true });
-
-    setTimeout(() => setIsClosing(false), 500);
-  }, [isClosing, navigate, onClose]);
-
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") {
-     
-        handleClose();
-      }
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [handleClose]);
+  // Determinar si mostrar loader
+  const currentMedia = mediaItems[activeIdx];
+  const isCurrentVideo = typeof currentMedia === "object" && currentMedia.type === "video";
+  const currentImageUrl = isCurrentVideo ? null : optimizeCloudinaryUrl(currentMedia);
+  const showLoader = !isCurrentVideo && !loadedImages.has(currentImageUrl);
 
   return (
     <motion.div
@@ -198,11 +213,12 @@ const ProductModal = ({ item, onClose }) => {
       className="fixed inset-0 h-[100dvh] z-[100] flex items-center justify-center bg-black overflow-hidden touch-none select-none"
     >
       <AnimatePresence>
-        {isImageLoading && (
+        {showLoader && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-10 z-[140] pointer-events-none"
           >
             <Loader2
@@ -270,12 +286,6 @@ const ProductModal = ({ item, onClose }) => {
                         muted
                         playsInline
                         draggable="false"
-                        onLoadedData={() => {
-                          if (isActive) setIsImageLoading(false);
-                        }}
-                        onPlaying={() => {
-                          if (isActive) setIsImageLoading(false);
-                        }}
                         onClick={(e) => {
                           if (isActive) {
                             e.stopPropagation();
@@ -304,16 +314,10 @@ const ProductModal = ({ item, onClose }) => {
                       className="w-full h-full object-cover"
                       alt={`${item.title} - ${index}`}
                       draggable="false"
+                      loading={isActive ? "eager" : "lazy"}
                       onLoad={() => {
-                        if (isActive) setIsImageLoading(false);
-                      }}
-                      onError={() => {
-                        if (isActive) setIsImageLoading(false);
-                      }}
-                      ref={(el) => {
-                        if (el && el.complete && isActive) {
-                          setIsImageLoading(false);
-                        }
+                        const url = optimizeCloudinaryUrl(mediaUrl);
+                        setLoadedImages(prev => new Set([...prev, url]));
                       }}
                     />
                   )}
@@ -406,7 +410,7 @@ const ProductModal = ({ item, onClose }) => {
           e.stopPropagation();
           handleClose();
         }}
-        disabled={isClosing} // ← Deshabilitar mientras se cierra
+        disabled={isClosing}
         className="absolute top-6 right-6 md:top-8 md:right-8 z-[130] text-white/50 hover:text-white transition-colors p-4 disabled:opacity-50"
       >
         <X size={42} strokeWidth={1} />
@@ -556,10 +560,25 @@ const ProductModal = ({ item, onClose }) => {
                 <Share2 size={14} className="text-red-600 md:w-4 md:h-4" />
               </div>
             </button>
+
+            <button
+              onClick={handleGenerateFlyer}
+              className="group relative flex items-center justify-center gap-2 bg-transparent border border-white/20 px-6 py-3 md:px-8 md:py-3 overflow-hidden transition-all active:scale-95"
+            >
+              <div className="absolute inset-0 bg-white/10 translate-y-[101%] group-hover:translate-y-0 transition-transform duration-300" />
+              <div className="relative z-10 flex items-center gap-2">
+                <span className="text-white font-black italic uppercase tracking-tighter text-[10px] md:text-sm">
+                  FLYER
+                </span>
+                <Download size={14} className="text-red-600 md:w-4 md:h-4" />
+              </div>
+            </button>
           </div>
         </motion.div>
       </div>
+      <toast.ToastContainer />
     </motion.div>
+    
   );
 };
 

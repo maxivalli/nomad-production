@@ -6,19 +6,24 @@ const Hero = () => {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [collectionName, setCollectionName] = useState("LOADING_PROTOCOL");
   const [timeLeft, setTimeLeft] = useState({
-    dias: "00", horas: "00", minutos: "00", segundos: "00",
+    dias: "00",
+    horas: "00",
+    minutos: "00",
+    segundos: "00",
   });
   const [targetDateLabel, setTargetDateLabel] = useState("SYNC_PENDING...");
-  
+
   // ✅ NUEVO: Estado para el video dinámico
   const [videoSrc, setVideoSrc] = useState("");
 
   useEffect(() => {
     // Función para definir qué video cargar
     const handleVideoSrc = () => {
-      const desktopVideo = "https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,vc_vp9,w_1280/v1770525214/8230588-hd_1920_1080_30fps_bovbcy.mp4";
-      const mobileVideo = "https://res.cloudinary.com/det2xmstl/video/upload/v1770629236/8230667-sd_540_960_30fps_i8cpsn.mp4";
-      
+      const desktopVideo =
+        "https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,vc_vp9,w_1280/v1770767705/5561635-hd_1280_720_25fps_acotbx.mp4";
+      const mobileVideo =
+        "https://res.cloudinary.com/det2xmstl/video/upload/f_auto,q_auto,vc_vp9,w_1280/v1770767705/5561635-hd_1280_720_25fps_acotbx.mp4";
+
       // Si el ancho es menor a 768px (móvil/tablet vertical), cargamos el video vertical
       if (window.innerWidth < 768) {
         setVideoSrc(mobileVideo);
@@ -40,7 +45,20 @@ const Hero = () => {
 
         if (dataDate.date) {
           const [y, m, d] = dataDate.date.split("-");
-          const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+          const meses = [
+            "ENERO",
+            "FEBRERO",
+            "MARZO",
+            "ABRIL",
+            "MAYO",
+            "JUNIO",
+            "JULIO",
+            "AGOSTO",
+            "SEPTIEMBRE",
+            "OCTUBRE",
+            "NOVIEMBRE",
+            "DICIEMBRE",
+          ];
           setTargetDateLabel(`${d}_${meses[parseInt(m) - 1]}_${y}`);
           const targetTime = new Date(`${dataDate.date}T00:00:00`).getTime();
           startTimer(targetTime);
@@ -63,10 +81,17 @@ const Hero = () => {
         const diferencia = targetTime - ahora;
         if (diferencia < 0) {
           clearInterval(intervalo);
-          setTimeLeft({ dias: "00", horas: "00", minutos: "00", segundos: "00" });
+          setTimeLeft({
+            dias: "00",
+            horas: "00",
+            minutos: "00",
+            segundos: "00",
+          });
         } else {
           const d = Math.floor(diferencia / (1000 * 60 * 60 * 24));
-          const h = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const h = Math.floor(
+            (diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          );
           const m = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
           const s = Math.floor((diferencia % (1000 * 60)) / 1000);
           setTimeLeft({
@@ -95,8 +120,14 @@ const Hero = () => {
               className="absolute inset-0 z-20 flex items-center justify-center bg-black"
             >
               <div className="flex flex-col items-center gap-4">
-                <Loader2 className="text-red-600 animate-spin opacity-40" size={48} strokeWidth={1} />
-                <span className="text-white/20 text-[8px] tracking-[0.5em] font-mono">BUFFERING_NOMAD_STREAM</span>
+                <Loader2
+                  className="text-red-600 animate-spin opacity-40"
+                  size={48}
+                  strokeWidth={1}
+                />
+                <span className="text-white/20 text-[8px] tracking-[0.5em] font-mono">
+                  BUFFERING_NOMAD_STREAM
+                </span>
               </div>
             </motion.div>
           )}
@@ -111,10 +142,10 @@ const Hero = () => {
             muted
             playsInline
             onCanPlayThrough={() => setVideoLoaded(true)}
-            className={`w-full h-full object-cover grayscale brightness-[0.5] transition-opacity duration-[1500ms] ease-in-out ${
+            className={`w-full h-full object-cover brightness-[0.8] grayscale contrast-[1.2] transition-opacity duration-[1500ms] ease-in-out ${
               videoLoaded ? "opacity-90" : "opacity-0"
             }`}
-          > 
+          >
             <source src={videoSrc} type="video/mp4" />
           </video>
         )}
@@ -150,10 +181,10 @@ const Hero = () => {
       </div>
 
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={videoLoaded ? { opacity: 1 } : {}}
+        initial={{ opacity: 0, scale: 0.7 }} 
+        animate={videoLoaded ? { opacity: 1, scale: 0.7 } : {}}
         transition={{ delay: 0.5, duration: 1 }}
-        className="relative z-10 pb-10 mb-20"
+        className="relative z-10 pb-10 mb-20 origin-center" 
       >
         <div className="flex flex-col items-center gap-5">
           <div className="flex items-center gap-3">
