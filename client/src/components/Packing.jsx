@@ -54,22 +54,22 @@ const Packaging = () => {
 
   const images = [
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770646946/BOX_BLACK_NEW_LOGO_jsmfll.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770817019/BOX_FIN_azqs9k.jpg",
       speed: 30,
       span: "col-span-12 md:col-span-8 md:row-span-2 row-span-2",
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512068/PACKING-1_uym24f.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770512068/PACKING-1_uym24f.jpg",
       speed: -40,
       span: "col-start-3 col-span-10 md:col-start-auto md:col-span-4",
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770512067/PACKING-2_uywox1.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770512067/PACKING-2_uywox1.jpg",
       speed: 50,
       span: "col-span-9 md:col-span-4",
     },
     {
-      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto,w_800/v1770528454/clco_pad2un.jpg",
+      url: "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770815939/calco2_h0at8x.jpg",
       speed: -20,
       span: "col-start-2 col-span-11 md:col-start-auto md:col-span-12 md:h-[400px]",
     },
