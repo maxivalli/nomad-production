@@ -1,16 +1,63 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
-// Cambiamos el nombre interno para que coincida con la exportación y el uso
 const PackingModal = ({ selectedImg, onClose }) => {
+  const closedByPopStateRef = useRef(false);
+
+  // ✅ Manejo del historial del navegador
+  useEffect(() => {
+    if (!selectedImg) return;
+
+    // Agregar entrada al historial cuando se abre el modal
+    window.history.pushState({ packingModalOpen: true }, '');
+
+    // Escuchar el botón atrás del navegador
+    const handlePopState = () => {
+      closedByPopStateRef.current = true;
+      onClose();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      
+      // Si el modal se cerró programáticamente (no por botón atrás)
+      // remover la entrada del historial
+      if (!closedByPopStateRef.current && window.history.state?.packingModalOpen) {
+        window.history.back();
+      }
+    };
+  }, [selectedImg, onClose]);
+
+  // ✅ Manejo de tecla Escape
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && selectedImg) {
+        onClose();
+      }
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
+  }, [selectedImg, onClose]);
+
+  // ✅ Bloquear scroll del body
+  useEffect(() => {
+    if (selectedImg) {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    };
+  }, [selectedImg]);
 
   return (
     <AnimatePresence>

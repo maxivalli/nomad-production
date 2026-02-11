@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PackingModal from "./PackingModal";
 
@@ -75,10 +75,7 @@ const Packaging = () => {
     },
   ];
 
-  // Manejo de scroll lock y popstate (omitido por brevedad, igual a tu original)
-  useEffect(() => {
-    document.body.style.overflow = selectedImg ? "hidden" : "unset";
-  }, [selectedImg]);
+  // ✅ El manejo de scroll ahora está completamente en PackingModal
 
   return (
     <section id="packing" className="bg-black py-24 px-4 md:px-12 border-t border-white/5 overflow-hidden">
