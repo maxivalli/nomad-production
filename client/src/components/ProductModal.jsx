@@ -151,7 +151,7 @@ const ProductModal = ({ item, onClose }) => {
     (e) => {
       e.stopPropagation();
       const slug = generateSlug(item.title);
-      const shareUrl = `${window.location.origin}/producto/${slug}`;
+      const shareUrl = `${window.location.origin}/share/${slug}`;
 
       if (navigator.share) {
         navigator
