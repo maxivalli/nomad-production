@@ -201,10 +201,42 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
+  // ✅ MANEJO DEL BOTÓN "ATRÁS" FÍSICO / NAVEGADOR
+  useEffect(() => {
+    // 1. Al montar el modal, inyectamos un estado en el historial
+    window.history.pushState({ modalOpen: true }, "");
+
+    const handlePopState = () => {
+      // 2. Si el usuario presiona "atrás", cerramos el modal manualmente
+      // El 'onClose' ya debería encargarse de limpiar todo
+      onClose();
+    };
+
+    // 3. Escuchamos el evento de retroceso
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      // 4. Limpieza: quitamos el listener
+      window.removeEventListener("popstate", handlePopState);
+
+      // 5. Si el modal se cierra por un botón (X) y no por el botón atrás,
+      // quitamos el estado que inyectamos para no ensuciar el historial
+      if (window.history.state?.modalOpen) {
+        window.history.back();
+      }
+    };
+  }, [onClose]);
+
   // ✅ Delegar completamente el cierre al padre
   const handleClose = useCallback(() => {
     if (isClosing) return;
     setIsClosing(true);
+
+    // Si el modal se cierra por clic en X o fuera,
+    // volvemos atrás en el historial para remover el estado {modalOpen: true}
+    if (window.history.state?.modalOpen) {
+      window.history.back();
+    }
 
     if (onClose) {
       onClose();
