@@ -44,43 +44,10 @@ const ProductModal = ({ item, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const dragThreshold = 50;
   const toast = useToast();
-  const closedByPopStateRef = useRef(false); // ✅ Detectar si se cerró por botón atrás
 
-  // ✅ SOLUCIÓN MEJORADA: Gestionar historial del navegador con React Router
-  useEffect(() => {
-    // Agregar entrada al historial SOLO si no estamos en una ruta de producto
-    // (React Router ya maneja la navegación a /producto/:slug)
-    const currentPath = window.location.pathname;
-    const isProductRoute = currentPath.startsWith('/producto/') || currentPath.startsWith('/share/');
-    
-    // Si NO estamos en una ruta de producto, agregar entrada al historial
-    if (!isProductRoute) {
-      window.history.pushState({ modalOpen: true }, '');
-    }
-
-    // Escuchar evento popstate (botón atrás del navegador)
-    const handlePopState = (event) => {
-      // Marcar que se cerró por popstate
-      closedByPopStateRef.current = true;
-      
-      // Cerrar el modal
-      if (onClose) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      
-      // Si el modal se cierra programáticamente (botón X, no por botón atrás)
-      // Y NO estamos en una ruta de producto, remover la entrada del historial
-      if (!closedByPopStateRef.current && !isProductRoute && window.history.state?.modalOpen) {
-        window.history.back();
-      }
-    };
-  }, [onClose]);
+  // ✅ SOLUCIÓN: NO manejar historial cuando el modal se abre desde una ruta React Router
+  // App.jsx se encarga de todo el historial a través de navigate()
+  // El modal SOLO bloquea scroll y responde al onClose() del padre
 
   // ✅ Bloquear scroll sin position fixed
   useEffect(() => {
@@ -238,7 +205,7 @@ const ProductModal = ({ item, onClose }) => {
     }
   };
 
-  // ✅ Delegar completamente el cierre al padre
+  // ✅ Delegar completamente el cierre al padre (App.jsx maneja la navegación)
   const handleClose = useCallback(() => {
     if (isClosing) return;
     setIsClosing(true);

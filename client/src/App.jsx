@@ -91,20 +91,17 @@ function App() {
         // Redirigir a home si el producto no existe
         navigate("/", { replace: true });
       }
+    } else if (!productSlug && selectedItem) {
+      // ✅ NUEVO: Si estamos en home (sin slug) pero hay un producto seleccionado, cerrar modal
+      setSelectedItem(null);
     }
-  }, [slug, location.pathname, products, productsLoading, navigate]);
+  }, [slug, location.pathname, products, productsLoading, navigate, selectedItem]);
 
-  // 3. ✅ MEJORADO: Cierre del modal - React Router maneja la navegación
+  // 3. ✅ SIMPLIFICADO: Cierre del modal - solo navegar a home
   const handleCloseModal = useCallback(() => {
-    setSelectedItem(null);
-    
-    // Si la URL tiene /producto/ o /share/, volver a home
-    if (location.pathname.startsWith("/producto/") || location.pathname.startsWith("/share/")) {
-      // Navegar a home - esto disparará el popstate en ProductModal
-      navigate("/", { replace: true });
-    }
-    // Si no estamos en una ruta de producto, el ProductModal manejará su propio historial
-  }, [location.pathname, navigate]);
+    // Navegar a home - esto disparará el efecto anterior que cerrará el modal
+    navigate("/", { replace: false });
+  }, [navigate]);
 
   // 4. MANEJAR ESCAPE KEY PARA CERRAR MODAL
   useEffect(() => {
