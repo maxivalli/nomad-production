@@ -40,7 +40,7 @@ const ProcessCard = ({ step, index }) => {
       </div>
 
       {/* Contenedor principal con borde */}
-      <div className="relative border-4 border-white bg-black transition-all duration-700 group-hover:border-[#dc2626]">
+      <div className="relative bg-black transition-all duration-700 group-hover:border-[#dc2626]">
         {/* Video container */}
         <div className="relative h-[300px] md:h-[500px] overflow-hidden">
           <AnimatePresence>

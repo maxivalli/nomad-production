@@ -33,6 +33,7 @@ import { videoGenerator } from "../services/videoGenerator-replicate";
 
 const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
 const MAX_IMAGES = 5;
+const SIZE_GUIDE_IMAGE = "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770840193/guia_talles_ulwnqe.jpg";
 
 const SEASONS = ["summer", "autumn", "winter", "spring"];
 const YEARS = Array.from({ length: 25 }, (_, i) => 2026 + i); // 2026 a 2050
@@ -246,11 +247,25 @@ const AdminPanel = () => {
     setIsLoading(true);
 
     try {
+      // NUEVO: Preparar el array de imágenes con la guía de talles al final
+      const imagesWithSizeGuide = [...formData.img];
+      
+      // Solo agregar la guía de talles si no está ya en el array
+      if (!imagesWithSizeGuide.includes(SIZE_GUIDE_IMAGE)) {
+        imagesWithSizeGuide.push(SIZE_GUIDE_IMAGE);
+      }
+
+      // Crear el objeto de datos con la guía de talles incluida
+      const productData = {
+        ...formData,
+        img: imagesWithSizeGuide
+      };
+
       if (isEditing) {
-        await api.updateProduct(isEditing, formData);
+        await api.updateProduct(isEditing, productData);
         toast.success("Producto actualizado exitosamente");
       } else {
-        await api.createProduct(formData);
+        await api.createProduct(productData);
         toast.success("Producto creado exitosamente");
       }
 
@@ -297,13 +312,18 @@ const AdminPanel = () => {
         ? [item.color]
         : [];
 
+    // NUEVO: Filtrar la guía de talles del array de imágenes al editar
+    const imagesWithoutSizeGuide = Array.isArray(item.img) 
+      ? item.img.filter(img => img !== SIZE_GUIDE_IMAGE)
+      : [item.img].filter(img => img !== SIZE_GUIDE_IMAGE);
+
     setIsEditing(item.id);
     setFormData({
       season: item.season || "",
       year: item.year || "",
       title: item.title,
       description: item.description,
-      img: Array.isArray(item.img) ? item.img : [item.img],
+      img: imagesWithoutSizeGuide,
       sizes: item.sizes,
       purchase_link: item.purchase_link || "",
       color: colorData,
@@ -342,9 +362,10 @@ const AdminPanel = () => {
       return;
     }
 
-    const slotsAvailable = MAX_IMAGES - formData.img.length;
+    // MODIFICADO: Restar 1 al límite de slots para dejar espacio a la guía de talles
+    const slotsAvailable = (MAX_IMAGES - 1) - formData.img.length;
     if (slotsAvailable <= 0) {
-      toast.warning(`Límite de ${MAX_IMAGES} imágenes alcanzado`);
+      toast.warning(`Límite de ${MAX_IMAGES - 1} imágenes de producto alcanzado (se reserva 1 espacio para la guía de talles)`);
       return;
     }
 
@@ -397,7 +418,7 @@ const AdminPanel = () => {
 
           setFormData((prev) => ({
             ...prev,
-            img: [...prev.img, ...newUrls].slice(0, MAX_IMAGES),
+            img: [...prev.img, ...newUrls].slice(0, MAX_IMAGES - 1), // MODIFICADO: Dejar espacio para la guía
           }));
           toast.success("Imágenes optimizadas y subidas");
         }
@@ -1156,7 +1177,10 @@ const AdminPanel = () => {
                 <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-300 font-[900]">
                   Visual Assets
                   <span className="text-red-500 ml-2">
-                    {formData.img.length}/{MAX_IMAGES}
+                    {formData.img.length}/{MAX_IMAGES - 1}
+                  </span>
+                  <span className="text-neutral-500 text-[8px] ml-2">
+                    (+1 guía talles)
                   </span>
                 </label>
                 
@@ -1203,7 +1227,7 @@ const AdminPanel = () => {
                 ))}
 
                 {/* Botón agregar imagen (solo si no se alcanzó el límite) */}
-                {formData.img.length < MAX_IMAGES && (
+                {formData.img.length < (MAX_IMAGES - 1) && (
                   <button
                     type="button"
                     onClick={handleOpenWidget}
@@ -1218,6 +1242,19 @@ const AdminPanel = () => {
                     </span>
                   </button>
                 )}
+              </div>
+
+              {/* Indicador de guía de talles */}
+              <div className="mt-3 p-3 bg-green-600/10 border border-green-600/30 flex items-center gap-3">
+                <ImageIcon size={16} className="text-green-500" />
+                <div className="flex-1">
+                  <p className="text-[8px] uppercase tracking-widest text-green-400 font-bold">
+                    Guía de talles automática
+                  </p>
+                  <p className="text-[7px] text-neutral-500 mt-0.5">
+                    Se agregará automáticamente al guardar el producto
+                  </p>
+                </div>
               </div>
 
               {/* Preview y controles del video AI */}

@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { generateProductFlyer } from "../services/flyerGenerator";
 
+// Constante con la URL de la guía de talles (debe coincidir con AdminPanel.jsx)
+const SIZE_GUIDE_IMAGE = "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770840193/guia_talles_ulwnqe.jpg";
+
 // --- COMPONENTE INTERNO PARA EL EFECTO DE CINTA ---
 const Tape = ({ position = "top" }) => {
   const styles = {
@@ -225,6 +228,22 @@ const ProductModal = ({ item, onClose }) => {
     ? null
     : optimizeCloudinaryUrl(currentMedia);
   const showLoader = !isCurrentVideo && !loadedImages.has(currentImageUrl);
+
+  // ✅ NUEVO: Verificar si el medio actual es válido para generar flyer
+  // Solo mostrar el botón si:
+  // 1. No es un video
+  // 2. No es la guía de talles
+  const isCurrentMediaValidForFlyer = () => {
+    if (isCurrentVideo) return false;
+    
+    const currentMediaUrl = typeof currentMedia === "string" ? currentMedia : null;
+    if (!currentMediaUrl) return false;
+    
+    // Verificar que no sea la guía de talles
+    return currentMediaUrl !== SIZE_GUIDE_IMAGE;
+  };
+
+  const showFlyerButton = isCurrentMediaValidForFlyer();
 
   return (
     <motion.div
@@ -583,18 +602,21 @@ const ProductModal = ({ item, onClose }) => {
               </div>
             </button>
 
-            <button
-              onClick={handleGenerateFlyer}
-              className="group relative flex items-center justify-center gap-2 bg-transparent border border-white/20 px-6 py-3 md:px-8 md:py-3 overflow-hidden transition-all active:scale-95"
-            >
-              <div className="absolute inset-0 bg-white/10 translate-y-[101%] group-hover:translate-y-0 transition-transform duration-300" />
-              <div className="relative z-10 flex items-center gap-2">
-                <span className="text-white font-black italic uppercase tracking-tighter text-[10px] md:text-sm">
-                  FLYER
-                </span>
-                <Download size={14} className="text-red-600 md:w-4 md:h-4" />
-              </div>
-            </button>
+            {/* ✅ MODIFICADO: Solo mostrar el botón si el medio actual es válido (no es video ni guía de talles) */}
+            {showFlyerButton && (
+              <button
+                onClick={handleGenerateFlyer}
+                className="group relative flex items-center justify-center gap-2 bg-transparent border border-white/20 px-6 py-3 md:px-8 md:py-3 overflow-hidden transition-all active:scale-95"
+              >
+                <div className="absolute inset-0 bg-white/10 translate-y-[101%] group-hover:translate-y-0 transition-transform duration-300" />
+                <div className="relative z-10 flex items-center gap-2">
+                  <span className="text-white font-black italic uppercase tracking-tighter text-[10px] md:text-sm">
+                    FLYER
+                  </span>
+                  <Download size={14} className="text-red-600 md:w-4 md:h-4" />
+                </div>
+              </button>
+            )}
           </div>
         </motion.div>
       </div>
