@@ -1,6 +1,6 @@
 /**
  * flyerGenerator.js - NOMAD CORE 
- * Versión Limpia: Inter Black Impact
+ * Versión: Maximizar espacio y Tipografía Masiva
  */
 
 const generateSlug = (title) => {
@@ -17,110 +17,101 @@ const loadImage = (src) => {
   });
 };
 
-const drawCanvas = async (item, productImg, logoImg, overlayImg, width, height, prefix) => {
+const drawImageProp = (ctx, img, x, y, w, h, offsetX = 0.5, offsetY = 0.5) => {
+  var iw = img.width, ih = img.height, r = Math.min(w / iw, h / ih),
+    nw = iw * r, nh = ih * r, cx, cy, cw, ch, ar = 1;
+  if (nw < w) ar = w / nw;
+  if (Math.abs(ar - 1) < 1e-14 && nh < h) ar = h / nh; 
+  nw *= ar; nh *= ar;
+  cw = iw / (nw / w); ch = ih / (nh / h);
+  cx = (iw - cw) * offsetX; cy = (ih - ch) * offsetY;
+  ctx.drawImage(img, Math.max(cx, 0), Math.max(cy, 0), Math.min(cw, iw), Math.min(ch, ih), x, y, w, h);
+};
+
+const drawCanvas = async (item, img1, img2, logoImg, overlayImg, width, height, prefix) => {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
-  
   canvas.width = width;
   canvas.height = height;
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
 
-  const isStory = height > width;
-
-  // 1. FONDO
+  // 1. FONDO NEGRO
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, width, height);
 
-  // 2. IMAGEN DEL PRODUCTO
-  if (isStory) {
-    const ratio = Math.max(width / productImg.width, height / productImg.height);
-    const imgW = productImg.width * ratio;
-    const imgH = productImg.height * ratio;
-    ctx.drawImage(productImg, (width - imgW) / 2, (height - imgH) / 2, imgW, imgH);
-  } else {
-    const imgAreaTop = 150; 
-    const imgAreaBottom = height - 350; 
-    const availableH = imgAreaBottom - imgAreaTop;
-    const ratio = Math.min((width * 0.95) / productImg.width, availableH / productImg.height);
-    const imgW = productImg.width * ratio;
-    const imgH = productImg.height * ratio;
-    ctx.drawImage(productImg, (width - imgW) / 2, imgAreaTop + (availableH - imgH) / 2, imgW, imgH);
-  }
+  const isStory = height > 1400;
+  const margin = width * 0.06; 
 
-  // 3. TEXTURA OVERLAY
+  // --- LAYOUT OPTIMIZADO PARA LLENAR ESPACIO ---
+  
+  // CAJA 1: Arriba Izquierda
+  const box1 = {
+    x: margin,
+    y: isStory ? 250 : 100, 
+    w: width * 0.46, 
+    h: isStory ? height * 0.45 : height * 0.42 
+  };
+
+  // CAJA 2: Derecha (Ahora mucho más larga hacia abajo)
+  const box2 = {
+    x: width * 0.56, 
+    y: isStory ? 350 : 150,
+    w: width * 0.38, 
+    h: isStory ? height * 0.65 : height * 0.70 // Baja mucho más para no dejar huecos
+  };
+
+  // 2. DIBUJAR IMÁGENES
+  if (img1) drawImageProp(ctx, img1, box1.x, box1.y, box1.w, box1.h, 0.5, 0.2); 
+  if (img2) drawImageProp(ctx, img2, box2.x, box2.y, box2.w, box2.h, 0.5, 0.2);
+
+  // 3. TEXTURA (Sutil para no lavar los negros)
   ctx.globalCompositeOperation = "screen";
-  ctx.globalAlpha = 0.45; 
+  ctx.globalAlpha = 0.15; 
   ctx.drawImage(overlayImg, 0, 0, width, height);
   ctx.globalCompositeOperation = "source-over";
   ctx.globalAlpha = 1.0;
 
-  // 4. LOGO
-  const logoW = 300;
-  const logoH = 100;
-  ctx.drawImage(logoImg, width * 0.05, height * 0.05, logoW, logoH);
+  // 4. LOGO (Arriba Derecha)
+  const logoW = width * 0.22;
+  const logoRatio = logoImg.height / logoImg.width;
+  ctx.drawImage(logoImg, width - logoW - margin, isStory ? 100 : 50, logoW, logoW * logoRatio);
 
-  // 5. TÍTULO (SÓLIDO Y MASIVO)
+  // 5. TÍTULO (MÁS GRANDE Y APRETADO)
   const words = item.title.toUpperCase().split(" ");
-  const firstWord = words[0];
-  const restOfTitle = words.slice(1).join(" ");
   
-  let fontSize = isStory ? 120 : 100; 
-  const maxWidth = width * 0.94;
-  const textY = height - (height * 0.18); 
+  // Usamos un tamaño de fuente mayor
+  let fontSize = isStory ? 170 : 150;
+  ctx.font = `900 ${fontSize}px "Impact", "Inter", sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
 
-  const setFont = (size) => {
-    // Forzamos Inter 900. Si no carga, Impact es un buen fallback brutalista
-    ctx.font = `italic 900 ${size}px "Inter", "Impact", sans-serif`;
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
-  };
+  // El texto empieza un poco antes de que termine la imagen 1 para solaparse visualmente si es necesario
+  let textX = margin;
+  let textY = box1.y + box1.h + 20; 
 
-  const drawSolidText = (text, x, y, color) => {
-    ctx.save();
-    ctx.fillStyle = color;
+  const lineHeight = fontSize * 0.88; // Interlineado negativo/apretado para look brutalista
+
+  words.forEach((word, index) => {
+    ctx.fillStyle = (index === words.length - 1) ? "#FF0000" : "#FFFFFF";
     
-    // Sombra para despegar del fondo
-    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-    ctx.shadowBlur = 30;
-    ctx.shadowOffsetY = 10;
-
-    ctx.fillText(text, x, y);
-    
-    ctx.restore();
-  };
-
-  setFont(fontSize);
-
-  if (restOfTitle) {
-    let displayFS = fontSize;
-    setFont(displayFS);
-
-    let longestWordW = Math.max(ctx.measureText(firstWord).width, ctx.measureText(restOfTitle).width);
-    while (longestWordW > maxWidth && displayFS > 40) {
-      displayFS -= 5;
-      setFont(displayFS);
-      longestWordW = Math.max(ctx.measureText(firstWord).width, ctx.measureText(restOfTitle).width);
+    // Si la palabra es muy larga para el espacio izquierdo, reducimos fuente solo para esa línea
+    let currentFS = fontSize;
+    while (ctx.measureText(word).width > (width * 0.50) && currentFS > 80) {
+        currentFS -= 10;
+        ctx.font = `900 ${currentFS}px "Impact", "Inter", sans-serif`;
     }
 
-    const lineSpacing = displayFS * 0.9; 
-    drawSolidText(firstWord, width / 2, textY - (lineSpacing / 2), "#FFFFFF");
-    drawSolidText(restOfTitle, width / 2, textY + (lineSpacing / 2), "#DC2626");
-  } else {
-    let singleFS = fontSize + 50;
-    setFont(singleFS);
-    while (ctx.measureText(firstWord).width > maxWidth) {
-      singleFS -= 5;
-      setFont(singleFS);
-    }
-    drawSolidText(firstWord, width / 2, textY, "#FFFFFF");
-  }
+    ctx.fillText(word, textX, textY);
+    textY += (currentFS * 0.88);
+    // Reset font for next word
+    ctx.font = `900 ${fontSize}px "Impact", "Inter", sans-serif`;
+  });
 
-  // 6. SLOGAN
-  ctx.font = "bold 18px monospace"; 
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-  ctx.letterSpacing = "15px";
-  ctx.fillText("UNBOUND BY TERRITORY", width / 2, height - (height * 0.06));
+  // 6. WEBSITE (Alineado a la derecha, cerca de la base de la foto 2)
+  ctx.font = "800 22px sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "right";
+  ctx.letterSpacing = "1px";
+  ctx.fillText("NOMADWEAR.COM.AR", width - margin, height - 60);
 
   // 7. DESCARGA
   const filename = `${prefix}_${generateSlug(item.title)}.png`;
@@ -139,26 +130,23 @@ const drawCanvas = async (item, productImg, logoImg, overlayImg, width, height, 
   });
 };
 
-// Agregamos 'selectedImg' como tercer parámetro
-export const generateProductFlyer = async (item, optimizeUrl, selectedImg = null) => {
+export const generateProductFlyer = async (item, optimizeUrl) => {
   try {
-    await document.fonts.load('900 italic 100px Inter');
-    
     const [logoImg, overlayImg] = await Promise.all([
-      loadImage("/nomadflyer.png"),
+      loadImage("/nomadflyer.png"), 
       loadImage("/overlay.png")
     ]);
     
-    // LÓGICA DE SELECCIÓN:
-    // Si viene selectedImg del modal, usamos esa. 
-    // Si no (fallback), usamos la primera del item.
-    const baseImage = selectedImg || (Array.isArray(item.img) ? item.img[0] : item.img);
-    
-    const productImageUrl = optimizeUrl ? optimizeUrl(baseImage) : baseImage;
-    const productImg = await loadImage(productImageUrl);
+    let imgSource1 = item.img[0];
+    let imgSource2 = item.img[1] || item.img[0];
 
-    await drawCanvas(item, productImg, logoImg, overlayImg, 1080, 1350, "feed");
-    await drawCanvas(item, productImg, logoImg, overlayImg, 1080, 1920, "story");
+    const [productImg1, productImg2] = await Promise.all([
+        loadImage(optimizeUrl ? optimizeUrl(imgSource1) : imgSource1),
+        loadImage(optimizeUrl ? optimizeUrl(imgSource2) : imgSource2)
+    ]);
+
+    await drawCanvas(item, productImg1, productImg2, logoImg, overlayImg, 1080, 1350, "feed");
+    await drawCanvas(item, productImg1, productImg2, logoImg, overlayImg, 1080, 1920, "story");
 
     return { success: true };
   } catch (error) {

@@ -100,7 +100,7 @@ function App() {
   // 3. ✅ SIMPLIFICADO: Cierre del modal - solo navegar a home
   const handleCloseModal = useCallback(() => {
     // Navegar a home - esto disparará el efecto anterior que cerrará el modal
-    navigate("/", { replace: false });
+    navigate("/", { replace: true });
   }, [navigate]);
 
   // 4. MANEJAR ESCAPE KEY PARA CERRAR MODAL

@@ -14,7 +14,8 @@ import {
 import { generateProductFlyer } from "../services/flyerGenerator";
 
 // Constante con la URL de la guía de talles (debe coincidir con AdminPanel.jsx)
-const SIZE_GUIDE_IMAGE = "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770840193/guia_talles_ulwnqe.jpg";
+const SIZE_GUIDE_IMAGE =
+  "https://res.cloudinary.com/det2xmstl/image/upload/f_auto,q_auto/v1770840193/guia_talles_ulwnqe.jpg";
 
 // --- COMPONENTE INTERNO PARA EL EFECTO DE CINTA ---
 const Tape = ({ position = "top" }) => {
@@ -180,22 +181,13 @@ const ProductModal = ({ item, onClose }) => {
   const handleGenerateFlyer = async (e) => {
     e.stopPropagation();
     try {
-      // 1. Identificamos el medio actual
-      const currentMedia = mediaItems[activeIdx];
-      let imageToUse;
+      const result = await generateProductFlyer(item, optimizeCloudinaryUrl);
 
-      // 2. Si es un objeto de video, usamos la primera imagen del array como backup
-      if (typeof currentMedia === "object" && currentMedia.type === "video") {
-        imageToUse = Array.isArray(item.img) ? item.img[0] : item.img;
+      if (result.success) {
+        toast.success("Flyers generados (Feed y Story)");
       } else {
-        // Si es una imagen (string), usamos esa misma
-        imageToUse = currentMedia;
+        throw new Error(result.error);
       }
-
-      // 3. Pasamos la imagen específica al generador
-      await generateProductFlyer(item, optimizeCloudinaryUrl, imageToUse);
-
-      toast.success("Flyers generados en la carpeta descargas");
     } catch (error) {
       console.error("Error al generar flyer:", error);
       toast.error("Error al generar el flyer");
@@ -235,10 +227,11 @@ const ProductModal = ({ item, onClose }) => {
   // 2. No es la guía de talles
   const isCurrentMediaValidForFlyer = () => {
     if (isCurrentVideo) return false;
-    
-    const currentMediaUrl = typeof currentMedia === "string" ? currentMedia : null;
+
+    const currentMediaUrl =
+      typeof currentMedia === "string" ? currentMedia : null;
     if (!currentMediaUrl) return false;
-    
+
     // Verificar que no sea la guía de talles
     return currentMediaUrl !== SIZE_GUIDE_IMAGE;
   };
